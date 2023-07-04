@@ -1,4 +1,5 @@
 BINARY_NAME=domainator
+PG_PASSWORD ?= pass123
 
 ## help: print this help message
 .PHONY: help
@@ -25,7 +26,7 @@ audit:
 
 ## dev: run with hot-reloading
 .PHONY: dev
-dev:
+dev: pg/up
 	air .
 
 ## build: build binary
@@ -33,12 +34,6 @@ dev:
 build:
 	@echo 'Building for Linux'
 	go build -o=./bin/${BINARY_NAME} ./cmd/web
-
-## deps: install external dependencies not used in source code
-.PHONY: deps
-deps: confirm
-	@echo 'Installing `air` for hot-reloading'
-	go install github.com/cosmtrek/air@latest
 
 ## pg/up: start PostgreSQL docker container by running docker-compose.yml
 .PHONY: pg/up
@@ -51,3 +46,36 @@ pg/up:
 pg/down:
 	@echo 'Stopping PostgreSQL docker container'
 	docker compose up -d
+
+## pg/migrate/init: init tern project
+.PHONY: pg/migrate/init
+pg/migrate/init: confirm
+	@echo 'Initializing tern project'
+	tern init
+
+## pg/migrate/new name=$1: create a new database migration ($ make pg/migrate/new name=create_users_table)
+.PHONY: pg/migrate/new
+pg/migrate/new:
+	@echo 'Creating migration files for ${name}...'
+	tern new -m ./migrations ${name}
+
+## pg/migrate/up: run database migrations
+.PHONY: pg/migrate/up
+pg/migrate/up:
+	@echo 'Running migrations...'
+	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations
+
+## pg/migrate/down n=$1: rollback database N versions ($ make pg/migrate/down n=2)
+.PHONY: pg/migrate/down
+pg/migrate/down: confirm
+	@echo 'Rolling back ${n} migrations..'
+	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations --destination -${n}
+	
+## deps: install external dependencies not used in source code
+.PHONY: deps
+deps: confirm
+	@echo 'Installing `air` for hot-reloading'
+	go install github.com/cosmtrek/air@latest
+	@echo 'Installing `tern` for db migrations'
+	go install github.com/jackc/tern/v2@latest
+
