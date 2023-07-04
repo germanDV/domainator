@@ -5,22 +5,34 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-// TODO: use proper UUIDv4
-type uuid = string
 
 // Pinger is an interface that the ping service must implement
 type Pinger interface {
-	SaveSettings(userID uuid, domain string, successCode int) (uuid, error)
-	GetSummary(userID uuid) ([]*PingSummary, error)
-	InsertPing(settingsID uuid, status int, took time.Duration) (uuid, error)
+	SaveSettings(*PingCreate) (uuid.UUID, error)
+	GetSummary(userID uuid.UUID) ([]*PingSummary, error)
 	Validate(payload Validatable) bool
+}
+
+var dummyDB = []*PingSettings{
+	{ID: uuid.New(), Domain: "debian.org", SuccessCode: 200, CreatedAt: time.Now()},
+	{ID: uuid.New(), Domain: "wikipedia.com", SuccessCode: 200, CreatedAt: time.Now()},
+	{ID: uuid.New(), Domain: "duckduckgo.com", SuccessCode: 201, CreatedAt: time.Now()},
+}
+
+// PingSettings is the settings for a domain to be pinged
+type PingSettings struct {
+	ID          uuid.UUID
+	Domain      string
+	SuccessCode int
+	CreatedAt   time.Time
 }
 
 // PingSummary returns data about a ping settings and the latest check
 type PingSummary struct {
-	ID        uuid
+	ID        uuid.UUID
 	Domain    string
 	Status    string // 'healthy' or 'unhealthy'
 	LastCheck time.Time
@@ -29,6 +41,7 @@ type PingSummary struct {
 // PingService is a ping service
 type PingService struct {
 	Validator *validator.Validate
+	DB        *pgxpool.Pool
 }
 
 // Validate validates a struct
@@ -37,21 +50,27 @@ func (ps *PingService) Validate(payload Validatable) bool {
 }
 
 // GetSummary returns all ping settings for a user with data about the latest ping
-func (ps *PingService) GetSummary(userID uuid) ([]*PingSummary, error) {
-	pings := []*PingSummary{
-		{ID: "1", Domain: "debian.org", Status: "healthy", LastCheck: time.Now()},
-		{ID: "2", Domain: "wikipedia.com", Status: "unhealthy", LastCheck: time.Now()},
-		{ID: "3", Domain: "duckduckgo.com", Status: "healthy", LastCheck: time.Now()},
+func (ps *PingService) GetSummary(userID uuid.UUID) ([]*PingSummary, error) {
+	summaries := []*PingSummary{}
+	for _, s := range dummyDB {
+		summaries = append(summaries, &PingSummary{
+			ID:        s.ID,
+			Domain:    s.Domain,
+			Status:    "healthy",
+			LastCheck: time.Now(),
+		})
 	}
-	return pings, nil
+	return summaries, nil
 }
 
 // SaveSettings saves the settings for a domain to be pinged
-func (ps *PingService) SaveSettings(userID uuid, domain string, successCode int) (uuid, error) {
-	return "", errors.New("not implemented")
-}
-
-// InsertPing saves the results of an individual ping to a domain
-func (ps *PingService) InsertPing(settingsID uuid, status int, took time.Duration) (uuid, error) {
-	return "", errors.New("not implemented")
+func (ps *PingService) SaveSettings(payload *PingCreate) (uuid.UUID, error) {
+	newID := uuid.New()
+	dummyDB = append(dummyDB, &PingSettings{
+		ID:          newID,
+		Domain:      payload.Domain,
+		SuccessCode: payload.SuccessCode,
+		CreatedAt:   time.Now().UTC(),
+	})
+	return newID, errors.New("not implemented")
 }

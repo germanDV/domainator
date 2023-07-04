@@ -311,6 +311,11 @@ button:hover {
   cursor: pointer;
 }
 
+small {
+  color: #6a6c6f;
+  font-size: 14px;
+}
+
 .snippet {
   background-color: #ffffff;
   border: 1px solid #e4e5e7;

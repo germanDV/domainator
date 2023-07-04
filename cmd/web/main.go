@@ -24,6 +24,7 @@ type application struct {
 
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
+	dsn := flag.String("dsn", "postgres://postgres:pass123@localhost:5432/domainator", "PostgreSQL data source name")
 	flag.Parse()
 
 	errorLog := log.New(os.Stderr, "ERROR\t", log.LUTC|log.Ltime|log.Lshortfile)
@@ -36,10 +37,19 @@ func main() {
 
 	validate := validator.New()
 
+	db, err := openDB(*dsn)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	defer db.Close()
+
 	app := &application{
-		errorLog:      errorLog,
-		infoLog:       infoLog,
-		pingSvc:       &services.PingService{Validator: validate},
+		errorLog: errorLog,
+		infoLog:  infoLog,
+		pingSvc: &services.PingService{
+			Validator: validate,
+			DB:        db,
+		},
 		templateCache: templateCache,
 		formDecoder:   form.NewDecoder(),
 		validate:      validate,

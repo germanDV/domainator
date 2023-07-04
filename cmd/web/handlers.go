@@ -4,6 +4,8 @@ import (
 	"domainator/internal/services"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -11,7 +13,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) pings(w http.ResponseWriter, r *http.Request) {
-	dummyUserID := "00000000-0000-0000-0000-000000000000"
+	dummyUserID := uuid.New()
 
 	pings, err := app.pingSvc.GetSummary(dummyUserID)
 	if err != nil {
@@ -34,6 +36,7 @@ func (app *application) pingsNewForm(w http.ResponseWriter, r *http.Request) {
 func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 	var payload services.PingCreate
 	app.decodeForm(r, &payload)
+
 	ok := app.pingSvc.Validate(&payload)
 	if !ok {
 		templateData := map[string]any{
@@ -44,6 +47,6 @@ func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: save payload to database
+	app.pingSvc.SaveSettings(&payload)
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }

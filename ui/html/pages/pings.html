@@ -5,16 +5,16 @@
 {{if .Pings}}
 <table>
   <tr>
-    <th>ID</th>
     <th>Domain</th>
     <th>Status</th>
-    <th>Last Check</th>
+    <th>ID</th>
+    <th>Last Check (UTC)</th>
   </tr>
   {{range .Pings}}
     <tr>
-      <td><a href="/pings/{{.ID}}">{{.ID}}</a></td>
       <td>{{.Domain}}</td>
       <td class={{if eq .Status "unhealthy"}}"error"{{else}}"success"{{end}}>{{.Status}}</td>
+      <td><a href="/pings/{{.ID}}"><small>{{.ID}}</small></a></td>
       <td>{{humanDate .LastCheck}}</td>
     </tr>
   {{else}}

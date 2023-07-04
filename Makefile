@@ -40,3 +40,14 @@ deps: confirm
 	@echo 'Installing `air` for hot-reloading'
 	go install github.com/cosmtrek/air@latest
 
+## pg/up: start PostgreSQL docker container by running docker-compose.yml
+.PHONY: pg/up
+pg/up:
+	@echo 'Starting PostgreSQL docker container'
+	docker compose up -d
+
+## pg/down: stop PostgreSQL docker container
+.PHONY: pg/down
+pg/down:
+	@echo 'Stopping PostgreSQL docker container'
+	docker compose up -d
