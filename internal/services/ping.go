@@ -1,7 +1,7 @@
 package services
 
 import (
-	"errors"
+	"context"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -11,34 +11,12 @@ import (
 
 // Pinger is an interface that the ping service must implement
 type Pinger interface {
+	Validate(payload Validatable) bool
 	SaveSettings(*PingCreate) (uuid.UUID, error)
 	GetSummary(userID uuid.UUID) ([]*PingSummary, error)
-	Validate(payload Validatable) bool
 }
 
-var dummyDB = []*PingSettings{
-	{ID: uuid.New(), Domain: "debian.org", SuccessCode: 200, CreatedAt: time.Now()},
-	{ID: uuid.New(), Domain: "wikipedia.com", SuccessCode: 200, CreatedAt: time.Now()},
-	{ID: uuid.New(), Domain: "duckduckgo.com", SuccessCode: 201, CreatedAt: time.Now()},
-}
-
-// PingSettings is the settings for a domain to be pinged
-type PingSettings struct {
-	ID          uuid.UUID
-	Domain      string
-	SuccessCode int
-	CreatedAt   time.Time
-}
-
-// PingSummary returns data about a ping settings and the latest check
-type PingSummary struct {
-	ID        uuid.UUID
-	Domain    string
-	Status    string // 'healthy' or 'unhealthy'
-	LastCheck time.Time
-}
-
-// PingService is a ping service
+// PingService is a service that implements the Pinger interface
 type PingService struct {
 	Validator *validator.Validate
 	DB        *pgxpool.Pool
@@ -51,26 +29,49 @@ func (ps *PingService) Validate(payload Validatable) bool {
 
 // GetSummary returns all ping settings for a user with data about the latest ping
 func (ps *PingService) GetSummary(userID uuid.UUID) ([]*PingSummary, error) {
-	summaries := []*PingSummary{}
-	for _, s := range dummyDB {
-		summaries = append(summaries, &PingSummary{
-			ID:        s.ID,
-			Domain:    s.Domain,
-			Status:    "healthy",
-			LastCheck: time.Now(),
-		})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	sql := `select id, domain from ping_settings`
+
+	rows, err := ps.DB.Query(ctx, sql)
+	if err != nil {
+		return nil, err
 	}
+	defer rows.Close()
+
+	summaries := []*PingSummary{}
+	for rows.Next() {
+		s := &PingSummary{}
+		err = rows.Scan(&s.ID, &s.Domain)
+		if err != nil {
+			return nil, err
+		}
+		s.Status = "healthy"
+		s.LastCheck = time.Now()
+		summaries = append(summaries, s)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	return summaries, nil
 }
 
 // SaveSettings saves the settings for a domain to be pinged
 func (ps *PingService) SaveSettings(payload *PingCreate) (uuid.UUID, error) {
 	newID := uuid.New()
-	dummyDB = append(dummyDB, &PingSettings{
-		ID:          newID,
-		Domain:      payload.Domain,
-		SuccessCode: payload.SuccessCode,
-		CreatedAt:   time.Now().UTC(),
-	})
-	return newID, errors.New("not implemented")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	sql := `insert into ping_settings (id, domain, success_code) values ($1, $2, $3)`
+	_, err := ps.DB.Exec(ctx, sql, newID.String(), payload.Domain, payload.SuccessCode)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return newID, nil
 }

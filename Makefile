@@ -26,7 +26,7 @@ audit:
 
 ## dev: run with hot-reloading
 .PHONY: dev
-dev: pg/up
+dev:
 	air .
 
 ## build: build binary
@@ -41,11 +41,17 @@ pg/up:
 	@echo 'Starting PostgreSQL docker container'
 	docker compose up -d
 
-## pg/down: stop PostgreSQL docker container
-.PHONY: pg/down
-pg/down:
+## pg/stop: stop PostgreSQL docker container
+.PHONY: pg/stop
+pg/stop:
 	@echo 'Stopping PostgreSQL docker container'
-	docker compose up -d
+	docker compose stop
+
+## pg/down: tear down PostgreSQL docker container
+.PHONY: pg/down
+pg/down: confirm
+	@echo 'Stopping PostgreSQL docker container'
+	docker compose down
 
 ## pg/migrate/init: init tern project
 .PHONY: pg/migrate/init
