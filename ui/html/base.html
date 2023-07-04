@@ -1,0 +1,30 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Domainator</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700" />
+    <script defer src="/static/js/main.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <header>
+      <h1>
+        <a href="/">Domainator</a>
+      </h1>
+    </header>
+    {{template "nav" .}}
+
+    <main>
+      {{with .Flash}}
+      <div class="flash">{{.}}</div>
+      {{end}} {{template "main" .}}
+    </main>
+
+    {{template "footer" .}}
+  </body>
+</html>
+{{end}}

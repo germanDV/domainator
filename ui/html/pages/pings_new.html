@@ -1,0 +1,29 @@
+{{define "main"}}
+<h2>Add a new ping</h2>
+<form action="/pings-new" method="POST">
+  <div>
+    <label>Domain (include http(s)):</label>
+    {{with .Form.Errors.Domain}}
+    <label for="domain" class="error">{{.}}</label>
+    {{end}}
+    <input id="domain" type="text" name="domain" value="{{.Form.Domain}}" />
+  </div>
+  <div>
+    <label>Success Code (HTTP status code):</label>
+    {{with .Form.Errors.SuccessCode}}
+    <label for="successcode" class="error">{{.}}</label>
+    {{end}}
+    <input
+      id="successcode"
+      type="number"
+      min="100"
+      max="599"
+      name="success_code"
+      value="{{.Form.SuccessCode}}"
+    />
+  </div>
+  <div>
+    <input type="submit" value="Save Ping Settings" />
+  </div>
+</form>
+{{end}}
