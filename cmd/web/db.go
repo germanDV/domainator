@@ -13,10 +13,8 @@ func openDB(dsn string) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	cfg.MaxConns = 10
 	cfg.MaxConnIdleTime = 15 * time.Minute
 
-	// pool, err := pgxpool.New(context.Background(), dsn)
 	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
 	if err != nil {
 		return nil, err
