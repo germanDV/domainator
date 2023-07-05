@@ -12,8 +12,8 @@ import (
 // Pinger is an interface that the ping service must implement
 type Pinger interface {
 	Validate(payload Validatable) bool
-	SaveSettings(*PingCreate) (uuid.UUID, error)
-	GetSummary(userID uuid.UUID) ([]*PingSummary, error)
+	SaveSettings(ctx context.Context, payload *PingCreate) (uuid.UUID, error)
+	GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error)
 }
 
 // PingService is a service that implements the Pinger interface
@@ -28,8 +28,8 @@ func (ps *PingService) Validate(payload Validatable) bool {
 }
 
 // GetSummary returns all ping settings for a user with data about the latest ping
-func (ps *PingService) GetSummary(userID uuid.UUID) ([]*PingSummary, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	sql := `select id, domain from ping_settings`
@@ -61,10 +61,10 @@ func (ps *PingService) GetSummary(userID uuid.UUID) ([]*PingSummary, error) {
 }
 
 // SaveSettings saves the settings for a domain to be pinged
-func (ps *PingService) SaveSettings(payload *PingCreate) (uuid.UUID, error) {
+func (ps *PingService) SaveSettings(ctx context.Context, payload *PingCreate) (uuid.UUID, error) {
 	newID := uuid.New()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	sql := `insert into ping_settings (id, domain, success_code) values ($1, $2, $3)`

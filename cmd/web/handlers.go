@@ -15,7 +15,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 func (app *application) pings(w http.ResponseWriter, r *http.Request) {
 	dummyUserID := uuid.New()
 
-	pings, err := app.pingSvc.GetSummary(dummyUserID)
+	pings, err := app.pingSvc.GetSummary(r.Context(), dummyUserID)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -47,6 +47,6 @@ func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.pingSvc.SaveSettings(&payload)
+	app.pingSvc.SaveSettings(r.Context(), &payload)
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }
