@@ -1,5 +1,5 @@
 create table if not exists ping_settings (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   user_id uuid,
   domain text not null,
   success_code int not null,

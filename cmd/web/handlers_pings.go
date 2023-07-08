@@ -8,10 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	app.render(w, http.StatusOK, "home.html", &map[string]any{"Year": time.Now().Year()})
-}
-
 func (app *application) pings(w http.ResponseWriter, r *http.Request) {
 	dummyUserID := uuid.New()
 

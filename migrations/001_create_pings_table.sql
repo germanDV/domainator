@@ -1,5 +1,5 @@
 create table if not exists pings (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   settings_id uuid not null,
   resp_status int not null,
   took_ms int,
