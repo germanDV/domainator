@@ -20,7 +20,7 @@ func humanDate(t time.Time) string {
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
-	pages, err := filepath.Glob("./ui/html/pages/*.html")
+	pages, err := filepath.Glob("./ui/html/pages/*.html.tmpl")
 	if err != nil {
 		return nil, err
 	}
@@ -28,12 +28,12 @@ func newTemplateCache() (map[string]*template.Template, error) {
 	for _, page := range pages {
 		name := filepath.Base(page)
 
-		ts, err := template.ParseFiles("./ui/html/base.html")
+		ts, err := template.ParseFiles("./ui/html/base.html.tmpl")
 		if err != nil {
 			return nil, err
 		}
 
-		ts, err = ts.ParseGlob("./ui/html/partials/*.html")
+		ts, err = ts.ParseGlob("./ui/html/partials/*.html.tmpl")
 		if err != nil {
 			return nil, err
 		}

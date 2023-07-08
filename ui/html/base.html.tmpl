@@ -16,12 +16,15 @@
         <a href="/">Domainator</a>
       </h1>
     </header>
+    
     {{template "nav" .}}
 
     <main>
       {{with .Flash}}
-      <div class="flash">{{.}}</div>
-      {{end}} {{template "main" .}}
+        <div class="flash">{{.}}</div>
+      {{end}}
+
+      {{template "main" .}}
     </main>
 
     {{template "footer" .}}

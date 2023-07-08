@@ -4,14 +4,14 @@
   <div>
     <label>Domain (include http(s)):</label>
     {{with .Form.Errors.Domain}}
-    <label for="domain" class="error">{{.}}</label>
+      <label for="domain" class="error">{{.}}</label>
     {{end}}
     <input id="domain" type="text" name="domain" value="{{.Form.Domain}}" />
   </div>
   <div>
     <label>Success Code (HTTP status code):</label>
     {{with .Form.Errors.SuccessCode}}
-    <label for="successcode" class="error">{{.}}</label>
+      <label for="successcode" class="error">{{.}}</label>
     {{end}}
     <input
       id="successcode"

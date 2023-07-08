@@ -14,12 +14,23 @@ type Pinger interface {
 	Validate(payload Validatable) bool
 	SaveSettings(ctx context.Context, payload *PingCreate) (uuid.UUID, error)
 	GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error)
+	GetSettingsByID(ctx context.Context, id uuid.UUID) (*PingSettings, error)
+	GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping, error)
 }
 
 // PingService is a service that implements the Pinger interface
 type PingService struct {
 	Validator *validator.Validate
 	DB        *pgxpool.Pool
+}
+
+// Ping represents a check to a domain
+type Ping struct {
+	ID         uuid.UUID
+	SettingsID uuid.UUID
+	RespStatus int
+	TookMs     int
+	CreatedAt  time.Time
 }
 
 // Validate validates a struct
@@ -32,18 +43,25 @@ func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Pin
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	sql := `select
+	q := `
+		with l as (
+			select settings_id, max(created_at) as latest from pings group by settings_id
+		)
+		select
 			ps.id,
 			ps.domain,
 			ps.success_code,
 			coalesce(p.resp_status, 0) as resp_status,
-			coalesce(p.created_at, '0001-01-01') as last_check
+			max(coalesce(p.created_at, '0001-01-01')) as last_check
 		from ping_settings ps
-		left outer join pings p on p.settings_id = ps.id
-		order by p.created_at desc
-		limit 1;`
+		left outer join l on l.settings_id = ps.id
+		left outer join pings p on
+			p.settings_id = ps.id
+			and p.created_at = l.latest
+		group by ps.id, p.resp_status;
+	`
 
-	rows, err := ps.DB.Query(ctx, sql)
+	rows, err := ps.DB.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -94,11 +112,68 @@ func (ps *PingService) SaveSettings(ctx context.Context, payload *PingCreate) (u
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	sql := `insert into ping_settings (id, domain, success_code) values ($1, $2, $3)`
-	_, err := ps.DB.Exec(ctx, sql, newID.String(), payload.Domain, payload.SuccessCode)
+	q := `insert into ping_settings (id, domain, success_code) values ($1, $2, $3)`
+	_, err := ps.DB.Exec(ctx, q, newID.String(), payload.Domain, payload.SuccessCode)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
 	return newID, nil
+}
+
+// GetSettingsByID returns a ping settings by its ID
+func (ps *PingService) GetSettingsByID(ctx context.Context, id uuid.UUID) (*PingSettings, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `select id, domain, success_code from ping_settings where id = $1`
+	row := ps.DB.QueryRow(ctx, q, id.String())
+
+	p := &PingSettings{}
+
+	err := row.Scan(&p.ID, &p.Domain, &p.SuccessCode)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// GetCheksByID returns a ping by its ID
+func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	sql := `select id, settings_id, resp_status, took_ms, created_at
+		from pings where settings_id = $1
+		order by created_at desc`
+
+	rows, err := ps.DB.Query(ctx, sql, id.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	pings := []*Ping{}
+
+	for rows.Next() {
+
+		p := &Ping{}
+		err := rows.Scan(&p.ID, &p.SettingsID, &p.RespStatus, &p.TookMs, &p.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		pings = append(pings, p)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return pings, nil
 }

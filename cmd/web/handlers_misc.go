@@ -6,5 +6,5 @@ import (
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	app.render(w, http.StatusOK, "home.html", &map[string]any{"Year": time.Now().Year()})
+	app.render(w, http.StatusOK, "home.html.tmpl", &map[string]any{"Year": time.Now().Year()})
 }
