@@ -30,7 +30,7 @@ func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		app.serverError(w, err)
+		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -78,5 +78,17 @@ func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.pingSvc.SaveSettings(r.Context(), &payload)
+	http.Redirect(w, r, "/pings", http.StatusSeeOther)
+}
+
+func (app *application) pingDelete(w http.ResponseWriter, r *http.Request) {
+	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	app.pingSvc.DeleteSettingsByID(r.Context(), id)
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }

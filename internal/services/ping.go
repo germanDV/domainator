@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,6 +17,7 @@ type Pinger interface {
 	GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error)
 	GetSettingsByID(ctx context.Context, id uuid.UUID) (*PingSettings, error)
 	GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping, error)
+	DeleteSettingsByID(ctx context.Context, id uuid.UUID) error
 }
 
 // PingService is a service that implements the Pinger interface
@@ -176,4 +178,30 @@ func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping
 	}
 
 	return pings, nil
+}
+
+// DeleteSettingsByID deletes a ping settings and all its checks
+func (ps *PingService) DeleteSettingsByID(ctx context.Context, id uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, "delete from pings where settings_id = $1", id.String())
+	if err != nil {
+		tx.Rollback(ctx)
+		return err
+	}
+
+	_, err = tx.Exec(ctx, "delete from ping_settings where id = $1", id.String())
+	if err != nil {
+		tx.Rollback(ctx)
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

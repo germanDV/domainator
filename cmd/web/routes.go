@@ -18,10 +18,13 @@ func (app *application) routes() http.Handler {
 	})
 
 	mux.HandlerFunc(http.MethodGet, "/", app.home)
+
 	mux.HandlerFunc(http.MethodGet, "/pings", app.pings)
 	mux.HandlerFunc(http.MethodGet, "/pings-new", app.pingsNewForm)
 	mux.HandlerFunc(http.MethodPost, "/pings-new", app.pingsNew)
 	mux.HandlerFunc(http.MethodGet, "/pings/:id", app.ping)
+	mux.HandlerFunc(http.MethodPost, "/pings-delete/:id", app.pingDelete)
+
 	mux.HandlerFunc(http.MethodPost, "/user/logout", app.logout)
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
