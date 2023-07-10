@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -135,7 +136,7 @@ func (ps *PingService) GetSettingsByID(ctx context.Context, id uuid.UUID) (*Ping
 
 	err := row.Scan(&p.ID, &p.Domain, &p.SuccessCode)
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, err
@@ -144,7 +145,7 @@ func (ps *PingService) GetSettingsByID(ctx context.Context, id uuid.UUID) (*Ping
 	return p, nil
 }
 
-// GetCheksByID returns a ping by its ID
+// GetChecksByID returns a ping by its ID
 func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
