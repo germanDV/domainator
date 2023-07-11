@@ -1,15 +1,18 @@
 {{define "main"}}
-<div>
+<div class="ping-domain-summary">
   <p>Domain: <strong>{{.Settings.Domain}}</strong></p>
   <p>Expected response code: <strong>{{.Settings.SuccessCode}}</strong></p>
-<div>
+</div>
 
 <table>
-  <tr>
-    <th>Resp. Code</th>
-    <th>Date</th>
-    <th>Took (ms)</th>
-  </tr>
+  <thead>
+    <tr>
+      <th>Resp. Code</th>
+      <th>Date</th>
+      <th>Took (ms)</th>
+    </tr>
+  </thead>
+  <tbody> 
   {{range .Checks}}
     <tr>
       <td>{{.RespStatus}}</td>
@@ -17,5 +20,6 @@
       <td>{{.TookMs}}</td>
     </tr>
   {{end}}
+  </tbody>
 </table>
 {{end}}

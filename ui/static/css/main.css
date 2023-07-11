@@ -28,6 +28,7 @@
   --success: #a3be8c;
   --link: #88c0d0;
   --link-hover: #81a1c1;
+  --primary: #b48ead;
 }
 
 * {
@@ -73,6 +74,7 @@ h1 a {
   height: 36px;
   padding-left: 50px;
   position: relative;
+  text-shadow: var(--primary) 2px 0 10px;
 }
 
 h1 a:hover {
@@ -396,6 +398,7 @@ table {
   border: 1px solid var(--border);
   border-collapse: collapse;
   width: 100%;
+  box-shadow: 2px 2px 6px 2px var(--primary);
 }
 
 td,
@@ -455,4 +458,20 @@ footer {
 
 .hidden {
   display: none;
+}
+
+.ping-domain-summary {
+  border: 2px solid var(--primary);
+  padding: 24px;
+  margin-bottom: 48px;
+}
+
+.ping-domain-summary p {
+  font-size: 24px;
+}
+
+.ping-domain-summary strong {
+  color: var(--primary);
+  font-size: 24px;
+  letter-spacing: 1.5px;
 }
