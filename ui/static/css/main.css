@@ -441,3 +441,18 @@ footer {
   color: var(--text-alt);
   text-align: center;
 }
+
+#error-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 400px;
+  padding: 12px 24px;
+  background: var(--warn);
+  border-left: 20px solid var(--error);
+  color: var(--bg);
+}
+
+.hidden {
+  display: none;
+}
