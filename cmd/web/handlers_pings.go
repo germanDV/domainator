@@ -90,5 +90,5 @@ func (app *application) pingDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.pingSvc.DeleteSettingsByID(r.Context(), id)
-	http.Redirect(w, r, "/pings", http.StatusSeeOther)
+	w.WriteHeader(http.StatusOK)
 }

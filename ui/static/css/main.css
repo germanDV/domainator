@@ -78,6 +78,7 @@ h1 a {
 h1 a:hover {
   text-decoration: none;
   color: var(--text);
+  transition: 0.2s ease-in-out;
 }
 
 h2 {
@@ -95,6 +96,7 @@ a {
 a:hover {
   color: var(--link-hover);
   text-decoration: underline;
+  transition: 0.2s ease-in-out;
 }
 
 textarea,
@@ -233,6 +235,7 @@ nav a.live {
 
 nav a.live:hover {
   text-decoration: none;
+  transition: 0.2s ease-in-out;
 }
 
 nav a.live:after {
@@ -268,6 +271,7 @@ input[type="submit"]:hover {
   color: var(--bg);
   cursor: pointer;
   text-decoration: none;
+  transition: 0.2s ease-in-out;
 }
 
 form div {
@@ -341,6 +345,27 @@ button:hover {
   color: var(--link-hover);
   text-decoration: underline;
   cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+button.outline-danger {
+  display: flex;
+  padding: 6px;
+  border: 1px solid var(--error);
+  color: var(--error);
+  cursor: pointer;
+}
+
+button.outline-danger:hover {
+  text-decoration: none;
+  background: var(--error);
+  color: var(--text);
+  transition: 0.2s ease-in-out;
+}
+
+button.btn-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 small {
@@ -379,10 +404,16 @@ th {
   padding: 9px 18px;
 }
 
-th:last-child,
-td:last-child {
+th.right,
+td.right {
   text-align: right;
-  color: var(--text-alt);
+}
+
+th.flex-center,
+td.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 tr {
