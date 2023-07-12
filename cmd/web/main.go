@@ -1,6 +1,7 @@
 package main
 
 import (
+	"domainator/internal/db"
 	"domainator/internal/services"
 	"flag"
 	"html/template"
@@ -37,10 +38,7 @@ func main() {
 
 	validate := validator.New()
 
-	db, err := openDB(*dsn)
-	if err != nil {
-		errorLog.Fatal(err)
-	}
+	db := db.MustInit(*dsn)
 	defer db.Close()
 
 	app := &application{

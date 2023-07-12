@@ -29,11 +29,16 @@ audit:
 dev:
 	air .
 
-## build: build binary
-.PHONY: build
-build:
-	@echo 'Building for Linux'
+## build/web: build binary
+.PHONY: build/web
+build/web:
+	@echo 'Building web service for Linux'
 	go build -o=./bin/${BINARY_NAME} ./cmd/web
+
+## run/pinger: run pinger service
+.PHONY: run/pinger
+run/pinger:
+	go run ./cmd/ping
 
 ## pg/up: start PostgreSQL docker container by running docker-compose.yml
 .PHONY: pg/up
