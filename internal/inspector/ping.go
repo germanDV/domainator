@@ -3,6 +3,7 @@ package inspector
 import (
 	"context"
 	"domainator/internal/services"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -31,7 +32,7 @@ func (i Inspector) startPingLoop() {
 func (i Inspector) doPings() {
 	settings, err := i.pinger.GetSettings(context.Background())
 	if err != nil {
-		i.errorLog.Println(err)
+		i.logit.Error(err)
 	}
 
 	for _, s := range settings {
@@ -41,12 +42,12 @@ func (i Inspector) doPings() {
 
 // pingDomain pings a domain and saves the result to the database.
 func (i Inspector) pingDomain(s *services.PingSettings) {
-	i.infoLog.Printf("Pinging %q\n", s.Domain)
+	i.logit.Info(fmt.Sprintf("Pinging %q\n", s.Domain))
 
 	start := time.Now()
 	resp, err := http.Get(s.Domain)
 	if err != nil {
-		i.errorLog.Printf("Error pinging %q: %s\n", s.Domain, err.Error())
+		i.logit.Error(fmt.Sprintf("Error pinging %q: %s\n", s.Domain, err.Error()))
 		return
 	}
 
@@ -63,6 +64,6 @@ func (i Inspector) pingDomain(s *services.PingSettings) {
 		CreatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
-		i.errorLog.Printf("Error saving ping to db (%q): %s\n", s.Domain, err.Error())
+		i.logit.Error(fmt.Sprintf("Error saving ping to db (%q): %s\n", s.Domain, err.Error()))
 	}
 }

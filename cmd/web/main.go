@@ -1,15 +1,15 @@
+// Package main is the entry point for the application.
 package main
 
 import (
 	"domainator/internal/config"
 	"domainator/internal/db"
 	"domainator/internal/inspector"
+	"domainator/internal/logger"
 	"domainator/internal/services"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/go-playground/form/v4"
@@ -17,8 +17,7 @@ import (
 )
 
 type application struct {
-	errorLog      *log.Logger
-	infoLog       *log.Logger
+	logit         *logger.Logit
 	pingSvc       services.Pinger
 	templateCache map[string]*template.Template
 	formDecoder   *form.Decoder
@@ -30,16 +29,15 @@ func init() {
 }
 
 func main() {
-	errorLog := log.New(os.Stderr, "ERROR\t", log.LUTC|log.Ltime|log.Lshortfile)
-	infoLog := log.New(os.Stdout, "INFO\t", log.LUTC|log.Ltime)
 	validate := validator.New()
 	addr := fmt.Sprintf(":%d", config.GetInt("PORT"))
+	logit := logger.New()
 	db := db.MustInit(config.GetString("DSN"))
 	defer db.Close()
 
 	templateCache, err := newTemplateCache()
 	if err != nil {
-		errorLog.Fatal(err)
+		logit.Fatal(err)
 	}
 
 	pinger := &services.PingService{
@@ -48,8 +46,7 @@ func main() {
 	}
 
 	app := &application{
-		errorLog:      errorLog,
-		infoLog:       infoLog,
+		logit:         logit,
 		pingSvc:       pinger,
 		templateCache: templateCache,
 		formDecoder:   form.NewDecoder(),
@@ -58,17 +55,17 @@ func main() {
 
 	srv := &http.Server{
 		Addr:         addr,
-		ErrorLog:     app.errorLog,
+		ErrorLog:     app.logit.ErrorLog,
 		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
-	inspctr := inspector.New(db, pinger, errorLog, infoLog)
+	inspctr := inspector.New(db, pinger, logit)
 	inspctr.Start()
 
-	infoLog.Printf("Starting server on %s", addr)
+	logit.Info(fmt.Sprintf("Starting server on %s", addr))
 	err = srv.ListenAndServe()
-	errorLog.Fatal(err)
+	logit.Fatal(err)
 }

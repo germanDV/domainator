@@ -3,8 +3,8 @@ package inspector
 
 import (
 	"domainator/internal/config"
+	"domainator/internal/logger"
 	"domainator/internal/services"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,20 +17,18 @@ type Inspector struct {
 	pingTickInterval time.Duration
 	cleanInterval    time.Duration
 	cleanMaxAge      time.Duration
-	errorLog         *log.Logger
-	infoLog          *log.Logger
+	logit            *logger.Logit
 }
 
 // New creates a new Inspector.
-func New(db *pgxpool.Pool, pinger services.Pinger, errorLog, infoLog *log.Logger) Inspector {
+func New(db *pgxpool.Pool, pinger services.Pinger, logit *logger.Logit) Inspector {
 	return Inspector{
 		DB:               db,
 		pinger:           pinger,
 		pingTickInterval: config.GetDuration("PING_TICK_INTERVAL"),
 		cleanInterval:    config.GetDuration("CLEAN_INTERVAL"),
 		cleanMaxAge:      config.GetDuration("CLEAN_MAX_AGE"),
-		errorLog:         errorLog,
-		infoLog:          infoLog,
+		logit:            logit,
 	}
 }
 

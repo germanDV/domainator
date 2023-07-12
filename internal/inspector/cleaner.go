@@ -2,6 +2,7 @@ package inspector
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -29,8 +30,8 @@ func (i Inspector) startCleanLoop() {
 func (i Inspector) cleanPings() {
 	deleted, err := i.pinger.DeleteOldPings(context.Background(), i.cleanMaxAge)
 	if err != nil {
-		i.errorLog.Printf("Error cleaning pings: %v\n", err)
+		i.logit.Error(fmt.Sprintf("Error cleaning pings: %v\n", err))
 	} else {
-		i.infoLog.Printf("Removed %d pings\n", deleted)
+		i.logit.Info(fmt.Sprintf("Removed %d pings\n", deleted))
 	}
 }
