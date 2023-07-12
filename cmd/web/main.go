@@ -1,10 +1,11 @@
 package main
 
 import (
+	"domainator/internal/config"
 	"domainator/internal/db"
 	"domainator/internal/inspector"
 	"domainator/internal/services"
-	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -24,23 +25,22 @@ type application struct {
 	validate      *validator.Validate
 }
 
-func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "postgres://postgres:pass123@localhost:5432/domainator", "PostgreSQL data source name")
-	flag.Parse()
+func init() {
+	config.LoadEnv()
+}
 
+func main() {
 	errorLog := log.New(os.Stderr, "ERROR\t", log.LUTC|log.Ltime|log.Lshortfile)
 	infoLog := log.New(os.Stdout, "INFO\t", log.LUTC|log.Ltime)
+	validate := validator.New()
+	addr := fmt.Sprintf(":%d", config.GetInt("PORT"))
+	db := db.MustInit(config.GetString("DSN"))
+	defer db.Close()
 
 	templateCache, err := newTemplateCache()
 	if err != nil {
 		errorLog.Fatal(err)
 	}
-
-	validate := validator.New()
-
-	db := db.MustInit(*dsn)
-	defer db.Close()
 
 	pinger := &services.PingService{
 		Validator: validate,
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:         *addr,
+		Addr:         addr,
 		ErrorLog:     app.errorLog,
 		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
@@ -65,10 +65,10 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	inspctr := inspector.New(db, pinger, 15*time.Minute, errorLog, infoLog)
+	inspctr := inspector.New(db, pinger, errorLog, infoLog)
 	inspctr.Start()
 
-	infoLog.Printf("Starting server on %s", *addr)
+	infoLog.Printf("Starting server on %s", addr)
 	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 }

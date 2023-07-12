@@ -2,6 +2,7 @@
 package inspector
 
 import (
+	"domainator/internal/config"
 	"domainator/internal/services"
 	"log"
 	"time"
@@ -15,17 +16,19 @@ type Inspector struct {
 	pinger           services.Pinger
 	pingTickInterval time.Duration
 	cleanInterval    time.Duration
+	cleanMaxAge      time.Duration
 	errorLog         *log.Logger
 	infoLog          *log.Logger
 }
 
 // New creates a new Inspector.
-func New(db *pgxpool.Pool, pinger services.Pinger, pingTickInterval time.Duration, errorLog, infoLog *log.Logger) Inspector {
+func New(db *pgxpool.Pool, pinger services.Pinger, errorLog, infoLog *log.Logger) Inspector {
 	return Inspector{
 		DB:               db,
 		pinger:           pinger,
-		pingTickInterval: pingTickInterval,
-		cleanInterval:    12 * time.Hour,
+		pingTickInterval: config.GetDuration("PING_TICK_INTERVAL"),
+		cleanInterval:    config.GetDuration("CLEAN_INTERVAL"),
+		cleanMaxAge:      config.GetDuration("CLEAN_MAX_AGE"),
 		errorLog:         errorLog,
 		infoLog:          infoLog,
 	}
