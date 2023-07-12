@@ -27,10 +27,11 @@ func (i Inspector) startCleanLoop() {
 
 // cleanPings deletes old ping checks from the db
 func (i Inspector) cleanPings() {
-	i.infoLog.Println("Cleaning pings...")
 	age := 48 * time.Hour
-	err := i.pinger.DeleteOldPings(context.Background(), age)
+	deleted, err := i.pinger.DeleteOldPings(context.Background(), age)
 	if err != nil {
 		i.errorLog.Printf("Error cleaning pings: %v\n", err)
+	} else {
+		i.infoLog.Printf("Removed %d pings\n", deleted)
 	}
 }

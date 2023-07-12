@@ -20,7 +20,7 @@
     {{range .Pings}}
       <tr>
         <td><a href="/pings/{{.ID}}">{{.Domain}}</a></td>
-        <td class={{if eq .Status "unhealthy"}}"error"{{else}}"success"{{end}}>{{.Status}}</td>
+        <td><div class={{.Status}}>{{.Status}}</div></td>
         <td class="right">{{humanDate .LastCheck}}</td>
         <td class="flex-center" hx-delete="/pings/{{.ID}}">
           <button class="btn-icon outline-danger">

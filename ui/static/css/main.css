@@ -312,6 +312,20 @@ form label {
   margin-bottom: 9px;
 }
 
+.healthy,
+.unhealthy {
+  border-radius: 8px;
+  width: fit-content;
+  padding: 0 8px;
+  color: var(--bg);
+}
+.healthy {
+  background: var(--success);
+}
+.unhealthy {
+  background: var(--error);
+}
+
 .success {
   color: var(--success);
   font-weight: bold;

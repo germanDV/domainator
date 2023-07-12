@@ -21,7 +21,7 @@ type Pinger interface {
 	GetSettings(ctx context.Context) ([]*PingSettings, error)
 	GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping, error)
 	DeleteSettingsByID(ctx context.Context, id uuid.UUID) error
-	DeleteOldPings(ctx context.Context, age time.Duration) error
+	DeleteOldPings(ctx context.Context, age time.Duration) (int64, error)
 }
 
 // PingService is a service that implements the Pinger interface
@@ -254,12 +254,15 @@ func (ps *PingService) DeleteSettingsByID(ctx context.Context, id uuid.UUID) err
 }
 
 // DeleteOldPings deletes all ping checks older than the given age
-func (ps *PingService) DeleteOldPings(ctx context.Context, age time.Duration) error {
+func (ps *PingService) DeleteOldPings(ctx context.Context, age time.Duration) (int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := "delete from pings where created_at < $1"
 	arg := time.Now().UTC().Add(-age).Format(time.DateTime)
-	_, err := ps.DB.Exec(ctx, q, arg)
-	return err
+	resp, err := ps.DB.Exec(ctx, q, arg)
+	if err != nil {
+		return 0, err
+	}
+	return resp.RowsAffected(), nil
 }
