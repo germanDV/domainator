@@ -2,6 +2,7 @@ package main
 
 import (
 	"domainator/internal/db"
+	"domainator/internal/inspector"
 	"domainator/internal/services"
 	"flag"
 	"html/template"
@@ -41,13 +42,15 @@ func main() {
 	db := db.MustInit(*dsn)
 	defer db.Close()
 
+	pinger := &services.PingService{
+		Validator: validate,
+		DB:        db,
+	}
+
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		pingSvc: &services.PingService{
-			Validator: validate,
-			DB:        db,
-		},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		pingSvc:       pinger,
 		templateCache: templateCache,
 		formDecoder:   form.NewDecoder(),
 		validate:      validate,
@@ -61,6 +64,9 @@ func main() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
+
+	inspctr := inspector.New(db, pinger, 15*time.Minute, errorLog, infoLog)
+	inspctr.Start()
 
 	infoLog.Printf("Starting server on %s", *addr)
 	err = srv.ListenAndServe()
