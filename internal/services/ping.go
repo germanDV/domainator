@@ -209,13 +209,11 @@ func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping
 	pings := []*Ping{}
 
 	for rows.Next() {
-
 		p := &Ping{}
 		err := rows.Scan(&p.ID, &p.SettingsID, &p.RespStatus, &p.TookMs, &p.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
-
 		pings = append(pings, p)
 	}
 

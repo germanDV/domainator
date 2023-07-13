@@ -16,6 +16,10 @@ func (i Inspector) startPingLoop() {
 	ticker := time.NewTicker(i.pingTickInterval)
 	quit := make(chan struct{})
 	defer close(quit)
+	defer close(i.FailsCh)
+
+	// TODO: remove, just to make it faster during development
+	i.doPings()
 
 	for {
 		select {
@@ -42,12 +46,13 @@ func (i Inspector) doPings() {
 
 // pingDomain pings a domain and saves the result to the database.
 func (i Inspector) pingDomain(s *services.PingSettings) {
-	i.logit.Info(fmt.Sprintf("Pinging %q\n", s.Domain))
+	i.logit.Info(fmt.Sprintf("Pinging %q", s.Domain))
 
 	start := time.Now()
+	// TODO: use a custom http client with a timeout
 	resp, err := http.Get(s.Domain)
 	if err != nil {
-		i.logit.Error(fmt.Sprintf("Error pinging %q: %s\n", s.Domain, err.Error()))
+		i.logit.Error(fmt.Sprintf("Error pinging %q: %s", s.Domain, err.Error()))
 		return
 	}
 
@@ -56,14 +61,28 @@ func (i Inspector) pingDomain(s *services.PingSettings) {
 	_, _ = io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
+	checkID := uuid.New()
 	err = i.pinger.SavePingCheck(context.Background(), &services.Ping{
-		ID:         uuid.New(),
+		ID:         checkID,
 		SettingsID: s.ID,
 		TookMs:     int(time.Since(start).Milliseconds()),
 		RespStatus: resp.StatusCode,
 		CreatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
-		i.logit.Error(fmt.Sprintf("Error saving ping to db (%q): %s\n", s.Domain, err.Error()))
+		i.logit.Error(fmt.Sprintf("Error saving ping to db (%q): %s", s.Domain, err.Error()))
+		return
+	}
+
+	if resp.StatusCode != s.SuccessCode {
+		fp := FailedPing{
+			SettingsID:   s.ID,
+			CheckID:      checkID,
+			URL:          s.Domain,
+			ExpectedCode: s.SuccessCode,
+			ActualCode:   resp.StatusCode,
+			Time:         start,
+		}
+		i.FailsCh <- fp
 	}
 }

@@ -4,9 +4,11 @@ package inspector
 import (
 	"domainator/internal/config"
 	"domainator/internal/logger"
+	"domainator/internal/notifier"
 	"domainator/internal/services"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,6 +20,19 @@ type Inspector struct {
 	cleanInterval    time.Duration
 	cleanMaxAge      time.Duration
 	logit            *logger.Logit
+	FailsCh          chan FailedPing
+	Mailer           notifier.Notifier
+	Slacker          notifier.Notifier
+}
+
+// FailedPing is a ping to a domain/url that failed.
+type FailedPing struct {
+	SettingsID   uuid.UUID
+	CheckID      uuid.UUID
+	URL          string
+	ExpectedCode int
+	ActualCode   int
+	Time         time.Time
 }
 
 // New creates a new Inspector.
@@ -29,6 +44,9 @@ func New(db *pgxpool.Pool, pinger services.Pinger, logit *logger.Logit) Inspecto
 		cleanInterval:    config.GetDuration("CLEAN_INTERVAL"),
 		cleanMaxAge:      config.GetDuration("CLEAN_MAX_AGE"),
 		logit:            logit,
+		FailsCh:          make(chan FailedPing),
+		Mailer:           notifier.NewMailer(),
+		Slacker:          notifier.NewSlacker(),
 	}
 }
 

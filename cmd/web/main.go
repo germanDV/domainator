@@ -19,9 +19,11 @@ import (
 type application struct {
 	logit         *logger.Logit
 	pingSvc       services.Pinger
+	userSvc       services.IUserService
 	templateCache map[string]*template.Template
 	formDecoder   *form.Decoder
 	validate      *validator.Validate
+	inspector     inspector.Inspector
 }
 
 func init() {
@@ -45,12 +47,18 @@ func main() {
 		DB:        db,
 	}
 
+	userSvc := &services.UserService{
+		DB: db,
+	}
+
 	app := &application{
 		logit:         logit,
 		pingSvc:       pinger,
+		userSvc:       userSvc,
 		templateCache: templateCache,
 		formDecoder:   form.NewDecoder(),
 		validate:      validate,
+		inspector:     inspector.New(db, pinger, logit),
 	}
 
 	srv := &http.Server{
@@ -62,8 +70,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	inspctr := inspector.New(db, pinger, logit)
-	inspctr.Start()
+	app.startInspector()
 
 	logit.Info(fmt.Sprintf("Starting server on %s", addr))
 	err = srv.ListenAndServe()

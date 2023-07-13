@@ -20,7 +20,7 @@ type SlackNotifier struct {
 }
 
 // NewSlacker returns a new SlackNotifier
-func NewSlacker() Notifier[SlackMessage] {
+func NewSlacker() Notifier {
 	return &SlackNotifier{
 		Username: "Domainator",
 		Timeout:  5 * time.Second,
@@ -28,11 +28,15 @@ func NewSlacker() Notifier[SlackMessage] {
 }
 
 // Notify sends a slack message
-func (e *SlackNotifier) Notify(message SlackMessage) error {
+func (e *SlackNotifier) Notify(message Message) error {
+	payload := SlackMessage{
+		Channel: message.To,
+		Text:    message.Body,
+	}
 	fmt.Println("@@@ TO BE IMPLEMENTED @@@")
 	fmt.Println("Sending Slack message")
-	fmt.Printf("\tChannel: %s\n", message.Channel)
-	fmt.Printf("\tMessage: %+v\n", message.Text)
+	fmt.Printf("\tChannel: %s\n", payload.Channel)
+	fmt.Printf("\tMessage: %+v\n", payload.Text)
 	fmt.Println()
 	return nil
 }

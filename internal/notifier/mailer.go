@@ -9,19 +9,6 @@ import (
 	"time"
 )
 
-// EmailMessage is the payload required to send an email
-type EmailMessage struct {
-	To      string `json:"to,omitempty"`
-	Subject string `json:"subject,omitempty"`
-	HTML    string `json:"html,omitempty"`
-}
-
-// emailPayload is the full payload required by the email provider's API
-type emailPayload struct {
-	From string `json:"from,omitempty"`
-	EmailMessage
-}
-
 // EmailNotifier is a Notifier that sends emails
 type EmailNotifier struct {
 	APIKey   string
@@ -30,8 +17,16 @@ type EmailNotifier struct {
 	Timeout  time.Duration
 }
 
+// emailMessage is the payload required to send an email
+type emailMessage struct {
+	From    string `json:"from,omitempty"`
+	To      string `json:"to,omitempty"`
+	Subject string `json:"subject,omitempty"`
+	HTML    string `json:"html,omitempty"`
+}
+
 // NewMailer creates a new EmailNotifier
-func NewMailer() Notifier[EmailMessage] {
+func NewMailer() Notifier {
 	return &EmailNotifier{
 		APIKey:   config.GetString("RESEND_API_KEY"),
 		Endpoint: "https://api.resend.com/emails",
@@ -41,11 +36,15 @@ func NewMailer() Notifier[EmailMessage] {
 }
 
 // Notify sends an email
-func (e *EmailNotifier) Notify(message EmailMessage) error {
-	body, err := json.Marshal(emailPayload{
-		From:         e.From,
-		EmailMessage: message,
-	})
+func (e *EmailNotifier) Notify(message Message) error {
+	payload := emailMessage{
+		From:    e.From,
+		To:      message.To,
+		Subject: message.Subject,
+		HTML:    message.Body,
+	}
+
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
