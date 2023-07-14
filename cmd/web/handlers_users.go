@@ -1,10 +1,13 @@
 package main
 
 import (
+	"domainator/internal/config"
 	"domainator/internal/services"
 	"errors"
 	"net/http"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func (app *application) signupForm(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +48,8 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: redirect to a page that says "check your email for activation link"
+	// and actually implement the activation part.
 	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
@@ -102,6 +107,28 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		app.render(w, http.StatusOK, "login.html.tmpl", &templateData)
 		return
 	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": u.ID,
+		"exp": time.Now().Add(config.GetDuration("TOKEN_EXP")).Unix(),
+		"aud": "domainator",
+	})
+
+	t, err := token.SignedString([]byte(config.GetString("JWT_SECRET")))
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    t,
+		Path:     "/",
+		Expires:  time.Now().Add(config.GetDuration("TOKEN_EXP")),
+		SameSite: http.SameSiteStrictMode,
+		HttpOnly: true,
+		Secure:   true,
+	})
 
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }

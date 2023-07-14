@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/go-playground/form/v4 v4.2.0
 	github.com/go-playground/validator/v10 v10.14.1
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v5 v5.4.1

@@ -19,7 +19,9 @@ func (app *application) routes() http.Handler {
 
 	mux.HandlerFunc(http.MethodGet, "/", app.home)
 
-	mux.HandlerFunc(http.MethodGet, "/pings", app.pings)
+	protected := alice.New(app.requireAuth)
+
+	mux.Handler(http.MethodGet, "/pings", protected.ThenFunc(app.pings))
 	mux.HandlerFunc(http.MethodGet, "/pings-new", app.pingsNewForm)
 	mux.HandlerFunc(http.MethodPost, "/pings-new", app.pingsNew)
 	mux.HandlerFunc(http.MethodGet, "/pings/:id", app.ping)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"domainator/internal/services"
+	"errors"
 	"net/http"
 	"time"
 
@@ -10,9 +11,19 @@ import (
 )
 
 func (app *application) pings(w http.ResponseWriter, r *http.Request) {
-	dummyUserID := uuid.New()
+	idStr, ok := r.Context().Value(userIDContextKey).(string)
+	if !ok {
+		app.serverError(w, errors.New("invalid/missing user id"))
+		return
+	}
 
-	pings, err := app.pingSvc.GetSummary(r.Context(), dummyUserID)
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		app.serverError(w, errors.New("invalid user id"))
+		return
+	}
+
+	pings, err := app.pingSvc.GetSummary(r.Context(), userID)
 	if err != nil {
 		app.serverError(w, err)
 		return

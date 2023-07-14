@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
+	"domainator/internal/config"
 	"fmt"
 	"net/http"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func secureHeaders(next http.Handler) http.Handler {
@@ -33,6 +37,49 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 			}
 		}()
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) requireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("token")
+		if err != nil || cookie == nil {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+
+		err = cookie.Valid()
+		if err != nil {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+
+		if cookie.Value == "" {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+
+		token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (any, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(config.GetString("JWT_SECRET")), nil
+		})
+		if err != nil {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+
+		w.Header().Add("Cache-Control", "no-store")
+		ctx := context.WithValue(r.Context(), userIDContextKey, claims["sub"])
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }
