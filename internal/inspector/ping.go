@@ -19,7 +19,7 @@ func (i Inspector) startPingLoop() {
 	defer close(i.FailsCh)
 
 	// TODO: remove, just to make it faster during development
-	i.doPings()
+	// i.doPings()
 
 	for {
 		select {

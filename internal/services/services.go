@@ -13,6 +13,10 @@ type Validatable interface {
 }
 
 var (
-	ErrNotFound        = errors.New("services: no records found")
+	// ErrNotFound is an error that is returned when no records are found in the db
+	ErrNotFound = errors.New("services: no records found")
+	// ErrDuplicateDomain is an error that is returned when a domain is already in use
 	ErrDuplicateDomain = errors.New("services: duplicate domain")
+	// ErrDuplicateEmail is an error that is returned when an email is already in use
+	ErrDuplicateEmail = errors.New("services: duplicate email")
 )

@@ -48,7 +48,8 @@ func main() {
 	}
 
 	userSvc := &services.UserService{
-		DB: db,
+		Validator: validate,
+		DB:        db,
 	}
 
 	app := &application{
@@ -70,7 +71,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	app.startInspector()
+	go app.startInspector()
 
 	logit.Info(fmt.Sprintf("Starting server on %s", addr))
 	err = srv.ListenAndServe()
