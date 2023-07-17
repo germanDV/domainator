@@ -6,6 +6,7 @@ import (
 	"domainator/internal/logger"
 	"domainator/internal/notifier"
 	"domainator/internal/services"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,6 +53,21 @@ func New(db *pgxpool.Pool, pinger services.Pinger, logit *logger.Logit) Inspecto
 
 // Start kicks off the background tasks in a goroutine.
 func (i Inspector) Start() {
-	go i.startPingLoop()
-	go i.startCleanLoop()
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				i.logit.Error(fmt.Sprintf("Ping Loop panicked! %v", err))
+			}
+		}()
+		i.startPingLoop()
+	}()
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				i.logit.Error(fmt.Sprintf("Clean Loop panicked! %v", err))
+			}
+		}()
+		i.startCleanLoop()
+	}()
 }

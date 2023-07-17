@@ -71,7 +71,14 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	go app.startInspector()
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				logit.Error(fmt.Sprintf("Inspector panicked! %v", err))
+			}
+		}()
+		app.startInspector()
+	}()
 
 	logit.Info(fmt.Sprintf("Starting server on %s", addr))
 	err = srv.ListenAndServe()

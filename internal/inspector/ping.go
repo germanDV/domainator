@@ -18,9 +18,6 @@ func (i Inspector) startPingLoop() {
 	defer close(quit)
 	defer close(i.FailsCh)
 
-	// TODO: remove, just to make it faster during development
-	// i.doPings()
-
 	for {
 		select {
 		case <-ticker.C:
@@ -40,7 +37,14 @@ func (i Inspector) doPings() {
 	}
 
 	for _, s := range settings {
-		go i.pingDomain(s)
+		go func(set *services.PingSettings) {
+			defer func() {
+				if err := recover(); err != nil {
+					i.logit.Error(fmt.Sprintf("Panic pinging %s: %v", set.Domain, err))
+				}
+			}()
+			i.pingDomain(set)
+		}(s)
 	}
 }
 
