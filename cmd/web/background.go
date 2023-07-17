@@ -29,11 +29,15 @@ func (app *application) handleFailedPing(fail inspector.FailedPing) {
 	for _, pref := range prefs {
 		switch pref.Service {
 		case "email":
+			sub, body, err := inspector.ParseFailedPingTemplate(fail)
+			if err != nil {
+				app.logit.Error(err)
+				continue
+			}
 			app.inspector.Mailer.Notify(notifier.Message{
 				To:      pref.To,
-				Subject: "Domainator: unhealthy domain!",
-				// TODO: use an HTML template
-				Body: fmt.Sprintf("<h2>Domain %q is unhealthy</h2><p>Want: %d, got: %d</p>", fail.URL, fail.ExpectedCode, fail.ActualCode),
+				Subject: sub,
+				Body:    body,
 			})
 		case "slack":
 			app.logit.Info("Sending slack message")
