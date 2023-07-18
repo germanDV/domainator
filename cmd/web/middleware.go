@@ -84,6 +84,12 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
+		u, err := app.userSvc.GetByID(r.Context(), userID)
+		if err != nil || u == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), userIDContextKey, userID)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

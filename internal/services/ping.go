@@ -14,7 +14,7 @@ import (
 // Pinger is an interface that the ping service must implement
 type Pinger interface {
 	Validate(payload Validatable) bool
-	SaveSettings(ctx context.Context, payload *PingCreate) (uuid.UUID, error)
+	SaveSettings(ctx context.Context, userID uuid.UUID, payload *PingCreate) (uuid.UUID, error)
 	SavePingCheck(ctx context.Context, payload *Ping) error
 	GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error)
 	GetSettingsByID(ctx context.Context, id uuid.UUID) (*PingSettings, error)
@@ -112,14 +112,14 @@ func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Pin
 }
 
 // SaveSettings saves the settings for a domain to be pinged
-func (ps *PingService) SaveSettings(ctx context.Context, payload *PingCreate) (uuid.UUID, error) {
+func (ps *PingService) SaveSettings(ctx context.Context, userID uuid.UUID, payload *PingCreate) (uuid.UUID, error) {
 	newID := uuid.New()
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `insert into ping_settings (id, domain, success_code) values ($1, $2, $3)`
-	_, err := ps.DB.Exec(ctx, q, newID.String(), payload.Domain, payload.SuccessCode)
+	q := `insert into ping_settings (id, domain, success_code, user_id) values ($1, $2, $3, $4)`
+	_, err := ps.DB.Exec(ctx, q, newID.String(), payload.Domain, payload.SuccessCode, userID)
 	if err != nil {
 		return uuid.Nil, err
 	}

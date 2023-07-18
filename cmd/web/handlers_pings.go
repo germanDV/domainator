@@ -24,7 +24,6 @@ func (app *application) pings(w http.ResponseWriter, r *http.Request) {
 
 	templateData := initialTmplData(r)
 	templateData["Pings"] = pings
-
 	app.render(w, http.StatusOK, "pings.html.tmpl", &templateData)
 }
 
@@ -55,7 +54,6 @@ func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 	templateData := initialTmplData(r)
 	templateData["Settings"] = settings
 	templateData["Checks"] = pingChecks
-
 	app.render(w, http.StatusOK, "ping.html.tmpl", &templateData)
 }
 
@@ -76,7 +74,8 @@ func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.pingSvc.SaveSettings(r.Context(), &payload)
+	userID := app.MustGetUserIDFromCtx(w, r)
+	app.pingSvc.SaveSettings(r.Context(), userID, &payload)
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }
 

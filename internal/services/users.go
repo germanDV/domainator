@@ -21,6 +21,7 @@ type IUserService interface {
 	New(email, password string) (*User, error)
 	Create(ctx context.Context, user *User) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetNotificationPreferencesBySettings(ctx context.Context, settingsID uuid.UUID) ([]NotificationPreference, error)
 }
 
@@ -85,6 +86,30 @@ func (us *UserService) Create(ctx context.Context, user *User) (*User, error) {
 	}
 
 	return user, nil
+}
+
+// GetByID finds a user by ID
+func (us *UserService) GetByID(ctx context.Context, id uuid.UUID) (*User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `select id, email, password, activated from users where id = $1`
+	var user User
+	err := us.DB.QueryRow(ctx, q, id).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activated,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 // GetByEmail finds a user by email
