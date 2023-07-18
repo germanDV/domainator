@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func secureHeaders(next http.Handler) http.Handler {
@@ -41,22 +42,22 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) requireAuth(next http.Handler) http.Handler {
+func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("token")
 		if err != nil || cookie == nil {
-			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			next.ServeHTTP(w, r)
 			return
 		}
 
 		err = cookie.Valid()
 		if err != nil {
-			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			next.ServeHTTP(w, r)
 			return
 		}
 
 		if cookie.Value == "" {
-			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -67,19 +68,37 @@ func (app *application) requireAuth(next http.Handler) http.Handler {
 			return []byte(config.GetString("JWT_SECRET")), nil
 		})
 		if err != nil {
-			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			next.ServeHTTP(w, r)
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok || !token.Valid {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		userID, err := uuid.Parse(claims["sub"].(string))
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userIDContextKey, userID)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) requireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := r.Context().Value(userIDContextKey).(uuid.UUID)
+		if !ok || userID.String() == "" {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
 
 		w.Header().Add("Cache-Control", "no-store")
-		ctx := context.WithValue(r.Context(), userIDContextKey, claims["sub"])
-		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }

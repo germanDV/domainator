@@ -11,19 +11,18 @@ import (
 )
 
 func (app *application) signupForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, http.StatusOK, "signup.html.tmpl", &map[string]any{"Year": time.Now().Year()})
+	templateData := initialTmplData(r)
+	app.render(w, http.StatusOK, "signup.html.tmpl", &templateData)
 }
 
 func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 	var payload services.UserCredentials
 	app.decodeForm(r, &payload)
+	templateData := initialTmplData(r)
 
 	ok := app.userSvc.Validate(&payload)
 	if !ok {
-		templateData := map[string]any{
-			"Year": time.Now().Year(),
-			"Form": payload,
-		}
+		templateData["Form"] = payload
 		app.render(w, http.StatusOK, "signup.html.tmpl", &templateData)
 		return
 	}
@@ -36,11 +35,8 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 	_, err = app.userSvc.Create(r.Context(), u)
 	if err != nil {
 		if errors.Is(err, services.ErrDuplicateEmail) {
-			templateData := map[string]any{
-				"Year":  time.Now().Year(),
-				"Form":  payload,
-				"Flash": "Email already in use",
-			}
+			templateData["Form"] = payload
+			templateData["Flash"] = "Email already in use"
 			app.render(w, http.StatusOK, "signup.html.tmpl", &templateData)
 		} else {
 			app.serverError(w, err)
@@ -54,19 +50,18 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) loginForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, http.StatusOK, "login.html.tmpl", &map[string]any{"Year": time.Now().Year()})
+	templateData := initialTmplData(r)
+	app.render(w, http.StatusOK, "login.html.tmpl", &templateData)
 }
 
 func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	var payload services.UserCredentials
 	app.decodeForm(r, &payload)
+	templateData := initialTmplData(r)
 
 	ok := app.userSvc.Validate(&payload)
 	if !ok {
-		templateData := map[string]any{
-			"Year": time.Now().Year(),
-			"Form": payload,
-		}
+		templateData["Form"] = payload
 		app.render(w, http.StatusOK, "login.html.tmpl", &templateData)
 		return
 	}
@@ -74,11 +69,8 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	u, err := app.userSvc.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		if errors.Is(err, services.ErrNotFound) {
-			templateData := map[string]any{
-				"Year":  time.Now().Year(),
-				"Form":  payload,
-				"Flash": "Invalid email or password",
-			}
+			templateData["Form"] = payload
+			templateData["Flash"] = "Invalid email or password"
 			app.render(w, http.StatusOK, "login.html.tmpl", &templateData)
 			return
 		}
@@ -89,21 +81,15 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 
 	match := u.Password.Matches(payload.Password)
 	if !match {
-		templateData := map[string]any{
-			"Year":  time.Now().Year(),
-			"Form":  payload,
-			"Flash": "Invalid email or password",
-		}
+		templateData["Form"] = payload
+		templateData["Flash"] = "Invalid email or password"
 		app.render(w, http.StatusOK, "login.html.tmpl", &templateData)
 		return
 	}
 
 	if !u.Activated {
-		templateData := map[string]any{
-			"Year":  time.Now().Year(),
-			"Form":  payload,
-			"Flash": "Please activate your account in order to continue",
-		}
+		templateData["Form"] = payload
+		templateData["Flash"] = "Please activate your account in order to continue"
 		app.render(w, http.StatusOK, "login.html.tmpl", &templateData)
 		return
 	}

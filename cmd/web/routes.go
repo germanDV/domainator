@@ -17,23 +17,21 @@ func (app *application) routes() http.Handler {
 		app.notFound(w)
 	})
 
-	mux.HandlerFunc(http.MethodGet, "/", app.home)
-
-	protected := alice.New(app.requireAuth)
-
-	mux.Handler(http.MethodGet, "/pings", protected.ThenFunc(app.pings))
-	mux.HandlerFunc(http.MethodGet, "/pings-new", app.pingsNewForm)
-	mux.HandlerFunc(http.MethodPost, "/pings-new", app.pingsNew)
-	mux.HandlerFunc(http.MethodGet, "/pings/:id", app.ping)
-	mux.HandlerFunc(http.MethodDelete, "/pings/:id", app.pingDelete)
-
-	mux.HandlerFunc(http.MethodGet, "/user/signup", app.signupForm)
-	mux.HandlerFunc(http.MethodPost, "/user/signup", app.signup)
-	mux.HandlerFunc(http.MethodGet, "/user/login", app.loginForm)
-	mux.HandlerFunc(http.MethodPost, "/user/login", app.login)
-	mux.HandlerFunc(http.MethodPost, "/user/logout", app.logout)
-
+	base := alice.New(app.authenticate)
+	protected := base.Append(app.requireAuth)
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+
+	mux.Handler(http.MethodGet, "/", base.ThenFunc(app.home))
+	mux.Handler(http.MethodGet, "/pings", protected.ThenFunc(app.pings))
+	mux.Handler(http.MethodGet, "/pings-new", protected.ThenFunc(app.pingsNewForm))
+	mux.Handler(http.MethodPost, "/pings-new", protected.ThenFunc(app.pingsNew))
+	mux.Handler(http.MethodGet, "/pings/:id", protected.ThenFunc(app.ping))
+	mux.Handler(http.MethodDelete, "/pings/:id", protected.ThenFunc(app.pingDelete))
+	mux.Handler(http.MethodGet, "/user/signup", base.ThenFunc(app.signupForm))
+	mux.Handler(http.MethodPost, "/user/signup", base.ThenFunc(app.signup))
+	mux.Handler(http.MethodGet, "/user/login", base.ThenFunc(app.loginForm))
+	mux.Handler(http.MethodPost, "/user/login", base.ThenFunc(app.login))
+	mux.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.logout))
 
 	return standard.Then(mux)
 }

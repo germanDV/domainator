@@ -4,22 +4,15 @@ import (
 	"domainator/internal/services"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
 func (app *application) pings(w http.ResponseWriter, r *http.Request) {
-	idStr, ok := r.Context().Value(userIDContextKey).(string)
+	userID, ok := r.Context().Value(userIDContextKey).(uuid.UUID)
 	if !ok {
 		app.serverError(w, errors.New("invalid/missing user id"))
-		return
-	}
-
-	userID, err := uuid.Parse(idStr)
-	if err != nil {
-		app.serverError(w, errors.New("invalid user id"))
 		return
 	}
 
@@ -29,10 +22,8 @@ func (app *application) pings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templateData := map[string]any{
-		"Year":  time.Now().Year(),
-		"Pings": pings,
-	}
+	templateData := initialTmplData(r)
+	templateData["Pings"] = pings
 
 	app.render(w, http.StatusOK, "pings.html.tmpl", &templateData)
 }
@@ -61,17 +52,16 @@ func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templateData := map[string]any{
-		"Year":     time.Now().Year(),
-		"Settings": settings,
-		"Checks":   pingChecks,
-	}
+	templateData := initialTmplData(r)
+	templateData["Settings"] = settings
+	templateData["Checks"] = pingChecks
 
 	app.render(w, http.StatusOK, "ping.html.tmpl", &templateData)
 }
 
 func (app *application) pingsNewForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, http.StatusOK, "pings_new.html.tmpl", &map[string]any{"Year": time.Now().Year()})
+	templateData := initialTmplData(r)
+	app.render(w, http.StatusOK, "pings_new.html.tmpl", &templateData)
 }
 
 func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
@@ -80,10 +70,8 @@ func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 
 	ok := app.pingSvc.Validate(&payload)
 	if !ok {
-		templateData := map[string]any{
-			"Year": time.Now().Year(),
-			"Form": payload,
-		}
+		templateData := initialTmplData(r)
+		templateData["Form"] = payload
 		app.render(w, http.StatusOK, "pings_new.html.tmpl", &templateData)
 		return
 	}

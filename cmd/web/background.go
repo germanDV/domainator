@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"domainator/internal/inspector"
+	"domainator/internal/notificators"
 	"domainator/internal/notifier"
 	"fmt"
 )
@@ -28,7 +29,7 @@ func (app *application) handleFailedPing(fail inspector.FailedPing) {
 
 	for _, pref := range prefs {
 		switch pref.Service {
-		case "email":
+		case notificators.Email:
 			sub, body, err := inspector.ParseFailedPingTemplate(fail)
 			if err != nil {
 				app.logit.Error(err)
@@ -39,7 +40,7 @@ func (app *application) handleFailedPing(fail inspector.FailedPing) {
 				Subject: sub,
 				Body:    body,
 			})
-		case "slack":
+		case notificators.Slack:
 			app.logit.Info("Sending slack message")
 			app.inspector.Slacker.Notify(notifier.Message{
 				To:      pref.To,

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"domainator/internal/notificators"
 	"errors"
 	"strings"
 	"time"
@@ -135,12 +136,27 @@ func (us *UserService) GetNotificationPreferencesBySettings(ctx context.Context,
 	prefs := []NotificationPreference{}
 
 	for rows.Next() {
-		p := NotificationPreference{}
-		err = rows.Scan(&p.Service, &p.To, &p.WebhookURL)
+		var svc string
+		var to string
+		var webhook string
+		err = rows.Scan(&svc, &to, &webhook)
 		if err != nil {
 			return nil, err
 		}
+
+		p := NotificationPreference{}
+		switch svc {
+		case notificators.Email.String():
+			p.Service = notificators.Email
+		case notificators.Slack.String():
+			p.Service = notificators.Slack
+		default:
+			p.Service = notificators.Nil
+		}
+		p.To = to
+		p.WebhookURL = webhook
 		p.Enabled = true
+
 		prefs = append(prefs, p)
 	}
 

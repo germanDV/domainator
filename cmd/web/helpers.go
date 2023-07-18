@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 // serverError helper writes an error message and stack trace to the errorLog,
@@ -59,4 +62,19 @@ func (app *application) decodeForm(r *http.Request, dst any) error {
 	}
 
 	return nil
+}
+
+// initialTmplData is a helper that returns the basic common data for the templates.
+func initialTmplData(r *http.Request) map[string]any {
+	data := map[string]any{}
+	data["Year"] = time.Now().Year()
+
+	userID, ok := r.Context().Value(userIDContextKey).(uuid.UUID)
+	if ok {
+		data["User"] = map[string]any{
+			"ID": userID.String(),
+		}
+	}
+
+	return data
 }
