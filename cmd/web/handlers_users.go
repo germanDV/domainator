@@ -4,6 +4,7 @@ import (
 	"domainator/internal/config"
 	"domainator/internal/services"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -32,7 +33,8 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	_, err = app.userSvc.Create(r.Context(), u)
+
+	_, code, err := app.userSvc.Create(r.Context(), u)
 	if err != nil {
 		if errors.Is(err, services.ErrDuplicateEmail) {
 			templateData["Form"] = payload
@@ -44,9 +46,9 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: redirect to a page that says "check your email for activation link"
-	// and actually implement the activation part.
-	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+	// TODO: Email verification code
+	app.logit.Info(fmt.Sprintf("Verification code for %s: %s", u.Email, code))
+	http.Redirect(w, r, "/user/verify", http.StatusSeeOther)
 }
 
 func (app *application) loginForm(w http.ResponseWriter, r *http.Request) {
@@ -130,4 +132,36 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 		Secure:   true,
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) verifyForm(w http.ResponseWriter, r *http.Request) {
+	templateData := initialTmplData(r)
+	app.render(w, http.StatusOK, "verify.html.tmpl", &templateData)
+}
+
+func (app *application) verify(w http.ResponseWriter, r *http.Request) {
+	var payload services.VerificationCode
+	app.decodeForm(r, &payload)
+	templateData := initialTmplData(r)
+
+	ok := app.userSvc.Validate(&payload)
+	if !ok {
+		templateData["Form"] = payload
+		app.render(w, http.StatusOK, "verify.html.tmpl", &templateData)
+		return
+	}
+
+	err := app.userSvc.Verify(r.Context(), payload.Email, payload.Plain)
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidCode) {
+			templateData["Form"] = payload
+			templateData["Flash"] = err.Error()
+			app.render(w, http.StatusOK, "verify.html.tmpl", &templateData)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }

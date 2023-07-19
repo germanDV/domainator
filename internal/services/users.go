@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"domainator/internal/config"
 	"domainator/internal/notificators"
 	"errors"
 	"strings"
@@ -19,10 +20,11 @@ import (
 type IUserService interface {
 	Validate(payload Validatable) bool
 	New(email, password string) (*User, error)
-	Create(ctx context.Context, user *User) (*User, error)
+	Create(ctx context.Context, user *User) (*User, string, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetNotificationPreferencesBySettings(ctx context.Context, settingsID uuid.UUID) ([]NotificationPreference, error)
+	Verify(ctx context.Context, email string, code string) error
 }
 
 // User is a struct that represents a user
@@ -66,26 +68,44 @@ func (us *UserService) New(email, password string) (*User, error) {
 	return user, nil
 }
 
-// Create inserts the User in the database.
-func (us *UserService) Create(ctx context.Context, user *User) (*User, error) {
-	q := `insert into users (id, email, password, created_at)
-		values ($1, $2, $3, $4)`
+// Create inserts the User in the database and generats a verification code
+func (us *UserService) Create(ctx context.Context, user *User) (*User, string, error) {
+	q1 := `insert into users (id, email, password, created_at) values ($1, $2, $3, $4)`
+	args1 := []any{user.ID, user.Email, user.Password.hash, user.CreatedAt}
 
-	args := []any{user.ID, user.Email, user.Password.hash, user.CreatedAt}
+	code := generateCode()
+	hashedCode := hashCode(code)
+	exp := config.GetDuration("VERIFICATION_CODE_EXP")
+	q2 := `insert into verification_codes (user_id, email, code, expires_at) values ($1, $2, $3, $4)`
+	args2 := []any{user.ID, user.Email, hashedCode, time.Now().Add(exp).UTC()}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, err := us.DB.Exec(ctx, q, args...)
+	tx, err := us.DB.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
+		return nil, "", err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, q1, args1...)
+	if err != nil {
+		tx.Rollback(ctx)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return nil, ErrDuplicateEmail
+			return nil, "", ErrDuplicateEmail
 		}
-		return nil, err
+		return nil, "", err
 	}
 
-	return user, nil
+	_, err = tx.Exec(ctx, q2, args2...)
+	if err != nil {
+		tx.Rollback(ctx)
+		return nil, "", err
+	}
+
+	tx.Commit(ctx)
+	return user, code, nil
 }
 
 // GetByID finds a user by ID
@@ -191,4 +211,45 @@ func (us *UserService) GetNotificationPreferencesBySettings(ctx context.Context,
 	}
 
 	return prefs, nil
+}
+
+func (us *UserService) getVerificationCode(ctx context.Context, email string) (*VerificationCode, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	code := VerificationCode{
+		Email: email,
+	}
+
+	q := `select code, expires_at from verification_codes where email = $1 order by created_at desc limit 1`
+	err := us.DB.QueryRow(ctx, q, strings.ToLower(email)).Scan(&code.Hash, &code.ExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &code, nil
+}
+
+// Verify checks the verification code provided by the user and marks the user as activated
+func (us *UserService) Verify(ctx context.Context, email string, candidate string) error {
+	code, err := us.getVerificationCode(ctx, email)
+	if err != nil {
+		return ErrInvalidCode
+	}
+
+	if time.Now().UTC().After(code.ExpiresAt) {
+		return ErrInvalidCode
+	}
+
+	match := code.Matches(candidate)
+	if !match {
+		return ErrInvalidCode
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `update users set activated = true where email = $1`
+	_, err = us.DB.Exec(ctx, q, email)
+	return err
 }

@@ -64,10 +64,11 @@ func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Pin
 		left outer join pings p on
 			p.settings_id = ps.id
 			and p.created_at = l.latest
+		where ps.user_id = $1
 		group by ps.id, p.resp_status;
 	`
 
-	rows, err := ps.DB.Query(ctx, q)
+	rows, err := ps.DB.Query(ctx, q, userID)
 	if err != nil {
 		return nil, err
 	}

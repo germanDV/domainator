@@ -79,12 +79,10 @@ func initialTmplData(r *http.Request) map[string]any {
 	return data
 }
 
-// MustGetUserIDFromCtx returns the user ID from the request context,
-// if one is not found, or is invalid, it sends an error to the client.
-func (app *application) MustGetUserIDFromCtx(w http.ResponseWriter, r *http.Request) uuid.UUID {
+// GetUserIDFromCtx returns the user ID from the request context
+func (app *application) GetUserIDFromCtx(w http.ResponseWriter, r *http.Request) uuid.UUID {
 	userID, ok := r.Context().Value(userIDContextKey).(uuid.UUID)
 	if !ok || userID == uuid.Nil || userID.String() == "" {
-		app.clientError(w, http.StatusForbidden)
 		return uuid.Nil
 	}
 	return userID

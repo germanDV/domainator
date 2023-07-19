@@ -16,8 +16,5 @@ func hashPwd(plain string, cost int) ([]byte, error) {
 // hashed password stored in the struct.
 func (p *pwd) Matches(candidate string) bool {
 	err := bcrypt.CompareHashAndPassword(p.hash, []byte(candidate))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }

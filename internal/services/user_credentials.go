@@ -21,17 +21,14 @@ func (uc *UserCredentials) Validate(validate *validator.Validate) bool {
 			tag := e.Tag()
 			if tag == "required" {
 				uc.Errors[e.Field()] = "This field is required"
-				continue
 			} else if tag == "gte" {
 				uc.Errors[e.Field()] = "This field must be greater than or equal to 8"
-				continue
 			} else if tag == "email" {
 				uc.Errors[e.Field()] = "This field must be a valid email"
 			} else if tag == "alphanum" {
 				uc.Errors[e.Field()] = "This field must be alphanumeric"
 			} else {
 				uc.Errors[e.Field()] = e.Error()
-				continue
 			}
 		}
 	}

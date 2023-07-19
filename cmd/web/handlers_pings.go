@@ -10,9 +10,9 @@ import (
 )
 
 func (app *application) pings(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(userIDContextKey).(uuid.UUID)
-	if !ok {
-		app.serverError(w, errors.New("invalid/missing user id"))
+	userID := app.GetUserIDFromCtx(w, r)
+	if userID == uuid.Nil {
+		app.clientError(w, http.StatusUnauthorized)
 		return
 	}
 
@@ -27,6 +27,7 @@ func (app *application) pings(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "pings.html.tmpl", &templateData)
 }
 
+// TODO: only allow the user to see their own pings
 func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
@@ -74,11 +75,17 @@ func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := app.MustGetUserIDFromCtx(w, r)
+	userID := app.GetUserIDFromCtx(w, r)
+	if userID == uuid.Nil {
+		app.serverError(w, errors.New("Missing user ID in context"))
+		return
+	}
+
 	app.pingSvc.SaveSettings(r.Context(), userID, &payload)
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }
 
+// TODO: only allow the user to delete their own pings
 func (app *application) pingDelete(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
