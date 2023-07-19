@@ -90,7 +90,6 @@ func (app *application) pingsNew(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }
 
-// TODO: only allow the user to delete their own pings
 func (app *application) pingDelete(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
@@ -99,6 +98,12 @@ func (app *application) pingDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.pingSvc.DeleteSettingsByID(r.Context(), id)
+	userID := app.GetUserIDFromCtx(w, r)
+	if userID == uuid.Nil {
+		app.serverError(w, errors.New("Missing user ID in context"))
+		return
+	}
+
+	app.pingSvc.DeleteSettingsByID(r.Context(), id, userID)
 	w.WriteHeader(http.StatusOK)
 }

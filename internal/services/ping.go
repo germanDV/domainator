@@ -20,7 +20,7 @@ type Pinger interface {
 	GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*PingSettings, error)
 	GetSettings(ctx context.Context) ([]*PingSettings, error)
 	GetChecksByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error)
-	DeleteSettingsByID(ctx context.Context, id uuid.UUID) error
+	DeleteSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	DeleteOldPings(ctx context.Context, age time.Duration) (int64, error)
 }
 
@@ -233,7 +233,7 @@ func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID, userID u
 }
 
 // DeleteSettingsByID deletes a ping settings and all its checks
-func (ps *PingService) DeleteSettingsByID(ctx context.Context, id uuid.UUID) error {
+func (ps *PingService) DeleteSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -243,13 +243,13 @@ func (ps *PingService) DeleteSettingsByID(ctx context.Context, id uuid.UUID) err
 	}
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Exec(ctx, "delete from pings where settings_id = $1", id.String())
-	if err != nil {
+	resp, err := tx.Exec(ctx, "delete from ping_settings where id = $1 and user_id = $2", id, userID)
+	if err != nil || resp.RowsAffected() == 0 {
 		tx.Rollback(ctx)
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "delete from ping_settings where id = $1", id.String())
+	_, err = tx.Exec(ctx, "delete from pings where settings_id = $1", id)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err
