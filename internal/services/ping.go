@@ -17,9 +17,9 @@ type Pinger interface {
 	SaveSettings(ctx context.Context, userID uuid.UUID, payload *PingCreate) (uuid.UUID, error)
 	SavePingCheck(ctx context.Context, payload *Ping) error
 	GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error)
-	GetSettingsByID(ctx context.Context, id uuid.UUID) (*PingSettings, error)
+	GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*PingSettings, error)
 	GetSettings(ctx context.Context) ([]*PingSettings, error)
-	GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping, error)
+	GetChecksByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error)
 	DeleteSettingsByID(ctx context.Context, id uuid.UUID) error
 	DeleteOldPings(ctx context.Context, age time.Duration) (int64, error)
 }
@@ -143,12 +143,12 @@ func (ps *PingService) SavePingCheck(ctx context.Context, p *Ping) error {
 }
 
 // GetSettingsByID returns a ping settings by its ID
-func (ps *PingService) GetSettingsByID(ctx context.Context, id uuid.UUID) (*PingSettings, error) {
+func (ps *PingService) GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*PingSettings, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select id, domain, success_code from ping_settings where id = $1`
-	row := ps.DB.QueryRow(ctx, q, id.String())
+	q := `select id, domain, success_code from ping_settings where id = $1 and user_id = $2`
+	row := ps.DB.QueryRow(ctx, q, id, userID)
 
 	p := &PingSettings{}
 
@@ -163,7 +163,7 @@ func (ps *PingService) GetSettingsByID(ctx context.Context, id uuid.UUID) (*Ping
 	return p, nil
 }
 
-// GetSettings returns all ping settings
+// GetSettings returns all ping settings for all users
 func (ps *PingService) GetSettings(ctx context.Context) ([]*PingSettings, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -193,15 +193,21 @@ func (ps *PingService) GetSettings(ctx context.Context) ([]*PingSettings, error)
 }
 
 // GetChecksByID returns a ping by its ID
-func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID) ([]*Ping, error) {
+func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select id, settings_id, resp_status, took_ms, created_at
-		from pings where settings_id = $1
-		order by created_at desc`
+	q := `
+		select p.id, p.settings_id, p.resp_status, p.took_ms, p.created_at
+		from pings p
+		inner join ping_settings ps
+			on ps.id = p.settings_id
+		where p.settings_id = $1
+			and ps.user_id = $2
+		order by p.created_at desc;
+	`
 
-	rows, err := ps.DB.Query(ctx, q, id.String())
+	rows, err := ps.DB.Query(ctx, q, id, userID)
 	if err != nil {
 		return nil, err
 	}

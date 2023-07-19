@@ -27,7 +27,6 @@ func (app *application) pings(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "pings.html.tmpl", &templateData)
 }
 
-// TODO: only allow the user to see their own pings
 func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
@@ -36,7 +35,13 @@ func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	settings, err := app.pingSvc.GetSettingsByID(r.Context(), id)
+	userID := app.GetUserIDFromCtx(w, r)
+	if userID == uuid.Nil {
+		app.clientError(w, http.StatusUnauthorized)
+		return
+	}
+
+	settings, err := app.pingSvc.GetSettingsByID(r.Context(), id, userID)
 	if err != nil {
 		if err == services.ErrNotFound {
 			app.notFound(w)
@@ -46,7 +51,7 @@ func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pingChecks, err := app.pingSvc.GetChecksByID(r.Context(), id)
+	pingChecks, err := app.pingSvc.GetChecksByID(r.Context(), id, userID)
 	if err != nil {
 		app.serverError(w, err)
 		return
