@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -65,11 +66,16 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 		})
 	}()
 
-	http.Redirect(w, r, "/user/verify", http.StatusSeeOther)
+	target := fmt.Sprintf("/user/verify?email=%s", url.QueryEscape(payload.Email))
+	http.Redirect(w, r, target, http.StatusSeeOther)
 }
 
 func (app *application) loginForm(w http.ResponseWriter, r *http.Request) {
 	templateData := initialTmplData(r)
+	email, err := url.QueryUnescape(r.URL.Query().Get("email"))
+	if err == nil && email != "" {
+		templateData["Form"] = services.UserCredentials{Email: email}
+	}
 	app.render(w, http.StatusOK, "login.html.tmpl", &templateData)
 }
 
@@ -153,6 +159,10 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) verifyForm(w http.ResponseWriter, r *http.Request) {
 	templateData := initialTmplData(r)
+	email, err := url.QueryUnescape(r.URL.Query().Get("email"))
+	if err == nil && email != "" {
+		templateData["Form"] = services.VerificationCode{Email: email}
+	}
 	app.render(w, http.StatusOK, "verify.html.tmpl", &templateData)
 }
 
@@ -180,5 +190,6 @@ func (app *application) verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/pings", http.StatusSeeOther)
+	target := fmt.Sprintf("/user/login?email=%s", url.QueryEscape(payload.Email))
+	http.Redirect(w, r, target, http.StatusSeeOther)
 }
