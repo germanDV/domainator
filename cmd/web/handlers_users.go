@@ -2,6 +2,7 @@ package main
 
 import (
 	"domainator/internal/config"
+	"domainator/internal/notifier"
 	"domainator/internal/services"
 	"errors"
 	"fmt"
@@ -46,8 +47,24 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Email verification code
-	app.logit.Info(fmt.Sprintf("Verification code for %s: %s", u.Email, code))
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				app.logit.Error(fmt.Sprintf("Send verification email panicked: %v", err))
+			}
+		}()
+		sub, body, err := notifier.ParseTemplate("verification.html.tmpl", map[string]any{"Code": code})
+		if err != nil {
+			app.logit.Error(err)
+			return
+		}
+		app.mailer.Notify(notifier.Message{
+			To:      u.Email,
+			Subject: sub,
+			Body:    body,
+		})
+	}()
+
 	http.Redirect(w, r, "/user/verify", http.StatusSeeOther)
 }
 

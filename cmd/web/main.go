@@ -6,6 +6,7 @@ import (
 	"domainator/internal/db"
 	"domainator/internal/inspector"
 	"domainator/internal/logger"
+	"domainator/internal/notifier"
 	"domainator/internal/services"
 	"fmt"
 	"html/template"
@@ -24,6 +25,7 @@ type application struct {
 	formDecoder   *form.Decoder
 	validate      *validator.Validate
 	inspector     inspector.Inspector
+	mailer        notifier.Notifier
 }
 
 func init() {
@@ -60,6 +62,7 @@ func main() {
 		formDecoder:   form.NewDecoder(),
 		validate:      validate,
 		inspector:     inspector.New(db, pinger, logit),
+		mailer:        notifier.NewMailer(),
 	}
 
 	srv := &http.Server{

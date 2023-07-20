@@ -1,0 +1,19 @@
+{{define "subject"}}
+  Welcome to Domainator!
+{{end}}
+
+{{define "body"}}
+  <html lang="en">
+    <head>
+      <title>Domainator - Welcome!</title>
+      <meta name="viewport" content="width=device-width" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    </head>
+    <body>
+      <h2>Welcome to Domainator!</h2>
+      <p>Hi there,</p>
+      <p>Here's your verification code:</p>
+      <p><strong>{{.Code}}</strong></p>
+    </body>
+  </html>
+{{end}}
