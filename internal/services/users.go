@@ -27,7 +27,8 @@ type IUserService interface {
 	GetNotificationPreferencesByUserID(ctx context.Context, userID uuid.UUID) ([]NotificationPreference, error)
 	Verify(ctx context.Context, email string, code string) error
 	CreateEmailNotification(ctx context.Context, userID uuid.UUID, email string) (*NotificationPreference, error)
-	UpdateEmailNotification(ctx context.Context, id int, email string) (*NotificationPreference, error)
+	UpdateEmailNotification(ctx context.Context, id int, userID uuid.UUID, email string) (*NotificationPreference, error)
+	ToggleNotification(ctx context.Context, id int, userID uuid.UUID) (bool, error)
 }
 
 // User is a struct that represents a user
@@ -220,7 +221,7 @@ func (us *UserService) GetNotificationPreferencesByUserID(ctx context.Context, u
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select id, service, recipient, coalesce(webhook_url, '') as webhook_url
+	q := `select id, service, recipient, coalesce(webhook_url, '') as webhook_url, enabled
 		from notification_preferences
 		where user_id = $1
 		order by created_at desc;
@@ -236,7 +237,7 @@ func (us *UserService) GetNotificationPreferencesByUserID(ctx context.Context, u
 	for rows.Next() {
 		var pref NotificationPreference
 		var svc string
-		err = rows.Scan(&pref.ID, &svc, &pref.To, &pref.WebhookURL)
+		err = rows.Scan(&pref.ID, &svc, &pref.To, &pref.WebhookURL, &pref.Enabled)
 		if err != nil {
 			return nil, err
 		}
@@ -328,16 +329,16 @@ func (us *UserService) CreateEmailNotification(ctx context.Context, userID uuid.
 }
 
 // UpdateEmailNotification updates the recipient of email notifications
-func (us *UserService) UpdateEmailNotification(ctx context.Context, id int, email string) (*NotificationPreference, error) {
+func (us *UserService) UpdateEmailNotification(ctx context.Context, id int, userID uuid.UUID, email string) (*NotificationPreference, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := `update notification_preferences
 		set recipient = $1
-		where id = $2
+		where id = $2 and user_id = $3
 		returning id, enabled, recipient;
 	`
-	args := []any{email, id}
+	args := []any{email, id, userID}
 
 	var pref NotificationPreference
 	err := us.DB.QueryRow(ctx, q, args...).Scan(
@@ -351,4 +352,28 @@ func (us *UserService) UpdateEmailNotification(ctx context.Context, id int, emai
 
 	pref.Service = notificators.Email
 	return &pref, nil
+}
+
+// ToggleNotification enables or disables a notification preference
+func (us *UserService) ToggleNotification(ctx context.Context, id int, userID uuid.UUID) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `update notification_preferences
+		set enabled = not enabled
+		where id = $1 and user_id = $2
+		returning enabled;
+	`
+	args := []any{id, userID}
+
+	var enabled bool
+	err := us.DB.QueryRow(ctx, q, args...).Scan(&enabled)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, ErrNotFound
+		}
+		return false, err
+	}
+
+	return enabled, nil
 }

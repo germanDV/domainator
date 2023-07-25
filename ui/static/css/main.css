@@ -284,22 +284,22 @@ form div:last-child {
   border-top: 1px dashed var(--border);
 }
 
-form input[type="radio"] {
+input[type="radio"] {
   margin-left: 18px;
 }
 
-form input[type="text"],
-form input[type="password"],
-form input[type="email"],
-form input[type="number"] {
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"] {
   padding: 0.75em 18px;
   width: 100%;
 }
 
-form input[type="text"],
-form input[type="password"],
-form input[type="email"],
-form input[type="number"],
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
 textarea {
   color: var(--text-alt);
   background: var(--bg-alt);
@@ -307,7 +307,7 @@ textarea {
   border-radius: 3px;
 }
 
-form label {
+label {
   display: inline-block;
   margin-bottom: 9px;
 }
@@ -489,3 +489,98 @@ footer {
   font-size: 24px;
   letter-spacing: 1.5px;
 }
+
+section {
+  margin-top: 48px;
+  margin-bottom: 48px;
+}
+
+section h3 {
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  font-size: 20px;
+}
+
+.primary {
+  color: var(--primary);
+}
+
+.card {
+  border: 1px solid var(--border);
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 2px 2px 6px 2px var(--primary);
+}
+
+.card h4 {
+  font-size: 22px;
+  color: var(--primary);
+}
+
+.card p {
+  margin-bottom: 12px;
+  color: var(--text-alt);
+}
+
+div.inline {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  grid-gap: 48px;
+  align-items: center;
+}
+
+/* Toggle Switch */
+.toggle {
+  cursor: pointer;
+  display: inline-block;
+  margin-bottom: 0;
+}
+
+.toggle-switch {
+  display: inline-block;
+  background: var(--text-alt);
+  border-radius: 16px;
+  width: 58px;
+  height: 32px;
+  position: relative;
+  vertical-align: middle;
+  transition: background 0.25s;
+}
+.toggle-switch:before,
+.toggle-switch:after {
+  content: "";
+}
+.toggle-switch:before {
+  display: block;
+  background: linear-gradient(to bottom, var(--text) 0%, var(--text-alt) 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  transition: left 0.25s;
+}
+.toggle:hover .toggle-switch:before {
+  background: linear-gradient(to bottom, var(--text) 0%, var(--text) 100%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.toggle-checkbox:checked + .toggle-switch {
+  background: var(--link);
+}
+.toggle-checkbox:checked + .toggle-switch:before {
+  left: 30px;
+}
+
+.toggle-checkbox {
+  position: absolute;
+  visibility: hidden;
+}
+
+.toggle-label {
+  margin-left: 5px;
+  position: relative;
+  top: 2px;
+}
+/* End Toggle Switch */

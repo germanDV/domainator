@@ -3,6 +3,8 @@ package main
 import (
 	"domainator/internal/notificators"
 	"domainator/internal/services"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -83,7 +85,7 @@ func (app *application) settingsUpsertEmail(w http.ResponseWriter, r *http.Reque
 	if id == 0 {
 		pref, err = app.userSvc.CreateEmailNotification(r.Context(), userID, payload.Email)
 	} else {
-		pref, err = app.userSvc.UpdateEmailNotification(r.Context(), id, payload.Email)
+		pref, err = app.userSvc.UpdateEmailNotification(r.Context(), id, userID, payload.Email)
 	}
 	if e != nil {
 		app.serverError(w, err)
@@ -98,4 +100,44 @@ func (app *application) settingsUpsertEmail(w http.ResponseWriter, r *http.Reque
 	}
 
 	app.renderFragment(w, "settings_email_input.html.tmpl", &data)
+}
+
+func (app *application) settingsToggle(w http.ResponseWriter, r *http.Request) {
+	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	userID := app.GetUserIDFromCtx(w, r)
+	if userID == uuid.Nil {
+		app.clientError(w, http.StatusUnauthorized)
+		return
+	}
+
+	isEnabled, err := app.userSvc.ToggleNotification(r.Context(), id, userID)
+	if err != nil {
+		if errors.Is(err, services.ErrNotFound) {
+			app.clientError(w, http.StatusNotFound)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	var html string
+	if isEnabled {
+		html = fmt.Sprintf(
+			`<input class="toggle-checkbox" type="checkbox" name="enabled" hx-put="/settings/toggle/%d" hx-swap="outerHTML" hx-indicator="#ind" checked />`,
+			id,
+		)
+	} else {
+		html = fmt.Sprintf(
+			`<input class="toggle-checkbox" type="checkbox" name="enabled" hx-put="/settings/toggle/%d" hx-swap="outerHTML" hx-indicator="#ind" />`,
+			id,
+		)
+	}
+
+	w.Write([]byte(html))
 }
