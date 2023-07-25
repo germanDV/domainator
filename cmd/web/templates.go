@@ -38,7 +38,34 @@ func newTemplateCache() (map[string]*template.Template, error) {
 			return nil, err
 		}
 
+		ts, err = ts.ParseGlob("./ui/html/fragments/*.html.tmpl")
+		if err != nil {
+			return nil, err
+		}
+
 		ts, err = ts.Funcs(functions).ParseFiles(page)
+		if err != nil {
+			return nil, err
+		}
+
+		cache[name] = ts
+	}
+
+	return cache, nil
+}
+
+func newFragmentsCache() (map[string]*template.Template, error) {
+	cache := map[string]*template.Template{}
+
+	fragments, err := filepath.Glob("./ui/html/fragments/*.html.tmpl")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, fragment := range fragments {
+		name := filepath.Base(fragment)
+
+		ts, err := template.New(name).Funcs(functions).ParseFiles(fragment)
 		if err != nil {
 			return nil, err
 		}

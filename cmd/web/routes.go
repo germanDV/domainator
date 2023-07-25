@@ -34,6 +34,8 @@ func (app *application) routes() http.Handler {
 	mux.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.logout))
 	mux.Handler(http.MethodGet, "/user/verify", base.ThenFunc(app.verifyForm))
 	mux.Handler(http.MethodPost, "/user/verify", base.ThenFunc(app.verify))
+	mux.Handler(http.MethodGet, "/settings", protected.ThenFunc(app.settings))
+	mux.Handler(http.MethodPut, "/settings/email/:id", protected.ThenFunc(app.settingsUpsertEmail))
 
 	return standard.Then(mux)
 }

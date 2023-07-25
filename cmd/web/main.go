@@ -22,6 +22,7 @@ type application struct {
 	pingSvc       services.Pinger
 	userSvc       services.IUserService
 	templateCache map[string]*template.Template
+	fragmentCache map[string]*template.Template
 	formDecoder   *form.Decoder
 	validate      *validator.Validate
 	inspector     inspector.Inspector
@@ -44,6 +45,11 @@ func main() {
 		logit.Fatal(err)
 	}
 
+	fragmentCache, err := newFragmentsCache()
+	if err != nil {
+		logit.Fatal(err)
+	}
+
 	pinger := &services.PingService{
 		Validator: validate,
 		DB:        db,
@@ -59,6 +65,7 @@ func main() {
 		pingSvc:       pinger,
 		userSvc:       userSvc,
 		templateCache: templateCache,
+		fragmentCache: fragmentCache,
 		formDecoder:   form.NewDecoder(),
 		validate:      validate,
 		inspector:     inspector.New(db, pinger, logit),

@@ -1,9 +1,12 @@
 package services
 
-import "domainator/internal/notificators"
+import (
+	"domainator/internal/notificators"
+)
 
 // NotificationPreference is a struct that represents a user's notification preference
 type NotificationPreference struct {
+	ID         int
 	Service    notificators.Service
 	Enabled    bool
 	To         string // email address | slack channel

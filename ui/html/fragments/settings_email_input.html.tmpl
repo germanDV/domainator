@@ -1,0 +1,15 @@
+{{define "settings_email_input"}}
+  <div hx-target="this" hx-swap="outerHTML">
+    <input
+      type="text"
+      name="email"
+      value="{{.Prefs.Email.To}}"
+      hx-put="/settings/email/{{.Prefs.Email.ID}}"
+      hx-indicator="#ind"
+    />
+    <img id="ind" class="htmx-indicator" src="/static/img/bars.svg" />
+    {{if .Error}}
+      <span class="error">{{.Error}}</span>
+    {{end}}
+  </div>
+{{end}}

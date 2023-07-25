@@ -24,7 +24,10 @@ type IUserService interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetNotificationPreferencesBySettings(ctx context.Context, settingsID uuid.UUID) ([]NotificationPreference, error)
+	GetNotificationPreferencesByUserID(ctx context.Context, userID uuid.UUID) ([]NotificationPreference, error)
 	Verify(ctx context.Context, email string, code string) error
+	CreateEmailNotification(ctx context.Context, userID uuid.UUID, email string) (*NotificationPreference, error)
+	UpdateEmailNotification(ctx context.Context, id int, email string) (*NotificationPreference, error)
 }
 
 // User is a struct that represents a user
@@ -213,6 +216,51 @@ func (us *UserService) GetNotificationPreferencesBySettings(ctx context.Context,
 	return prefs, nil
 }
 
+func (us *UserService) GetNotificationPreferencesByUserID(ctx context.Context, userID uuid.UUID) ([]NotificationPreference, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `select id, service, recipient, coalesce(webhook_url, '') as webhook_url
+		from notification_preferences
+		where user_id = $1
+		order by created_at desc;
+	`
+
+	rows, err := us.DB.Query(ctx, q, userID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	prefs := []NotificationPreference{}
+	for rows.Next() {
+		var pref NotificationPreference
+		var svc string
+		err = rows.Scan(&pref.ID, &svc, &pref.To, &pref.WebhookURL)
+		if err != nil {
+			return nil, err
+		}
+
+		switch svc {
+		case notificators.Email.String():
+			pref.Service = notificators.Email
+		case notificators.Slack.String():
+			pref.Service = notificators.Slack
+		default:
+			pref.Service = notificators.Nil
+		}
+
+		prefs = append(prefs, pref)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return prefs, nil
+}
+
 func (us *UserService) getVerificationCode(ctx context.Context, email string) (*VerificationCode, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -252,4 +300,55 @@ func (us *UserService) Verify(ctx context.Context, email string, candidate strin
 	q := `update users set activated = true where email = $1`
 	_, err = us.DB.Exec(ctx, q, email)
 	return err
+}
+
+// CreateEmailNotification creates a new email notification preference for a user and enables it
+func (us *UserService) CreateEmailNotification(ctx context.Context, userID uuid.UUID, email string) (*NotificationPreference, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `insert into notification_preferences (user_id, service, enabled, recipient)
+		values($1, $2, $3, $4)
+		returning id, enabled, recipient;
+	`
+	args := []any{userID, notificators.Email.String(), true, email}
+
+	var pref NotificationPreference
+	err := us.DB.QueryRow(ctx, q, args...).Scan(
+		&pref.ID,
+		&pref.Enabled,
+		&pref.To,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	pref.Service = notificators.Email
+	return &pref, nil
+}
+
+// UpdateEmailNotification updates the recipient of email notifications
+func (us *UserService) UpdateEmailNotification(ctx context.Context, id int, email string) (*NotificationPreference, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `update notification_preferences
+		set recipient = $1
+		where id = $2
+		returning id, enabled, recipient;
+	`
+	args := []any{email, id}
+
+	var pref NotificationPreference
+	err := us.DB.QueryRow(ctx, q, args...).Scan(
+		&pref.ID,
+		&pref.Enabled,
+		&pref.To,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	pref.Service = notificators.Email
+	return &pref, nil
 }

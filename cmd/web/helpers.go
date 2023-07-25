@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,6 +50,26 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	buf.WriteTo(w)
 }
 
+// renderFragment is a helper that renders an HTML fragment with data, and handles any errors.
+func (app *application) renderFragment(w http.ResponseWriter, fragment string, data *map[string]any) {
+	ts, ok := app.fragmentCache[fragment]
+	if !ok {
+		err := fmt.Errorf("The fragment %s does not exist", fragment)
+		app.serverError(w, err)
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	tmplName := strings.TrimSuffix(fragment, ".html.tmpl")
+	err := ts.ExecuteTemplate(buf, tmplName, data)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	buf.WriteTo(w)
+}
+
 // decodeForm is a helper that decodes the form data from the request into the destination struct.
 func (app *application) decodeForm(r *http.Request, dst any) error {
 	err := r.ParseForm()
@@ -86,4 +107,16 @@ func (app *application) GetUserIDFromCtx(w http.ResponseWriter, r *http.Request)
 		return uuid.Nil
 	}
 	return userID
+}
+
+// find returns the first element in the slice that matches the predicate function.
+func find[T any](slice []T, predicate func(T) bool) T {
+	for _, v := range slice {
+		if predicate(v) {
+			return v
+		}
+	}
+
+	empty := new(T)
+	return *empty
 }

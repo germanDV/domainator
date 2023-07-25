@@ -1,0 +1,31 @@
+{{define "main"}}
+  <!-- TODO: style this page -->
+  <h2>Account Settings</h2>
+  <hr />
+
+  <section>
+    <h4>Personal Details</h4>
+    <p>Email: <strong>{{.User.Email}}</strong></p>
+    <p>Plan: <strong>Free</strong></p>
+  </section>
+  <hr />
+
+  <section>
+    <h4>Notification Preferences</h4>
+    
+    <div style="border: 2px solid green;">
+      <p>Email</p>
+      <p>Send an email to the following address when a ping fails or a domain is about to expire.</p>
+      {{template "settings_email_input" .}}
+      <label for="enabled">Enabled</label>
+      <input type="checkbox" id="enabled" name="enabled" checked="{{.Prefs.Email.Enabled}}" />
+    </div>
+    
+    <div>
+      <p>Slack</p>
+      <p>Send a slack message to the following channel when a ping fails or a domain is about to expire.</p>
+      <p>COMING SOON!</p>
+    </div>
+  </section>
+  <hr />
+{{end}}

@@ -2,10 +2,13 @@
 <nav>
   <div>
     <a href="/">Home</a>
-    <a href="/pings">Pings</a>
+    {{if .User}}
+      <a href="/pings">Pings</a>
+    {{end}}
   </div>
   <div>
     {{if .User}}
+      <a href="/settings">Settings</a>
       <form action="/user/logout" method="POST">
         <button>Logout</button>
       </form>
