@@ -53,24 +53,26 @@ func (i Inspector) pingDomain(s *services.PingSettings) {
 	i.logit.Info(fmt.Sprintf("Pinging %q", s.Domain))
 
 	start := time.Now()
+	var status int
+
 	// TODO: use a custom http client with a timeout
 	resp, err := http.Get(s.Domain)
 	if err != nil {
-		i.logit.Error(fmt.Sprintf("Error pinging %q: %s", s.Domain, err.Error()))
-		return
+		status = 523 // Unreachable
+	} else {
+		status = resp.StatusCode
+		// Read and close body even if we don't care about it,
+		// to avoid leaking connections and keeping too many file descriptors.
+		_, _ = io.ReadAll(resp.Body)
+		defer resp.Body.Close()
 	}
-
-	// Read and close body even if we don't care about it,
-	// to avoid leaking connections and keeping too many file descriptors.
-	_, _ = io.ReadAll(resp.Body)
-	defer resp.Body.Close()
 
 	checkID := uuid.New()
 	err = i.pinger.SavePingCheck(context.Background(), &services.Ping{
 		ID:         checkID,
 		SettingsID: s.ID,
 		TookMs:     int(time.Since(start).Milliseconds()),
-		RespStatus: resp.StatusCode,
+		RespStatus: status,
 		CreatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
@@ -78,13 +80,13 @@ func (i Inspector) pingDomain(s *services.PingSettings) {
 		return
 	}
 
-	if resp.StatusCode != s.SuccessCode {
+	if status != s.SuccessCode {
 		fp := FailedPing{
 			SettingsID:   s.ID,
 			CheckID:      checkID,
 			URL:          s.Domain,
 			ExpectedCode: s.SuccessCode,
-			ActualCode:   resp.StatusCode,
+			ActualCode:   status,
 			Time:         start,
 		}
 		i.FailsCh <- fp
