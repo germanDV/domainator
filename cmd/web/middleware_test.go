@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -64,5 +65,46 @@ func TestSecureHeaders(t *testing.T) {
 	got = string(body)
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
+	}
+}
+
+func TestRecoverPanic(t *testing.T) {
+	infoLogs := io.Discard
+	errLogs := new(bytes.Buffer)
+	app := newTestAppWithLogger(t, infoLogs, errLogs)
+	rr := httptest.NewRecorder()
+
+	r, err := http.NewRequest(http.MethodGet, "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	panicMsg := "oops"
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic(panicMsg)
+	})
+
+	app.recoverPanic(next).ServeHTTP(rr, r)
+	rs := rr.Result()
+
+	wantCode := http.StatusInternalServerError
+	if rs.StatusCode != wantCode {
+		t.Errorf("want %d, got %d", wantCode, rs.StatusCode)
+	}
+
+	defer rs.Body.Close()
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bytes.TrimSpace(body)
+	wantText := http.StatusText(http.StatusInternalServerError) + "\n"
+	if string(body) != wantText {
+		t.Errorf("want %q, got %q", wantText, string(body))
+	}
+
+	if !strings.Contains(errLogs.String(), panicMsg) {
+		t.Errorf("want error log to contain %q", panicMsg)
 	}
 }

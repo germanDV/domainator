@@ -2,8 +2,8 @@
 package logger
 
 import (
+	"io"
 	"log"
-	"os"
 )
 
 // Logit is a simple logger interface
@@ -13,10 +13,10 @@ type Logit struct {
 }
 
 // New returns a new Logit instance
-func New() *Logit {
+func New(infoOut io.Writer, errOut io.Writer) *Logit {
 	return &Logit{
-		InfoLog:  log.New(os.Stdout, "INFO\t", log.LUTC|log.Ltime|log.Lshortfile),
-		ErrorLog: log.New(os.Stderr, "ERROR\t", log.LUTC|log.Ltime|log.Lshortfile),
+		InfoLog:  log.New(infoOut, "INFO\t", log.LUTC|log.Ltime|log.Lshortfile),
+		ErrorLog: log.New(errOut, "ERROR\t", log.LUTC|log.Ltime|log.Lshortfile),
 	}
 }
 

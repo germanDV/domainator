@@ -14,7 +14,7 @@ confirm:
 ## test: run tests
 .PHONY: test
 test:
-	ENV_FILENAME=.env.test go test ./...
+	ENV_FILENAME=.env.test go test -v ./...
 
 ## test/race: run tests with race detector
 .PHONY: test/race

@@ -16,8 +16,12 @@ type testServer struct {
 }
 
 func newTestApp(t *testing.T) *application {
+	return newTestAppWithLogger(t, io.Discard, io.Discard)
+}
+
+func newTestAppWithLogger(t *testing.T, infoOut, errOut io.Writer) *application {
 	validate := validator.New()
-	logit := logger.New()
+	logit := logger.New(infoOut, errOut)
 
 	templateCache, err := newTemplateCache()
 	if err != nil {

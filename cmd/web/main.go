@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-playground/form/v4"
@@ -36,7 +37,7 @@ func init() {
 func main() {
 	validate := validator.New()
 	addr := fmt.Sprintf(":%d", config.GetInt("PORT"))
-	logit := logger.New()
+	logit := logger.New(os.Stdout, os.Stderr)
 	db := db.MustInit(config.GetString("DSN"))
 	defer db.Close()
 
