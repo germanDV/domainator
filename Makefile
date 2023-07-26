@@ -11,6 +11,16 @@ help:
 confirm:
 	@echo -n 'Are you sure? [y/N]' && read ans && [ $${ans:-N} = y ]
 
+## test: run tests
+.PHONY: test
+test:
+	ENV_FILENAME=.env.test go test ./...
+
+## test/race: run tests with race detector
+.PHONY: test/race
+test/race:
+	ENV_FILENAME=.env.test go test -race ./...
+
 ## audit: tidy dependencies, format, vet and test
 .PHONY: audit
 audit:
@@ -22,7 +32,7 @@ audit:
 	@echo 'Vetting code...'
 	go vet ./...
 	@echo 'Running tests...'
-	ENV=testing go test -race -vet=off ./...
+	ENV_FILENAME=.env.test go test -race -vet=off ./...
 
 ## dev: run with hot-reloading
 .PHONY: dev

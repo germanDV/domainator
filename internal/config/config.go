@@ -14,10 +14,18 @@ import (
 // ProjectName is the name of the project and it's useful to find the root path
 const ProjectName = "domainator"
 
-// LoadEnv loads env vars from .env file at the root of the project
-// and panics if there's an error
+// LoadEnv loads env vars and panics if there's an error.
+// If ENV_FILENAME is set, it will load env vars from ProjectName/ENV_FILENAME.
+// Otherwise, it will load env vars from .env.
 func LoadEnv() {
-	err := godotenv.Load()
+	envFilename, ok := os.LookupEnv("ENV_FILENAME")
+	var err error
+	if ok {
+		rootPath := GetRootPath()
+		err = godotenv.Load(rootPath + "/" + envFilename)
+	} else {
+		err = godotenv.Load()
+	}
 	if err != nil {
 		panic(err)
 	}
