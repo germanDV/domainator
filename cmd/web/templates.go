@@ -1,6 +1,7 @@
 package main
 
 import (
+	"domainator/internal/config"
 	"html/template"
 	"path/filepath"
 	"time"
@@ -19,8 +20,9 @@ func humanDate(t time.Time) string {
 
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
+	rootPath := config.GetRootPath()
 
-	pages, err := filepath.Glob("./ui/html/pages/*.html.tmpl")
+	pages, err := filepath.Glob(rootPath + "/ui/html/pages/*.html.tmpl")
 	if err != nil {
 		return nil, err
 	}
@@ -28,17 +30,17 @@ func newTemplateCache() (map[string]*template.Template, error) {
 	for _, page := range pages {
 		name := filepath.Base(page)
 
-		ts, err := template.ParseFiles("./ui/html/base.html.tmpl")
+		ts, err := template.ParseFiles(rootPath + "/ui/html/base.html.tmpl")
 		if err != nil {
 			return nil, err
 		}
 
-		ts, err = ts.ParseGlob("./ui/html/partials/*.html.tmpl")
+		ts, err = ts.ParseGlob(rootPath + "/ui/html/partials/*.html.tmpl")
 		if err != nil {
 			return nil, err
 		}
 
-		ts, err = ts.ParseGlob("./ui/html/fragments/*.html.tmpl")
+		ts, err = ts.ParseGlob(rootPath + "/ui/html/fragments/*.html.tmpl")
 		if err != nil {
 			return nil, err
 		}
@@ -56,8 +58,9 @@ func newTemplateCache() (map[string]*template.Template, error) {
 
 func newFragmentsCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
+	rootPath := config.GetRootPath()
 
-	fragments, err := filepath.Glob("./ui/html/fragments/*.html.tmpl")
+	fragments, err := filepath.Glob(rootPath + "/ui/html/fragments/*.html.tmpl")
 	if err != nil {
 		return nil, err
 	}

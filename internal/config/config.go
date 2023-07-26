@@ -2,12 +2,17 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
 )
+
+// ProjectName is the name of the project and it's useful to find the root path
+const ProjectName = "domainator"
 
 // LoadEnv loads env vars from .env file at the root of the project
 // and panics if there's an error
@@ -65,4 +70,20 @@ func GetDuration(key string) time.Duration {
 		panic(err)
 	}
 	return v
+}
+
+// GetRootPath returns the root path of the project using the ProjectName
+func GetRootPath() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	re := regexp.MustCompile("^.*" + ProjectName)
+	root := re.FindString(cwd)
+	if root == "" {
+		panic(fmt.Errorf("Could not find root path; is the ProjectName %q correct?", ProjectName))
+	}
+
+	return root
 }
