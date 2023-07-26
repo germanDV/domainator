@@ -22,6 +22,7 @@ func (app *application) routes() http.Handler {
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
 	mux.Handler(http.MethodGet, "/", base.ThenFunc(app.home))
+	mux.Handler(http.MethodGet, "/healthcheck", base.ThenFunc(app.healthcheck))
 	mux.Handler(http.MethodGet, "/pings", protected.ThenFunc(app.pings))
 	mux.Handler(http.MethodGet, "/pings-new", protected.ThenFunc(app.pingsNewForm))
 	mux.Handler(http.MethodPost, "/pings-new", protected.ThenFunc(app.pingsNew))
