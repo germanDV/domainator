@@ -2,6 +2,7 @@ package inspector
 
 import (
 	"context"
+	"domainator/internal/logger"
 	"fmt"
 	"time"
 )
@@ -28,10 +29,10 @@ func (i Inspector) startCleanLoop() {
 
 // cleanPings deletes old ping checks from the db
 func (i Inspector) cleanPings() {
-	deleted, err := i.pinger.DeleteOldPings(context.Background(), i.cleanMaxAge)
+	deleted, err := i.pingsRepo.DeleteOldPings(context.Background(), i.cleanMaxAge)
 	if err != nil {
-		i.logit.Error(fmt.Sprintf("Error cleaning pings: %v", err))
+		logger.Writer.Error(fmt.Sprintf("Error cleaning pings: %v", err))
 	} else {
-		i.logit.Info(fmt.Sprintf("Removed %d pings", deleted))
+		logger.Writer.Info(fmt.Sprintf("Removed %d pings", deleted))
 	}
 }

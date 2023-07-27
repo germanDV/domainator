@@ -2,7 +2,8 @@ package inspector
 
 import (
 	"context"
-	"domainator/internal/services"
+	"domainator/internal/logger"
+	"domainator/internal/pings"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,7 +17,7 @@ func (i Inspector) startPingLoop() {
 	ticker := time.NewTicker(i.pingTickInterval)
 	quit := make(chan struct{})
 	defer close(quit)
-	defer close(i.FailsCh)
+	defer close(i.failsCh)
 
 	for {
 		select {
@@ -31,16 +32,16 @@ func (i Inspector) startPingLoop() {
 
 // doPings gets all ping settings from the database and fires off a goroutine to check each domain.
 func (i Inspector) doPings() {
-	settings, err := i.pinger.GetSettings(context.Background())
+	settings, err := i.pingsRepo.GetSettings(context.Background())
 	if err != nil {
-		i.logit.Error(err)
+		logger.Writer.Error(err)
 	}
 
 	for _, s := range settings {
-		go func(set *services.PingSettings) {
+		go func(set *pings.Settings) {
 			defer func() {
 				if err := recover(); err != nil {
-					i.logit.Error(fmt.Sprintf("Panic pinging %s: %v", set.Domain, err))
+					logger.Writer.Error(fmt.Sprintf("Panic pinging %s: %v", set.Domain, err))
 				}
 			}()
 			i.pingDomain(set)
@@ -49,15 +50,15 @@ func (i Inspector) doPings() {
 }
 
 // pingDomain pings a domain and saves the result to the database.
-func (i Inspector) pingDomain(s *services.PingSettings) {
-	i.logit.Info(fmt.Sprintf("Pinging %q", s.Domain))
+func (i Inspector) pingDomain(s *pings.Settings) {
+	logger.Writer.Info(fmt.Sprintf("Pinging %q", s.Domain))
 
 	start := time.Now()
 	var status int
 
-	// TODO: use a custom http client with a timeout
-	resp, err := http.Get(s.Domain)
-	if err != nil {
+	req, err1 := http.NewRequest(http.MethodGet, s.Domain, nil)
+	resp, err2 := i.httpclient.Do(req)
+	if err1 != nil || err2 != nil {
 		status = 523 // Unreachable
 	} else {
 		status = resp.StatusCode
@@ -68,7 +69,7 @@ func (i Inspector) pingDomain(s *services.PingSettings) {
 	}
 
 	checkID := uuid.New()
-	err = i.pinger.SavePingCheck(context.Background(), &services.Ping{
+	err := i.pingsRepo.Save(context.Background(), &pings.Ping{
 		ID:         checkID,
 		SettingsID: s.ID,
 		TookMs:     int(time.Since(start).Milliseconds()),
@@ -76,7 +77,7 @@ func (i Inspector) pingDomain(s *services.PingSettings) {
 		CreatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
-		i.logit.Error(fmt.Sprintf("Error saving ping to db (%q): %s", s.Domain, err.Error()))
+		logger.Writer.Error(fmt.Sprintf("Error saving ping to db (%q): %s", s.Domain, err.Error()))
 		return
 	}
 
@@ -89,6 +90,6 @@ func (i Inspector) pingDomain(s *services.PingSettings) {
 			ActualCode:   status,
 			Time:         start,
 		}
-		i.FailsCh <- fp
+		i.failsCh <- fp
 	}
 }

@@ -1,5 +1,5 @@
-// Package services is a package that encapsulates the services used by the appliation.
-package services
+// Package validation provides some utilities regarding validation and errors.
+package validation
 
 import (
 	"errors"

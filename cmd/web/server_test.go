@@ -1,0 +1,98 @@
+package main
+
+import (
+	"bytes"
+	"domainator/internal/logger"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
+	"testing"
+)
+
+func TestMain(m *testing.M) {
+	setup()
+	exitCode := m.Run()
+	os.Exit(exitCode)
+}
+
+func setup() {
+	logger.Init(io.Discard, io.Discard)
+}
+
+func TestHealthcheckHandler(t *testing.T) {
+	rr := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodGet, "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	healthcheckHandler(rr, r)
+	rs := rr.Result()
+
+	want := http.StatusOK
+	if rs.StatusCode != want {
+		t.Errorf("want %d, got %d", want, rs.StatusCode)
+	}
+
+	defer rs.Body.Close()
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bytes.TrimSpace(body)
+	if string(body) != "OK" {
+		t.Errorf("want %q, got %q", "OK", string(body))
+	}
+}
+
+func TestNotFoundHandler(t *testing.T) {
+	rr := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodGet, "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	notFoundHandler(rr, r)
+	rs := rr.Result()
+
+	want := http.StatusNotFound
+	if rs.StatusCode != want {
+		t.Errorf("want %d, got %d", want, rs.StatusCode)
+	}
+}
+
+func TestHomeHandler(t *testing.T) {
+	rr := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodGet, "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	homeHandler(rr, r)
+	rs := rr.Result()
+
+	want := http.StatusOK
+	if rs.StatusCode != want {
+		t.Errorf("want %d, got %d", want, rs.StatusCode)
+	}
+
+	defer rs.Body.Close()
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bytes.TrimSpace(body)
+
+	doctype := "<!DOCTYPE html>"
+	if !strings.Contains(string(body), doctype) {
+		t.Errorf("want resp to contain %s", doctype)
+	}
+
+	title := "<title>Domainator</title>"
+	if !strings.Contains(string(body), title) {
+		t.Errorf("want resp to contain %s", title)
+	}
+}

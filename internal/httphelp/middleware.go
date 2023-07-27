@@ -1,14 +1,45 @@
-package main
+package httphelp
 
 import (
 	"context"
 	"domainator/internal/config"
+	"domainator/internal/logger"
 	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/justinas/alice"
 )
+
+var (
+	// Base is the base middleware that attaches auth info to the context
+	Base = alice.New(authenticate)
+	// Protected builds on Base and requires authentication
+	Protected = Base.Append(requireAuth)
+	// Standard is the middleware that applies to all requests
+	Standard = alice.New(recoverPanic, logRequest, secureHeaders)
+)
+
+func logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		msg := fmt.Sprintf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+		logger.Writer.Info(msg)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.Header().Set("Connection", "close")
+				ServerError(w, fmt.Errorf("Recovered from panic. %v", err))
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
 
 func secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,28 +52,7 @@ func secureHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) logRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		msg := fmt.Sprintf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
-		app.logit.Info(msg)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (app *application) recoverPanic(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				w.Header().Set("Connection", "close")
-				app.serverError(w, fmt.Errorf("%s", err))
-			}
-		}()
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (app *application) authenticate(next http.Handler) http.Handler {
+func authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("token")
 		if err != nil || cookie == nil {
@@ -84,26 +94,19 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		u, err := app.userSvc.GetByID(r.Context(), userID)
-		if err != nil || u == nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), userIDContextKey, userID)
+		ctx := context.WithValue(r.Context(), UserIDContextKey, userID)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (app *application) requireAuth(next http.Handler) http.Handler {
+func requireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := r.Context().Value(userIDContextKey).(uuid.UUID)
-		if !ok || userID.String() == "" {
+		userID := GetUserIDFromCtx(w, r)
+		if userID == uuid.Nil {
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
-
 		w.Header().Add("Cache-Control", "no-store")
 		next.ServeHTTP(w, r)
 	})

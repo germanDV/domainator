@@ -1,51 +1,42 @@
-package services
+package pings
 
 import (
 	"context"
+	"domainator/internal/validation"
 	"errors"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Pinger is an interface that the ping service must implement
-type Pinger interface {
-	Validate(payload Validatable) bool
-	SaveSettings(ctx context.Context, userID uuid.UUID, payload *PingCreate) (uuid.UUID, error)
-	SavePingCheck(ctx context.Context, payload *Ping) error
-	GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error)
-	GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*PingSettings, error)
-	GetSettings(ctx context.Context) ([]*PingSettings, error)
-	GetChecksByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error)
+// Repo is an interface that the pings repository must implement.
+type Repo interface {
+	GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error)
+	SaveSettings(ctx context.Context, userID uuid.UUID, payload *CreatePingReq) (uuid.UUID, error)
+	Save(ctx context.Context, payload *Ping) error
+	GetSettings(ctx context.Context) ([]*Settings, error)
+	GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Settings, error)
+	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error)
 	DeleteSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	DeleteOldPings(ctx context.Context, age time.Duration) (int64, error)
 }
 
-// PingService is a service that implements the Pinger interface
-type PingService struct {
-	Validator *validator.Validate
-	DB        *pgxpool.Pool
+// PostgresRepo is a repository that implements the Repo interface.
+type PostgresRepo struct {
+	DB *pgxpool.Pool
 }
 
-// Ping represents a check to a domain
-type Ping struct {
-	ID         uuid.UUID
-	SettingsID uuid.UUID
-	RespStatus int
-	TookMs     int
-	CreatedAt  time.Time
+// NewPostgresRepo returns a new instance of a PostgresRepo.
+func NewPostgresRepo(db *pgxpool.Pool) *PostgresRepo {
+	return &PostgresRepo{
+		DB: db,
+	}
 }
 
-// Validate validates a struct
-func (ps *PingService) Validate(payload Validatable) bool {
-	return payload.Validate(ps.Validator)
-}
-
-// GetSummary returns all ping settings for a user with data about the latest ping
-func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*PingSummary, error) {
+// GetSummary returns all ping settings for a user with data about the latest ping.
+func (pg *PostgresRepo) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -68,13 +59,13 @@ func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Pin
 		group by ps.id, p.resp_status;
 	`
 
-	rows, err := ps.DB.Query(ctx, q, userID)
+	rows, err := pg.DB.Query(ctx, q, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	summaries := []*PingSummary{}
+	summaries := []*Summary{}
 
 	for rows.Next() {
 		var pingID uuid.UUID
@@ -88,7 +79,7 @@ func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Pin
 			return nil, err
 		}
 
-		s := &PingSummary{}
+		s := &Summary{}
 		s.ID = pingID
 		s.Domain = domain
 		if respStatus == 0 {
@@ -112,15 +103,15 @@ func (ps *PingService) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Pin
 	return summaries, nil
 }
 
-// SaveSettings saves the settings for a domain to be pinged
-func (ps *PingService) SaveSettings(ctx context.Context, userID uuid.UUID, payload *PingCreate) (uuid.UUID, error) {
+// SaveSettings saves the settings for a domain to be pinged.
+func (pg *PostgresRepo) SaveSettings(ctx context.Context, userID uuid.UUID, payload *CreatePingReq) (uuid.UUID, error) {
 	newID := uuid.New()
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := `insert into ping_settings (id, domain, success_code, user_id) values ($1, $2, $3, $4)`
-	_, err := ps.DB.Exec(ctx, q, newID.String(), payload.Domain, payload.SuccessCode, userID)
+	_, err := pg.DB.Exec(ctx, q, newID.String(), payload.Domain, payload.SuccessCode, userID)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -128,13 +119,13 @@ func (ps *PingService) SaveSettings(ctx context.Context, userID uuid.UUID, paylo
 	return newID, nil
 }
 
-// SavePingCheck saves the result of pinging a domain
-func (ps *PingService) SavePingCheck(ctx context.Context, p *Ping) error {
+// Save saves the result of pinging a domain
+func (pg *PostgresRepo) Save(ctx context.Context, p *Ping) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := `insert into pings (id, settings_id, resp_status, took_ms) values ($1, $2, $3, $4)`
-	_, err := ps.DB.Exec(ctx, q, p.ID.String(), p.SettingsID.String(), p.RespStatus, p.TookMs)
+	_, err := pg.DB.Exec(ctx, q, p.ID.String(), p.SettingsID.String(), p.RespStatus, p.TookMs)
 	if err != nil {
 		return err
 	}
@@ -142,41 +133,20 @@ func (ps *PingService) SavePingCheck(ctx context.Context, p *Ping) error {
 	return nil
 }
 
-// GetSettingsByID returns a ping settings by its ID
-func (ps *PingService) GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*PingSettings, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	q := `select id, domain, success_code from ping_settings where id = $1 and user_id = $2`
-	row := ps.DB.QueryRow(ctx, q, id, userID)
-
-	p := &PingSettings{}
-
-	err := row.Scan(&p.ID, &p.Domain, &p.SuccessCode)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-
-	return p, nil
-}
-
 // GetSettings returns all ping settings for all users
-func (ps *PingService) GetSettings(ctx context.Context) ([]*PingSettings, error) {
+func (pg *PostgresRepo) GetSettings(ctx context.Context) ([]*Settings, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := `select id, domain, success_code from ping_settings`
-	rows, err := ps.DB.Query(ctx, q)
+	rows, err := pg.DB.Query(ctx, q)
 	if err != nil {
 		return nil, err
 	}
 
-	settings := []*PingSettings{}
+	settings := []*Settings{}
 	for rows.Next() {
-		p := &PingSettings{}
+		p := &Settings{}
 		err := rows.Scan(&p.ID, &p.Domain, &p.SuccessCode)
 		if err != nil {
 			return nil, err
@@ -192,8 +162,29 @@ func (ps *PingService) GetSettings(ctx context.Context) ([]*PingSettings, error)
 	return settings, nil
 }
 
-// GetChecksByID returns a ping by its ID
-func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error) {
+// GetSettingsByID returns a ping settings by its ID.
+func (pg *PostgresRepo) GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Settings, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `select id, domain, success_code from ping_settings where id = $1 and user_id = $2`
+	row := pg.DB.QueryRow(ctx, q, id, userID)
+
+	p := &Settings{}
+
+	err := row.Scan(&p.ID, &p.Domain, &p.SuccessCode)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, validation.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// GetByID returns a ping by its ID.
+func (pg *PostgresRepo) GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -207,7 +198,7 @@ func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID, userID u
 		order by p.created_at desc;
 	`
 
-	rows, err := ps.DB.Query(ctx, q, id, userID)
+	rows, err := pg.DB.Query(ctx, q, id, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -232,12 +223,12 @@ func (ps *PingService) GetChecksByID(ctx context.Context, id uuid.UUID, userID u
 	return pings, nil
 }
 
-// DeleteSettingsByID deletes a ping settings and all its checks
-func (ps *PingService) DeleteSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+// DeleteSettingsByID deletes a ping settings and all its checks.
+func (pg *PostgresRepo) DeleteSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	tx, err := ps.DB.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
+	tx, err := pg.DB.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return err
 	}
@@ -259,13 +250,13 @@ func (ps *PingService) DeleteSettingsByID(ctx context.Context, id uuid.UUID, use
 }
 
 // DeleteOldPings deletes all ping checks older than the given age
-func (ps *PingService) DeleteOldPings(ctx context.Context, age time.Duration) (int64, error) {
+func (pg *PostgresRepo) DeleteOldPings(ctx context.Context, age time.Duration) (int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := "delete from pings where created_at < $1"
 	arg := time.Now().UTC().Add(-age).Format(time.DateTime)
-	resp, err := ps.DB.Exec(ctx, q, arg)
+	resp, err := pg.DB.Exec(ctx, q, arg)
 	if err != nil {
 		return 0, err
 	}

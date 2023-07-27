@@ -6,92 +6,51 @@ import (
 	"domainator/internal/db"
 	"domainator/internal/inspector"
 	"domainator/internal/logger"
-	"domainator/internal/notifier"
-	"domainator/internal/services"
+	"domainator/internal/pings"
+	"domainator/internal/users"
 	"fmt"
-	"html/template"
-	"net/http"
 	"os"
-	"time"
 
-	"github.com/go-playground/form/v4"
 	"github.com/go-playground/validator/v10"
 )
 
-type application struct {
-	logit         *logger.Logit
-	pingSvc       services.Pinger
-	userSvc       services.IUserService
-	templateCache map[string]*template.Template
-	fragmentCache map[string]*template.Template
-	formDecoder   *form.Decoder
-	validate      *validator.Validate
-	inspector     inspector.Inspector
-	mailer        notifier.Notifier
-}
-
 func init() {
 	config.LoadEnv()
+	logger.Init(os.Stdout, os.Stderr)
 }
 
 func main() {
 	validate := validator.New()
+
 	addr := fmt.Sprintf(":%d", config.GetInt("PORT"))
-	logit := logger.New(os.Stdout, os.Stderr)
+	srv, mux := buildServer(addr)
+
 	db := db.MustInit(config.GetString("DSN"))
 	defer db.Close()
 
-	templateCache, err := newTemplateCache()
-	if err != nil {
-		logit.Fatal(err)
-	}
+	// Users
+	usersRepo := users.NewPostgresRepo(db)
+	usersController := users.NewController(usersRepo, validate)
+	users.AttachRoutes(mux, usersController)
 
-	fragmentCache, err := newFragmentsCache()
-	if err != nil {
-		logit.Fatal(err)
-	}
+	// Pings
+	pingsRepo := pings.NewPostgresRepo(db)
+	pingsController := pings.NewController(pingsRepo, validate)
+	pings.AttachRoutes(mux, pingsController)
 
-	pinger := &services.PingService{
-		Validator: validate,
-		DB:        db,
-	}
-
-	userSvc := &services.UserService{
-		Validator: validate,
-		DB:        db,
-	}
-
-	app := &application{
-		logit:         logit,
-		pingSvc:       pinger,
-		userSvc:       userSvc,
-		templateCache: templateCache,
-		fragmentCache: fragmentCache,
-		formDecoder:   form.NewDecoder(),
-		validate:      validate,
-		inspector:     inspector.New(db, pinger, logit),
-		mailer:        notifier.NewMailer(),
-	}
-
-	srv := &http.Server{
-		Addr:         addr,
-		ErrorLog:     app.logit.ErrorLog,
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
+	// Inspector (background tasks)
+	inspctr := inspector.New(db)
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				logit.Error(fmt.Sprintf("Inspector panicked! %v", err))
+				logger.Writer.Error(fmt.Sprintf("Inspector panicked! %v", err))
 			}
 		}()
-		app.startInspector()
+		inspctr.Start()
 	}()
 
-	logit.Info(fmt.Sprintf("Starting server on %s", addr))
-	err = srv.ListenAndServe()
-	logit.Fatal(err)
+	// Start server
+	logger.Writer.Info(fmt.Sprintf("Starting server on %s", addr))
+	err := srv.ListenAndServe()
+	logger.Writer.Fatal(err)
 }

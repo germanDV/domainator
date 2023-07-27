@@ -1,4 +1,4 @@
-package services
+package users
 
 import (
 	"crypto/rand"
@@ -9,34 +9,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// generateCode generates a random code with format xxxx-xxxx (e.g. 1234-5678).
-// It panics if it fails to generate a random number.
-func generateCode() string {
-	max := big.NewInt(10000)
-
-	n, err := rand.Int(rand.Reader, max)
-	if err != nil {
-		panic(err)
-	}
-
-	m, err := rand.Int(rand.Reader, max)
-	if err != nil {
-		panic(err)
-	}
-
-	return fmt.Sprintf("%04d-%04d", n, m)
-}
-
-// hashCode calculates the bcrypt hash of a code.
-// It panics if it fails to generate the hash.
-func hashCode(code string) []byte {
-	hash, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
-	}
-	return hash
-}
 
 // VerificationCode is a struct that represents the payload sent to verify a user
 type VerificationCode struct {
@@ -74,4 +46,32 @@ func (vc *VerificationCode) Validate(validate *validator.Validate) bool {
 func (vc *VerificationCode) Matches(candidate string) bool {
 	err := bcrypt.CompareHashAndPassword(vc.Hash, []byte(candidate))
 	return err == nil
+}
+
+// generateCode generates a random code with format xxxx-xxxx (e.g. 1234-5678).
+// It panics if it fails to generate a random number.
+func generateCode() string {
+	max := big.NewInt(10000)
+
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		panic(err)
+	}
+
+	m, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		panic(err)
+	}
+
+	return fmt.Sprintf("%04d-%04d", n, m)
+}
+
+// hashCode calculates the bcrypt hash of a code.
+// It panics if it fails to generate the hash.
+func hashCode(code string) []byte {
+	hash, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	return hash
 }

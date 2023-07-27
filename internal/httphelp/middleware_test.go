@@ -1,13 +1,30 @@
-package main
+package httphelp
 
 import (
 	"bytes"
+	"domainator/internal/logger"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
+
+var (
+	infoLogs = io.Discard
+	errLogs  = new(bytes.Buffer)
+)
+
+func TestMain(m *testing.M) {
+	setup()
+	exitCode := m.Run()
+	os.Exit(exitCode)
+}
+
+func setup() {
+	logger.Init(infoLogs, errLogs)
+}
 
 func TestSecureHeaders(t *testing.T) {
 	rr := httptest.NewRecorder()
@@ -69,9 +86,6 @@ func TestSecureHeaders(t *testing.T) {
 }
 
 func TestRecoverPanic(t *testing.T) {
-	infoLogs := io.Discard
-	errLogs := new(bytes.Buffer)
-	app := newTestAppWithLogger(t, infoLogs, errLogs)
 	rr := httptest.NewRecorder()
 
 	r, err := http.NewRequest(http.MethodGet, "/", nil)
@@ -84,7 +98,7 @@ func TestRecoverPanic(t *testing.T) {
 		panic(panicMsg)
 	})
 
-	app.recoverPanic(next).ServeHTTP(rr, r)
+	recoverPanic(next).ServeHTTP(rr, r)
 	rs := rr.Result()
 
 	wantCode := http.StatusInternalServerError
@@ -99,7 +113,7 @@ func TestRecoverPanic(t *testing.T) {
 	}
 
 	bytes.TrimSpace(body)
-	wantText := http.StatusText(http.StatusInternalServerError) + "\n"
+	wantText := http.StatusText(wantCode) + "\n"
 	if string(body) != wantText {
 		t.Errorf("want %q, got %q", wantText, string(body))
 	}
