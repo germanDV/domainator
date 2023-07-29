@@ -100,9 +100,8 @@ func (eu *EmailUpdate) Validate(validate *validator.Validate) bool {
 
 // NotificationPref is a struct that represents a user's notification preference
 type NotificationPref struct {
-	ID         int
-	Service    notificators.Service
-	Enabled    bool
-	To         string // email address | slack channel
-	WebhookURL string // slack webhook url
+	ID      int
+	Service notificators.Service
+	Enabled bool
+	To      string // email address | slack webhook url
 }

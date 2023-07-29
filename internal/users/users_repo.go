@@ -134,10 +134,7 @@ func (pg *PostgresRepo) GetNotificationPrefsBySettings(ctx context.Context, sett
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select
-			np.service,
-			np.recipient,
-			coalesce(np.webhook_url, '') as webhook_url
+	q := `select np.service, np.recipient
 		from ping_settings ps
 		join notification_preferences np
 			on np.user_id = ps.user_id
@@ -156,8 +153,7 @@ func (pg *PostgresRepo) GetNotificationPrefsBySettings(ctx context.Context, sett
 	for rows.Next() {
 		var svc string
 		var to string
-		var webhook string
-		err = rows.Scan(&svc, &to, &webhook)
+		err = rows.Scan(&svc, &to)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +168,6 @@ func (pg *PostgresRepo) GetNotificationPrefsBySettings(ctx context.Context, sett
 			p.Service = notificators.Nil
 		}
 		p.To = to
-		p.WebhookURL = webhook
 		p.Enabled = true
 
 		prefs = append(prefs, p)
@@ -191,7 +186,7 @@ func (pg *PostgresRepo) GetNotificationPrefsByUserID(ctx context.Context, userID
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select id, service, recipient, coalesce(webhook_url, '') as webhook_url, enabled
+	q := `select id, service, recipient, enabled
 		from notification_preferences
 		where user_id = $1
 		order by created_at desc;
@@ -207,7 +202,7 @@ func (pg *PostgresRepo) GetNotificationPrefsByUserID(ctx context.Context, userID
 	for rows.Next() {
 		var pref NotificationPref
 		var svc string
-		err = rows.Scan(&pref.ID, &svc, &pref.To, &pref.WebhookURL, &pref.Enabled)
+		err = rows.Scan(&pref.ID, &svc, &pref.To, &pref.Enabled)
 		if err != nil {
 			return nil, err
 		}

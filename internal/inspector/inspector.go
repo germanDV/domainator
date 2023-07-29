@@ -106,11 +106,9 @@ func (i Inspector) handleFailedPing(fail FailedPing) {
 				Body:    body,
 			})
 		case notificators.Slack:
-			logger.Writer.Info("Sending slack message")
 			i.slacker.Notify(notifier.Message{
-				To:      pref.To,
-				Subject: "Domainator: unhealthy domain!",
-				Body:    fmt.Sprintf("Domain %q is unhealthy. Want: %d, got: %d", fail.URL, fail.ExpectedCode, fail.ActualCode),
+				To:   pref.To,
+				Body: fmt.Sprintf("Domain %q is unhealthy. Want: %d, got: %d", fail.URL, fail.ExpectedCode, fail.ActualCode),
 			})
 		default:
 			logger.Writer.Info(fmt.Sprintf("Unknown notification type %q", pref.Service))
