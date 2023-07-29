@@ -21,10 +21,8 @@ func init() {
 
 func main() {
 	validate := validator.New()
-
 	addr := fmt.Sprintf(":%d", config.GetInt("PORT"))
 	srv, mux := buildServer(addr)
-
 	db := db.MustInit(config.GetString("DSN"))
 	defer db.Close()
 

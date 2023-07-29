@@ -13,11 +13,12 @@ import (
 
 // Repo is an interface that the pings repository must implement.
 type Repo interface {
-	GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error)
-	SaveSettings(ctx context.Context, userID uuid.UUID, payload *CreatePingReq) (uuid.UUID, error)
 	Save(ctx context.Context, payload *Ping) error
+	SaveSettings(ctx context.Context, userID uuid.UUID, payload *CreatePingReq) (uuid.UUID, error)
+	GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error)
 	GetSettings(ctx context.Context) ([]*Settings, error)
 	GetSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Settings, error)
+	CountSettings(ctx context.Context, userID uuid.UUID) (int, error)
 	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error)
 	DeleteSettingsByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	DeleteOldPings(ctx context.Context, age time.Duration) (int64, error)
@@ -221,6 +222,20 @@ func (pg *PostgresRepo) GetByID(ctx context.Context, id uuid.UUID, userID uuid.U
 	}
 
 	return pings, nil
+}
+
+// CountSettings returns the number of ping settings for a user.
+func (pg *PostgresRepo) CountSettings(ctx context.Context, userID uuid.UUID) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var count int
+	err := pg.DB.QueryRow(ctx, "select count(*) from ping_settings where user_id = $1", userID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // DeleteSettingsByID deletes a ping settings and all its checks.

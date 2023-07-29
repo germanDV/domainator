@@ -2,6 +2,7 @@
 package pings
 
 import (
+	"domainator/internal/config"
 	"domainator/internal/httphelp"
 	"domainator/internal/tmpl"
 	"domainator/internal/validation"
@@ -68,6 +69,19 @@ func (c *Controller) CreatePing(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
 	if userID == uuid.Nil {
 		httphelp.ServerError(w, errors.New("Missing user ID in context"))
+		return
+	}
+
+	count, err := c.repo.CountSettings(r.Context(), userID)
+	if err != nil {
+		httphelp.ServerError(w, err)
+		return
+	}
+	if count >= config.GetInt("FREE_PLAN_LIMIT") {
+		templateData := tmpl.BaseData(r)
+		templateData["Form"] = payload
+		templateData["Flash"] = "You have reached the limit for the free plan. Please upgrade to create more pings."
+		tmpl.RenderPage(w, http.StatusOK, "pings_new.html.tmpl", &templateData)
 		return
 	}
 
