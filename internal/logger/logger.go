@@ -2,8 +2,10 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"log"
+	"strings"
 )
 
 // Logit is a simple logger interface.
@@ -25,15 +27,23 @@ func Init(infoOut io.Writer, errOut io.Writer) {
 
 // Info logs an info message.
 func (l *Logit) Info(msgs ...any) {
-	l.InfoLog.Println(msgs...)
+	l.InfoLog.Output(2, join(msgs))
 }
 
 // Error logs an error message.
 func (l *Logit) Error(msgs ...any) {
-	l.ErrorLog.Println(msgs...)
+	l.ErrorLog.Output(2, join(msgs))
 }
 
 // Fatal logs an error message and exits.
 func (l *Logit) Fatal(msgs ...any) {
-	l.ErrorLog.Fatal(msgs...)
+	l.ErrorLog.Output(2, join(msgs))
+}
+
+func join(values []any) string {
+	var msg string
+	for _, v := range values {
+		msg += fmt.Sprintf("%v ", v)
+	}
+	return strings.Trim(msg, " ")
 }
