@@ -18,7 +18,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -232,11 +231,6 @@ func (c *Controller) Verify(w http.ResponseWriter, r *http.Request) {
 // GetSettings renders the page with the user settings.
 func (c *Controller) GetSettings(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	if userID == uuid.Nil {
-		httphelp.ClientError(w, http.StatusUnauthorized)
-		return
-	}
-
 	user, err := c.repo.GetByID(r.Context(), userID)
 	if err != nil {
 		httphelp.ClientError(w, http.StatusUnauthorized)
@@ -276,10 +270,6 @@ func (c *Controller) UpsertEmailSetting(w http.ResponseWriter, r *http.Request) 
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	if userID == uuid.Nil {
-		httphelp.ClientError(w, http.StatusUnauthorized)
-		return
-	}
 
 	var payload EmailUpdate
 	httphelp.DecodeForm(r, &payload)
@@ -302,9 +292,9 @@ func (c *Controller) UpsertEmailSetting(w http.ResponseWriter, r *http.Request) 
 	var pref *NotificationPref
 	var e error
 	if id == 0 {
-		pref, err = c.repo.CreateEmailNotification(r.Context(), userID, payload.Email)
+		pref, err = c.repo.CreateNotification(r.Context(), userID, notificators.Email, payload.Email)
 	} else {
-		pref, err = c.repo.UpdateEmailNotification(r.Context(), id, userID, payload.Email)
+		pref, err = c.repo.UpdateNotification(r.Context(), id, userID, payload.Email)
 	}
 	if e != nil {
 		httphelp.ServerError(w, err)
@@ -321,6 +311,58 @@ func (c *Controller) UpsertEmailSetting(w http.ResponseWriter, r *http.Request) 
 	tmpl.RenderFragment(w, "settings_email_input.html.tmpl", &data)
 }
 
+// UpsertSlackSetting creates or updates a user's slack notification settings.
+func (c *Controller) UpsertSlackSetting(w http.ResponseWriter, r *http.Request) {
+	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		httphelp.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	userID := httphelp.GetUserIDFromCtx(w, r)
+
+	var payload SlackUpdate
+	httphelp.DecodeForm(r, &payload)
+
+	ok := payload.Validate(c.validator)
+	if !ok {
+		fmt.Printf("%+v\n", payload.Errors)
+		data := map[string]any{
+			"Prefs": map[string]any{
+				"Slack": map[string]any{
+					"ID": id,
+					"To": payload.Webhook,
+				},
+			},
+			"Error": payload.Errors["Webhook"],
+		}
+		tmpl.RenderFragment(w, "settings_slack_input.html.tmpl", &data)
+		return
+	}
+
+	var pref *NotificationPref
+	var e error
+	if id == 0 {
+		pref, err = c.repo.CreateNotification(r.Context(), userID, notificators.Slack, payload.Webhook)
+	} else {
+		pref, err = c.repo.UpdateNotification(r.Context(), id, userID, payload.Webhook)
+	}
+	if e != nil {
+		httphelp.ServerError(w, err)
+		return
+	}
+
+	slackSettings := map[string]any{"ID": pref.ID, "To": pref.To}
+	data := map[string]any{
+		"Prefs": map[string]any{
+			"Slack": slackSettings,
+		},
+	}
+
+	tmpl.RenderFragment(w, "settings_slack_input.html.tmpl", &data)
+}
+
 // TogglePref enables/disables a user's notification preference.
 func (c *Controller) TogglePref(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
@@ -331,11 +373,6 @@ func (c *Controller) TogglePref(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	if userID == uuid.Nil {
-		httphelp.ClientError(w, http.StatusUnauthorized)
-		return
-	}
-
 	isEnabled, err := c.repo.ToggleNotification(r.Context(), id, userID)
 	if err != nil {
 		if errors.Is(err, validation.ErrNotFound) {

@@ -40,12 +40,28 @@
       </div>
     </div>
     
-    <!--
     <div class="card">
       <h4>Slack</h4>
-      <p>[COMING SOON!] Send a slack message to the following channel when a ping fails or a domain is about to expire.</p>
+      <p>Send a slack message when a ping fails or a domain is about to expire.</p>
+      <p class="it">You may check <a href="https://api.slack.com/messaging/webhooks" target="_blank">Slack's docs</a> if you need guidance setting up a webhook.</p>
+      <div class="inline">
+        {{template "settings_slack_input" .}}
+        <label class="toggle">
+          <input
+            class="toggle-checkbox"
+            type="checkbox"
+            name="enabled"
+            {{if .Prefs.Slack.Enabled}}checked{{end}}
+            hx-put="/settings/toggle/{{.Prefs.Slack.ID}}"
+            hx-swap="outerHTML"
+            hx-indicator="#ind"
+          />
+          <div class="toggle-switch"></div>
+          <span class="toggle-label"></span>
+          <img id="ind" class="htmx-indicator" style="margin-left:12px;" src="/static/img/bars.svg" />
+        </label>
+      </div>
     </div>
-    -->
   </section>
   <hr />
 {{end}}

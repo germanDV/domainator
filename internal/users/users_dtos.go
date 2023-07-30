@@ -98,6 +98,33 @@ func (eu *EmailUpdate) Validate(validate *validator.Validate) bool {
 	return len(eu.Errors) == 0
 }
 
+// SlackUpdate is a struct that represents the payload sent to update slack settings
+type SlackUpdate struct {
+	Webhook string            `form:"webhook" validate:"required,url"`
+	Errors  map[string]string `form:"-"`
+}
+
+// Validate makes EmailUpdate implement the Validator interface
+func (su *SlackUpdate) Validate(validate *validator.Validate) bool {
+	err := validate.Struct(su)
+
+	if err != nil {
+		su.Errors = make(map[string]string)
+		for _, e := range err.(validator.ValidationErrors) {
+			tag := e.Tag()
+			if tag == "required" {
+				su.Errors[e.Field()] = "This field is required"
+			} else if tag == "url" {
+				su.Errors[e.Field()] = "This field must be a valid URL"
+			} else {
+				su.Errors[e.Field()] = e.Error()
+			}
+		}
+	}
+
+	return len(su.Errors) == 0
+}
+
 // NotificationPref is a struct that represents a user's notification preference
 type NotificationPref struct {
 	ID      int

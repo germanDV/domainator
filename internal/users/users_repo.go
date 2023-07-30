@@ -24,8 +24,8 @@ type Repo interface {
 	GetNotificationPrefsBySettings(ctx context.Context, settingsID uuid.UUID) ([]NotificationPref, error)
 	GetNotificationPrefsByUserID(ctx context.Context, userID uuid.UUID) ([]NotificationPref, error)
 	Verify(ctx context.Context, email string, code string) error
-	CreateEmailNotification(ctx context.Context, userID uuid.UUID, email string) (*NotificationPref, error)
-	UpdateEmailNotification(ctx context.Context, id int, userID uuid.UUID, email string) (*NotificationPref, error)
+	CreateNotification(ctx context.Context, userID uuid.UUID, service notificators.Service, recipient string) (*NotificationPref, error)
+	UpdateNotification(ctx context.Context, id int, userID uuid.UUID, recipient string) (*NotificationPref, error)
 	ToggleNotification(ctx context.Context, id int, userID uuid.UUID) (bool, error)
 }
 
@@ -268,8 +268,8 @@ func (pg *PostgresRepo) Verify(ctx context.Context, email string, candidate stri
 	return err
 }
 
-// CreateEmailNotification creates a new email notification preference for a user and enables it
-func (pg *PostgresRepo) CreateEmailNotification(ctx context.Context, userID uuid.UUID, email string) (*NotificationPref, error) {
+// CreateNotification creates a new notification preference for a user and enables it
+func (pg *PostgresRepo) CreateNotification(ctx context.Context, userID uuid.UUID, service notificators.Service, recipient string) (*NotificationPref, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -277,7 +277,7 @@ func (pg *PostgresRepo) CreateEmailNotification(ctx context.Context, userID uuid
 		values($1, $2, $3, $4)
 		returning id, enabled, recipient;
 	`
-	args := []any{userID, notificators.Email.String(), true, email}
+	args := []any{userID, service.String(), true, recipient}
 
 	var pref NotificationPref
 	err := pg.DB.QueryRow(ctx, q, args...).Scan(
@@ -289,33 +289,43 @@ func (pg *PostgresRepo) CreateEmailNotification(ctx context.Context, userID uuid
 		return nil, err
 	}
 
-	pref.Service = notificators.Email
+	pref.Service = service
 	return &pref, nil
 }
 
-// UpdateEmailNotification updates the recipient of email notifications
-func (pg *PostgresRepo) UpdateEmailNotification(ctx context.Context, id int, userID uuid.UUID, email string) (*NotificationPref, error) {
+// UpdateNotification updates the recipient of the notification preference.
+func (pg *PostgresRepo) UpdateNotification(ctx context.Context, id int, userID uuid.UUID, recipient string) (*NotificationPref, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := `update notification_preferences
 		set recipient = $1
 		where id = $2 and user_id = $3
-		returning id, enabled, recipient;
+		returning id, enabled, recipient, service;
 	`
-	args := []any{email, id, userID}
+	args := []any{recipient, id, userID}
 
+	var svc string
 	var pref NotificationPref
 	err := pg.DB.QueryRow(ctx, q, args...).Scan(
 		&pref.ID,
 		&pref.Enabled,
 		&pref.To,
+		&svc,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	pref.Service = notificators.Email
+	switch svc {
+	case notificators.Email.String():
+		pref.Service = notificators.Email
+	case notificators.Slack.String():
+		pref.Service = notificators.Slack
+	default:
+		pref.Service = notificators.Nil
+	}
+
 	return &pref, nil
 }
 

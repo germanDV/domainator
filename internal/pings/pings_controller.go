@@ -6,7 +6,6 @@ import (
 	"domainator/internal/httphelp"
 	"domainator/internal/tmpl"
 	"domainator/internal/validation"
-	"errors"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -31,11 +30,6 @@ func NewController(repo Repo, validate *validator.Validate) *Controller {
 // GetSummary returns a summary of the pings for the current user
 func (c *Controller) GetSummary(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	if userID == uuid.Nil {
-		httphelp.ClientError(w, http.StatusUnauthorized)
-		return
-	}
-
 	pings, err := c.repo.GetSummary(r.Context(), userID)
 	if err != nil {
 		httphelp.ServerError(w, err)
@@ -67,11 +61,6 @@ func (c *Controller) CreatePing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	if userID == uuid.Nil {
-		httphelp.ServerError(w, errors.New("Missing user ID in context"))
-		return
-	}
-
 	count, err := c.repo.CountSettings(r.Context(), userID)
 	if err != nil {
 		httphelp.ServerError(w, err)
@@ -99,11 +88,6 @@ func (c *Controller) GetPing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	if userID == uuid.Nil {
-		httphelp.ClientError(w, http.StatusUnauthorized)
-		return
-	}
-
 	settings, err := c.repo.GetSettingsByID(r.Context(), id, userID)
 	if err != nil {
 		if err == validation.ErrNotFound {
@@ -135,11 +119,6 @@ func (c *Controller) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	if userID == uuid.Nil {
-		httphelp.ServerError(w, errors.New("Missing user ID in context"))
-		return
-	}
-
 	c.repo.DeleteSettingsByID(r.Context(), id, userID)
 	w.WriteHeader(http.StatusOK)
 }

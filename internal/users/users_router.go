@@ -18,5 +18,6 @@ func AttachRoutes(mux *httprouter.Router, controller *Controller) {
 	mux.Handler(http.MethodPost, "/user/verify", httphelp.Base.ThenFunc(controller.Verify))
 	mux.Handler(http.MethodGet, "/settings", httphelp.Protected.ThenFunc(controller.GetSettings))
 	mux.Handler(http.MethodPut, "/settings/email/:id", httphelp.Protected.ThenFunc(controller.UpsertEmailSetting))
+	mux.Handler(http.MethodPut, "/settings/slack/:id", httphelp.Protected.ThenFunc(controller.UpsertSlackSetting))
 	mux.Handler(http.MethodPut, "/settings/toggle/:id", httphelp.Protected.ThenFunc(controller.TogglePref))
 }

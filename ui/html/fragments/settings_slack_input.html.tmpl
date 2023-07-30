@@ -1,0 +1,20 @@
+{{define "settings_slack_input"}}
+  <div hx-target="this" hx-swap="outerHTML">
+    <div style="display:flex;">
+      <input
+        type="text"
+        name="webhook"
+        value="{{.Prefs.Slack.To}}"
+        hx-put="/settings/slack/{{.Prefs.Slack.ID}}" 
+        hx-indicator="#ind"
+      />
+      <img id="ind" class="htmx-indicator" style="margin-left:12px;" src="/static/img/bars.svg" />
+    </div>
+    
+    {{if .Error}}
+      <div>
+        <span class="error">{{.Error}}</span>
+      </div>
+    {{end}}
+  </div>
+{{end}}

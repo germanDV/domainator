@@ -529,6 +529,10 @@ div.inline {
   align-items: center;
 }
 
+.it {
+  font-style: italic;
+}
+
 /* Toggle Switch */
 .toggle {
   cursor: pointer;
