@@ -7,6 +7,7 @@ import (
 	"domainator/internal/inspector"
 	"domainator/internal/logger"
 	"domainator/internal/pings"
+	"domainator/internal/plans"
 	"domainator/internal/users"
 	"fmt"
 	"os"
@@ -26,18 +27,22 @@ func main() {
 	db := db.MustInit(config.GetString("DSN"))
 	defer db.Close()
 
+	// Plans
+	plansRepo := plans.NewPostgresRepo(db)
+
 	// Users
 	usersRepo := users.NewPostgresRepo(db)
-	usersController := users.NewController(usersRepo, validate)
+	usersController := users.NewController(usersRepo, validate, plansRepo)
 	users.AttachRoutes(mux, usersController)
 
 	// Pings
 	pingsRepo := pings.NewPostgresRepo(db)
-	pingsController := pings.NewController(pingsRepo, validate)
+	pingsController := pings.NewController(pingsRepo, validate, plansRepo)
 	pings.AttachRoutes(mux, pingsController)
 
 	// Inspector (background tasks)
 	inspctr := inspector.New(db)
+	// TODO: make a utility for goroutine recovery
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {

@@ -93,8 +93,15 @@ func authenticate(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-
 		ctx := context.WithValue(r.Context(), UserIDContextKey, userID)
+
+		planID, ok := claims["pln"].(float64)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+		ctx = context.WithValue(ctx, PlanIDContextKey, int(planID))
+
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

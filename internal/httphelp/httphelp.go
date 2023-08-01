@@ -13,8 +13,11 @@ import (
 
 type contextKey string
 
-// UserIDContextKey is the key used to store the user ID in context
+// UserIDContextKey is the key used to store the user ID in context.
 const UserIDContextKey = contextKey("userID")
+
+// PlanIDContextKey is the key used to store the subscription plan ID in context.
+const PlanIDContextKey = contextKey("planID")
 
 // formDecoder is global because it has a cache, so it's more efficient to reuse it.
 var formDecoder = form.NewDecoder()
@@ -37,13 +40,22 @@ func NotFound(w http.ResponseWriter) {
 	ClientError(w, http.StatusNotFound)
 }
 
-// GetUserIDFromCtx returns the user ID from the request context
+// GetUserIDFromCtx returns the user ID from the request context.
 func GetUserIDFromCtx(w http.ResponseWriter, r *http.Request) uuid.UUID {
 	userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
 	if !ok || userID == uuid.Nil || userID.String() == "" {
 		return uuid.Nil
 	}
 	return userID
+}
+
+// GetPlanIDFromCtx returns the subscribed plan ID from the request context.
+func GetPlanIDFromCtx(w http.ResponseWriter, r *http.Request) int {
+	planID, ok := r.Context().Value(PlanIDContextKey).(int)
+	if !ok {
+		return 0
+	}
+	return planID
 }
 
 // DecodeForm is a helper that decodes the form data from the request into the destination struct.

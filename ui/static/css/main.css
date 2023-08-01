@@ -533,6 +533,10 @@ div.inline {
   font-style: italic;
 }
 
+.upper {
+  text-transform: uppercase;
+}
+
 /* Toggle Switch */
 .toggle {
   cursor: pointer;

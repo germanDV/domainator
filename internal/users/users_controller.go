@@ -7,6 +7,7 @@ import (
 	"domainator/internal/logger"
 	"domainator/internal/notificators"
 	"domainator/internal/notifier"
+	"domainator/internal/plans"
 	"domainator/internal/tmpl"
 	"domainator/internal/validation"
 	"errors"
@@ -26,14 +27,16 @@ type Controller struct {
 	repo      Repo
 	validator *validator.Validate
 	mailer    notifier.Notifier
+	plansRepo plans.Repo
 }
 
 // NewController returns a new users controller
-func NewController(repo Repo, validate *validator.Validate) *Controller {
+func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo) *Controller {
 	return &Controller{
 		repo:      repo,
 		validator: validate,
 		mailer:    notifier.NewMailer(),
+		plansRepo: plansRepo,
 	}
 }
 
@@ -152,6 +155,7 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": u.ID,
+		"pln": u.PlanID,
 		"exp": time.Now().Add(config.GetDuration("TOKEN_EXP")).Unix(),
 		"aud": "domainator",
 	})
@@ -250,8 +254,15 @@ func (c *Controller) GetSettings(w http.ResponseWriter, r *http.Request) {
 		return p.Service == notificators.Slack
 	})
 
+	plan, err := c.plansRepo.GetByID(r.Context(), user.PlanID)
+	if err != nil {
+		httphelp.ServerError(w, err)
+		return
+	}
+
 	templateData := tmpl.BaseData(r)
 	templateData["User"] = map[string]string{"Email": user.Email}
+	templateData["Plan"] = map[string]string{"Name": plan.Name}
 	templateData["Prefs"] = map[string]NotificationPref{
 		"Email": emailSettings,
 		"Slack": slackSettings,

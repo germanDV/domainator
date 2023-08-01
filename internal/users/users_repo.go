@@ -86,13 +86,14 @@ func (pg *PostgresRepo) GetByID(ctx context.Context, id uuid.UUID) (*User, error
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select id, email, password, activated from users where id = $1`
+	q := `select id, email, password, activated, plan_id from users where id = $1`
 	var user User
 	err := pg.DB.QueryRow(ctx, q, id).Scan(
 		&user.ID,
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
+		&user.PlanID,
 	)
 
 	if err != nil {
@@ -110,13 +111,14 @@ func (pg *PostgresRepo) GetByEmail(ctx context.Context, email string) (*User, er
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select id, email, password, activated from users where email = $1`
+	q := `select id, email, password, activated, plan_id from users where email = $1`
 	var user User
 	err := pg.DB.QueryRow(ctx, q, strings.ToLower(email)).Scan(
 		&user.ID,
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
+		&user.PlanID,
 	)
 
 	if err != nil {
@@ -244,7 +246,7 @@ func (pg *PostgresRepo) getVerificationCode(ctx context.Context, email string) (
 	return &code, nil
 }
 
-// Verify checks the verification code provided by the user and marks the user as activated
+// Verify checks the verification code provided by the user and marks the user as activated.
 func (pg *PostgresRepo) Verify(ctx context.Context, email string, candidate string) error {
 	code, err := pg.getVerificationCode(ctx, email)
 	if err != nil {

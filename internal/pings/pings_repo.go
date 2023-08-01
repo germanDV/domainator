@@ -144,6 +144,7 @@ func (pg *PostgresRepo) GetSettings(ctx context.Context) ([]*Settings, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	settings := []*Settings{}
 	for rows.Next() {

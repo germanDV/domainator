@@ -15,7 +15,9 @@ type User struct {
 	Email     string    `form:"email"`
 	Password  pwd       `form:"-"`
 	Activated bool      `form:"activated"`
+	Plan      int       `form:"-"`
 	CreatedAt time.Time `form:"created_at"`
+	PlanID    int       `form:"-"`
 }
 
 // newUser returns a User struct, hashing the password.
@@ -30,6 +32,7 @@ func newUser(email, password string) (*User, error) {
 		Email:     email,
 		Activated: false,
 		CreatedAt: time.Now().UTC(),
+		Plan:      1,
 		Password: pwd{
 			plain: &password,
 			hash:  hashedPwd,
