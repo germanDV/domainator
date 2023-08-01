@@ -43,8 +43,8 @@ func NewPostgresRepo(db *pgxpool.Pool) *PostgresRepo {
 
 // Create inserts the User in the database and generats a verification code
 func (pg *PostgresRepo) Create(ctx context.Context, user *User) (*User, string, error) {
-	q1 := `insert into users (id, email, password, created_at) values ($1, $2, $3, $4)`
-	args1 := []any{user.ID, user.Email, user.Password.hash, user.CreatedAt}
+	q1 := `insert into users (id, email, password, created_at, plan_id) values ($1, $2, $3, $4, $5)`
+	args1 := []any{user.ID, user.Email, user.Password.hash, user.CreatedAt, user.PlanID}
 
 	code := generateCode()
 	hashedCode := hashCode(code)
