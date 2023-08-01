@@ -2,6 +2,7 @@
 package main
 
 import (
+	"domainator/internal/bg"
 	"domainator/internal/config"
 	"domainator/internal/db"
 	"domainator/internal/inspector"
@@ -42,15 +43,7 @@ func main() {
 
 	// Inspector (background tasks)
 	inspctr := inspector.New(db)
-	// TODO: make a utility for goroutine recovery
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				logger.Writer.Error(fmt.Sprintf("Inspector panicked! %v", err))
-			}
-		}()
-		inspctr.Start()
-	}()
+	bg.Run(inspctr.Start)
 
 	// Start server
 	logger.Writer.Info(fmt.Sprintf("Starting server on %s", addr))

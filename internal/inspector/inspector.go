@@ -3,6 +3,7 @@ package inspector
 
 import (
 	"context"
+	"domainator/internal/bg"
 	"domainator/internal/config"
 	"domainator/internal/logger"
 	"domainator/internal/notificators"
@@ -57,23 +58,8 @@ func New(db *pgxpool.Pool) Inspector {
 
 // Start kicks off the background tasks in a goroutine.
 func (i Inspector) Start() {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				logger.Writer.Error(fmt.Sprintf("Ping Loop panicked! %v", err))
-			}
-		}()
-		i.startPingLoop()
-	}()
-
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				logger.Writer.Error(fmt.Sprintf("Clean Loop panicked! %v", err))
-			}
-		}()
-		i.startCleanLoop()
-	}()
+	bg.Run(i.startPingLoop)
+	bg.Run(i.startCleanLoop)
 
 	for fail := range i.failsCh {
 		i.handleFailedPing(fail)

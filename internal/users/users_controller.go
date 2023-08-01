@@ -2,6 +2,7 @@
 package users
 
 import (
+	"domainator/internal/bg"
 	"domainator/internal/config"
 	"domainator/internal/httphelp"
 	"domainator/internal/logger"
@@ -77,26 +78,19 @@ func (c *Controller) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func(validationCode string) {
-		defer func() {
-			if err := recover(); err != nil {
-				logger.Writer.Error(fmt.Sprintf("Send verification email panicked: %v", err))
-			}
-		}()
-
-		sub, body, err := notifier.ParseTemplate("verification.html.tmpl", map[string]any{"Code": validationCode})
+	bg.Run(func() {
+		sub, body, err := notifier.ParseTemplate("verification.html.tmpl", map[string]any{"Code": code})
 		if err != nil {
 			logger.Writer.Error(err)
 			return
 		}
 
-		fmt.Println("This should be an email", sub, body)
 		c.mailer.Notify(notifier.Message{
 			To:      u.Email,
 			Subject: sub,
 			Body:    body,
 		})
-	}(code)
+	})
 
 	target := fmt.Sprintf("/user/verify?email=%s", url.QueryEscape(payload.Email))
 	http.Redirect(w, r, target, http.StatusSeeOther)

@@ -2,6 +2,7 @@ package inspector
 
 import (
 	"context"
+	"domainator/internal/bg"
 	"domainator/internal/logger"
 	"domainator/internal/pings"
 	"fmt"
@@ -38,14 +39,8 @@ func (i Inspector) doPings() {
 	}
 
 	for _, s := range settings {
-		go func(set *pings.Settings) {
-			defer func() {
-				if err := recover(); err != nil {
-					logger.Writer.Error(fmt.Sprintf("Panic pinging %s: %v", set.Domain, err))
-				}
-			}()
-			i.pingDomain(set)
-		}(s)
+		ss := s
+		bg.Run(func() { i.pingDomain(ss) })
 	}
 }
 
