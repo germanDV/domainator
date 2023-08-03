@@ -3,6 +3,7 @@ package main
 
 import (
 	"domainator/internal/bg"
+	"domainator/internal/certs"
 	"domainator/internal/config"
 	"domainator/internal/db"
 	"domainator/internal/inspector"
@@ -40,6 +41,11 @@ func main() {
 	pingsRepo := pings.NewPostgresRepo(db)
 	pingsController := pings.NewController(pingsRepo, validate, plansRepo)
 	pings.AttachRoutes(mux, pingsController)
+
+	// Certs
+	certsRepo := certs.NewPostgresRepo(db)
+	certsController := certs.NewController(certsRepo, validate)
+	certs.AttachRoutes(mux, certsController)
 
 	// Inspector (background tasks)
 	inspctr := inspector.New(db)

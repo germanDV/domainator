@@ -11,19 +11,11 @@ import (
 // (it immediately performs a 'clean' and then sets the interval)
 func (i Inspector) startCleanLoop() {
 	ticker := time.NewTicker(i.cleanInterval)
-	quit := make(chan struct{})
-	defer close(quit)
+	defer ticker.Stop()
 
 	i.cleanPings()
-
-	for {
-		select {
-		case <-ticker.C:
-			i.cleanPings()
-		case <-quit:
-			ticker.Stop()
-			return
-		}
+	for range ticker.C {
+		i.cleanPings()
 	}
 }
 

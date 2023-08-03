@@ -126,7 +126,7 @@ func (pg *PostgresRepo) Save(ctx context.Context, p *Ping) error {
 	defer cancel()
 
 	q := `insert into pings (id, settings_id, resp_status, took_ms) values ($1, $2, $3, $4)`
-	_, err := pg.DB.Exec(ctx, q, p.ID.String(), p.SettingsID.String(), p.RespStatus, p.TookMs)
+	_, err := pg.DB.Exec(ctx, q, p.ID, p.SettingsID, p.RespStatus, p.TookMs)
 	if err != nil {
 		return err
 	}

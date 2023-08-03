@@ -7,7 +7,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// AttachRoutes attaches the routes for the pings controller
+// AttachRoutes attaches the routes for the pings controller.
 func AttachRoutes(mux *httprouter.Router, controller *Controller) {
 	mux.Handler(http.MethodGet, "/pings", httphelp.Protected.ThenFunc(controller.GetSummary))
 	mux.Handler(http.MethodGet, "/pings-new", httphelp.Protected.ThenFunc(controller.PingsNewForm))

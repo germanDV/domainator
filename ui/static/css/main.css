@@ -313,6 +313,7 @@ label {
 }
 
 .healthy,
+.ill,
 .unhealthy {
   border-radius: 8px;
   width: fit-content;
@@ -321,6 +322,9 @@ label {
 }
 .healthy {
   background: var(--success);
+}
+.ill {
+  background: var(--warn);
 }
 .unhealthy {
   background: var(--error);

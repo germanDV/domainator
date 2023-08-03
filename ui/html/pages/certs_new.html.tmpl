@@ -1,0 +1,15 @@
+{{define "main"}}
+<h2>Add a new domain to track the certificate</h2>
+<form action="/certs-new" method="POST">
+  <div>
+    <label>Domain:</label>
+    {{with .Form.Errors.Domain}}
+      <label for="domain" class="error">{{.}}</label>
+    {{end}}
+    <input id="domain" type="text" name="domain" value="{{.Form.Domain}}" />
+  </div>
+  <div>
+    <input type="submit" value="Save Ping Settings" />
+  </div>
+</form>
+{{end}}

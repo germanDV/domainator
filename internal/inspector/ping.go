@@ -16,18 +16,10 @@ import (
 // startPingLoop starts a loop that gets domains from the db and pings them at a set interval.
 func (i Inspector) startPingLoop() {
 	ticker := time.NewTicker(i.pingTickInterval)
-	quit := make(chan struct{})
-	defer close(quit)
-	defer close(i.failsCh)
+	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			i.doPings()
-		case <-quit:
-			ticker.Stop()
-			return
-		}
+	for range ticker.C {
+		i.doPings()
 	}
 }
 

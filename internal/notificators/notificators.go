@@ -1,15 +1,15 @@
-// Package notificators provides an enum with the supported notification services
+// Package notificators provides an enum with the supported notification services.
 package notificators
 
-// Service is an enum that holds the supported options
+// Service is an enum that holds the supported options.
 type Service int
 
 const (
-	// Nil is the zero value for notificators.Service
+	// Nil is the zero value for notificators.Service.
 	Nil Service = iota
-	// Email is the email notification service
+	// Email is the email notification service.
 	Email
-	// Slack is the slack notification service
+	// Slack is the slack notification service.
 	Slack
 )
 

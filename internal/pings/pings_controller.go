@@ -1,4 +1,4 @@
-// Package pings holds the logic for the pings service
+// Package pings holds the logic for the pings service.
 package pings
 
 import (
@@ -14,14 +14,14 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// Controller is a controller that handles requests to the pings service
+// Controller is a controller that handles requests to the pings service.
 type Controller struct {
 	repo      Repo
 	validator *validator.Validate
 	plansRepo plans.Repo
 }
 
-// NewController returns a new pings controller
+// NewController returns a new pings controller.
 func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo) *Controller {
 	return &Controller{
 		repo:      repo,
@@ -30,7 +30,7 @@ func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo
 	}
 }
 
-// GetSummary returns a summary of the pings for the current user
+// GetSummary returns a summary of the pings for the current user.
 func (c *Controller) GetSummary(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
 	pings, err := c.repo.GetSummary(r.Context(), userID)
@@ -85,7 +85,12 @@ func (c *Controller) CreatePing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.repo.SaveSettings(r.Context(), userID, &payload)
+	_, err = c.repo.SaveSettings(r.Context(), userID, &payload)
+	if err != nil {
+		httphelp.ServerError(w, err)
+		return
+	}
+
 	http.Redirect(w, r, "/pings", http.StatusSeeOther)
 }
 
@@ -121,6 +126,7 @@ func (c *Controller) GetPing(w http.ResponseWriter, r *http.Request) {
 	tmpl.RenderPage(w, http.StatusOK, "ping.html.tmpl", &templateData)
 }
 
+// DeleteByID deletes the ping settings.
 func (c *Controller) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
@@ -130,6 +136,11 @@ func (c *Controller) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	c.repo.DeleteSettingsByID(r.Context(), id, userID)
+	err = c.repo.DeleteSettingsByID(r.Context(), id, userID)
+	if err != nil {
+		httphelp.ServerError(w, err)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }

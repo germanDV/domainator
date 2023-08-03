@@ -3,6 +3,7 @@ package tmpl
 
 import (
 	"bytes"
+	"domainator/internal/certstatus"
 	"domainator/internal/config"
 	"domainator/internal/httphelp"
 	"fmt"
@@ -60,7 +61,10 @@ func RenderFragment(w http.ResponseWriter, fragment string, data *map[string]any
 }
 
 var functions = template.FuncMap{
-	"humanDate": humanDate,
+	"humanDate":         humanDate,
+	"humanDateShort":    humanDateShort,
+	"displayCertStatus": displayCertStatus,
+	"statusToClass":     statusToClass,
 }
 
 func humanDate(t time.Time) string {
@@ -68,6 +72,47 @@ func humanDate(t time.Time) string {
 		return ""
 	}
 	return t.UTC().Format("02 Jan 2006 at 15:04")
+}
+
+func humanDateShort(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.UTC().Format("02 Jan 2006")
+}
+
+func displayCertStatus(status certstatus.Status) string {
+	switch status {
+	case certstatus.OK:
+		return "OK"
+	case certstatus.AboutToExpire:
+		return "Expires Soon"
+	case certstatus.Expired:
+		return "Expired"
+	case certstatus.CannotConnect:
+		fallthrough
+	case certstatus.HostnameMismatch:
+		return "Error"
+	default:
+		return ""
+	}
+}
+
+func statusToClass(status certstatus.Status) string {
+	switch status {
+	case certstatus.OK:
+		return "healthy"
+	case certstatus.AboutToExpire:
+		return "ill"
+	case certstatus.Expired:
+		fallthrough
+	case certstatus.CannotConnect:
+		fallthrough
+	case certstatus.HostnameMismatch:
+		return "unhealthy"
+	default:
+		return ""
+	}
 }
 
 // newPagesCache parses HTML templates and caches them.

@@ -20,15 +20,16 @@ import (
 
 // Inspector performs background tasks at a given interval.
 type Inspector struct {
-	pingsRepo        pings.Repo
-	usersRepo        users.Repo
-	pingTickInterval time.Duration
-	cleanInterval    time.Duration
-	cleanMaxAge      time.Duration
-	failsCh          chan FailedPing
-	mailer           notifier.Notifier
-	slacker          notifier.Notifier
-	httpclient       *http.Client
+	pingsRepo         pings.Repo
+	usersRepo         users.Repo
+	pingTickInterval  time.Duration
+	checkCertInterval time.Duration
+	cleanInterval     time.Duration
+	cleanMaxAge       time.Duration
+	failsCh           chan FailedPing
+	mailer            notifier.Notifier
+	slacker           notifier.Notifier
+	httpclient        *http.Client
 }
 
 // FailedPing is a ping to a domain/url that failed.
@@ -44,23 +45,28 @@ type FailedPing struct {
 // New creates a new Inspector.
 func New(db *pgxpool.Pool) Inspector {
 	return Inspector{
-		pingsRepo:        pings.NewPostgresRepo(db),
-		usersRepo:        users.NewPostgresRepo(db),
-		pingTickInterval: config.GetDuration("PING_TICK_INTERVAL"),
-		cleanInterval:    config.GetDuration("CLEAN_INTERVAL"),
-		cleanMaxAge:      config.GetDuration("CLEAN_MAX_AGE"),
-		failsCh:          make(chan FailedPing),
-		mailer:           notifier.NewMailer(),
-		slacker:          notifier.NewSlacker(),
-		httpclient:       &http.Client{Timeout: config.GetDuration("PING_TIMEOUT")},
+		pingsRepo:         pings.NewPostgresRepo(db),
+		usersRepo:         users.NewPostgresRepo(db),
+		pingTickInterval:  config.GetDuration("PING_TICK_INTERVAL"),
+		checkCertInterval: config.GetDuration("CHECK_CERT_INTERVAL"),
+		cleanInterval:     config.GetDuration("CLEAN_INTERVAL"),
+		cleanMaxAge:       config.GetDuration("CLEAN_MAX_AGE"),
+		failsCh:           make(chan FailedPing),
+		mailer:            notifier.NewMailer(),
+		slacker:           notifier.NewSlacker(),
+		httpclient:        &http.Client{Timeout: config.GetDuration("PING_TIMEOUT")},
 	}
 }
 
 // Start kicks off the background tasks in a goroutine.
 func (i Inspector) Start() {
+	defer close(i.failsCh)
+
 	bg.Run(i.startPingLoop)
+	bg.Run(i.startCertsLoop)
 	bg.Run(i.startCleanLoop)
 
+	// TODO: create another channel for failed cert checks? Or re-use?
 	for fail := range i.failsCh {
 		i.handleFailedPing(fail)
 	}
