@@ -16,6 +16,7 @@ type Repo interface {
 	Save(ctx context.Context, userID uuid.UUID, payload *CreateCertReq) (uuid.UUID, error)
 	SaveCheck(ctx context.Context, check *Check) error
 	GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error)
+	GetAll(ctx context.Context) ([]*Cert, error)
 	DeleteByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	CountDomains(ctx context.Context, userID uuid.UUID) (int, error)
 }
@@ -127,6 +128,34 @@ func (pg *PostgresRepo) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Su
 	}
 
 	return summaries, nil
+}
+
+// GetAll returns all domains in the database.
+func (pg *PostgresRepo) GetAll(ctx context.Context) ([]*Cert, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	rows, err := pg.DB.Query(ctx, "select id, user_id, domain from certs")
+	if err != nil {
+		return nil, err
+	}
+
+	certs := []*Cert{}
+	for rows.Next() {
+		c := &Cert{}
+		err := rows.Scan(&c.ID, &c.UserID, &c.Domain)
+		if err != nil {
+			return nil, err
+		}
+		certs = append(certs, c)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return certs, nil
 }
 
 // CountDomains returns the number of domains for a user.

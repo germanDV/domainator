@@ -8,6 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// Cert represents the information for a TLS certificate.
+type Cert struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Domain    string
+	CreatedAt time.Time
+}
+
 // Summary represents the information for a TLS certificate including its latest check.
 type Summary struct {
 	ID        uuid.UUID

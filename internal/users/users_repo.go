@@ -22,6 +22,7 @@ type Repo interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetNotificationPrefsBySettings(ctx context.Context, settingsID uuid.UUID) ([]NotificationPref, error)
+	GetNotificationPrefsByCert(ctx context.Context, certID uuid.UUID) ([]NotificationPref, error)
 	GetNotificationPrefsByUserID(ctx context.Context, userID uuid.UUID) ([]NotificationPref, error)
 	Verify(ctx context.Context, email string, code string) error
 	CreateNotification(ctx context.Context, userID uuid.UUID, service notificators.Service, recipient string) (*NotificationPref, error)
@@ -145,6 +146,58 @@ func (pg *PostgresRepo) GetNotificationPrefsBySettings(ctx context.Context, sett
 	`
 
 	rows, err := pg.DB.Query(ctx, q, settingsID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	prefs := []NotificationPref{}
+
+	for rows.Next() {
+		var svc string
+		var to string
+		err = rows.Scan(&svc, &to)
+		if err != nil {
+			return nil, err
+		}
+
+		p := NotificationPref{}
+		switch svc {
+		case notificators.Email.String():
+			p.Service = notificators.Email
+		case notificators.Slack.String():
+			p.Service = notificators.Slack
+		default:
+			p.Service = notificators.Nil
+		}
+		p.To = to
+		p.Enabled = true
+
+		prefs = append(prefs, p)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return prefs, nil
+}
+
+// GetNotificationPrefsByCert returns a list of notification preferences for a given user, found by cert id.
+func (pg *PostgresRepo) GetNotificationPrefsByCert(ctx context.Context, certID uuid.UUID) ([]NotificationPref, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `select np.service, np.recipient
+		from certs c
+		join notification_preferences np
+			on np.user_id = c.user_id
+		where c.id = $1
+			and np.enabled = true;
+	`
+
+	rows, err := pg.DB.Query(ctx, q, certID.String())
 	if err != nil {
 		return nil, err
 	}

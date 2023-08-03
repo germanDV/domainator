@@ -1,0 +1,22 @@
+{{define "subject"}}
+  Domainator Alert! - Certificate
+{{end}}
+
+{{define "body"}}
+  <html lang="en">
+    <head>
+      <title>Domainator Alert! - Certificate</title>
+      <meta name="viewport" content="width=device-width" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    </head>
+    <body>
+      <p>Hi,</p>
+      <h2>Alert For {{.Domain}}'s Certificate</h2>
+      <ul>
+        <li>Status: <strong>{{.Status}}</strong></li>
+        <li>Expires: <strong>{{.Expiry}}</strong></li>
+        <li>Checked At (UTC): <strong>{{.Time}}</strong></li>
+      </ul>
+    </body>
+  </html>
+{{end}}

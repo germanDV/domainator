@@ -28,6 +28,7 @@ func (i Inspector) doPings() {
 	settings, err := i.pingsRepo.GetSettings(context.Background())
 	if err != nil {
 		logger.Writer.Error(err)
+		return
 	}
 
 	for _, s := range settings {
