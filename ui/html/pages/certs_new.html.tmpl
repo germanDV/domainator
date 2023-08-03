@@ -6,7 +6,13 @@
     {{with .Form.Errors.Domain}}
       <label for="domain" class="error">{{.}}</label>
     {{end}}
-    <input id="domain" type="text" name="domain" value="{{.Form.Domain}}" />
+    <input
+      id="domain"
+      type="text"
+      name="domain"
+      value="{{.Form.Domain}}"
+      placeholder="RFC 952 Hostname (e.g. debian.org)"
+    />
   </div>
   <div>
     <input type="submit" value="Save Ping Settings" />

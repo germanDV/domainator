@@ -3,7 +3,9 @@ package certs
 
 import (
 	"domainator/internal/httphelp"
+	"domainator/internal/plans"
 	"domainator/internal/tmpl"
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -15,13 +17,15 @@ import (
 type Controller struct {
 	repo      Repo
 	validator *validator.Validate
+	plansRepo plans.Repo
 }
 
 // NewController returns a new certs controller
-func NewController(repo Repo, validate *validator.Validate) *Controller {
+func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo) *Controller {
 	return &Controller{
 		repo:      repo,
 		validator: validate,
+		plansRepo: plansRepo,
 	}
 }
 
@@ -45,10 +49,28 @@ func (c *Controller) SaveDomain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
+	count, err := c.repo.CountDomains(r.Context(), userID)
+	if err != nil {
+		httphelp.ServerError(w, err)
+		return
+	}
 
-	// TODO: check limit according to plan
+	planID := httphelp.GetPlanIDFromCtx(w, r)
+	plan, err := c.plansRepo.GetByID(r.Context(), planID)
+	if err != nil {
+		httphelp.ServerError(w, err)
+		return
+	}
 
-	_, err := c.repo.Save(r.Context(), userID, &payload)
+	if count >= plan.CertsLimit {
+		templateData := tmpl.BaseData(r)
+		templateData["Form"] = payload
+		templateData["Flash"] = fmt.Sprintf("You have reached the limit for the %q plan. Please upgrade to track more domains.", plan.Name)
+		tmpl.RenderPage(w, http.StatusOK, "certs_new.html.tmpl", &templateData)
+		return
+	}
+
+	_, err = c.repo.Save(r.Context(), userID, &payload)
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return

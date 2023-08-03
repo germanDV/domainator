@@ -28,7 +28,7 @@ type Check struct {
 
 // CreateCertReq represents the request to save a new certificate for checking.
 type CreateCertReq struct {
-	Domain string            `form:"domain" validate:"required,url"`
+	Domain string            `form:"domain" validate:"required,hostname"`
 	Errors map[string]string `form:"-"`
 }
 
@@ -42,8 +42,8 @@ func (ccr *CreateCertReq) Validate(validate *validator.Validate) bool {
 			tag := e.Tag()
 			if tag == "required" {
 				ccr.Errors[e.Field()] = "This field is required"
-			} else if tag == "url" {
-				ccr.Errors[e.Field()] = "This field must be a valid URL"
+			} else if tag == "hostname" {
+				ccr.Errors[e.Field()] = "This field must be a valid hostname (e.g. example.com)"
 			} else {
 				ccr.Errors[e.Field()] = e.Error()
 			}

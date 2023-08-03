@@ -17,6 +17,7 @@ type Repo interface {
 	SaveCheck(ctx context.Context, check *Check) error
 	GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error)
 	DeleteByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	CountDomains(ctx context.Context, userID uuid.UUID) (int, error)
 }
 
 // PostgresRepo is a repository that implements the Repo interface.
@@ -126,6 +127,20 @@ func (pg *PostgresRepo) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Su
 	}
 
 	return summaries, nil
+}
+
+// CountDomains returns the number of domains for a user.
+func (pg *PostgresRepo) CountDomains(ctx context.Context, userID uuid.UUID) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var count int
+	err := pg.DB.QueryRow(ctx, "select count(*) from certs where user_id = $1", userID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // DeleteByID deletes a domain and all its certificate checks.

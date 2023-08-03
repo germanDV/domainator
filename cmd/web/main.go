@@ -44,7 +44,7 @@ func main() {
 
 	// Certs
 	certsRepo := certs.NewPostgresRepo(db)
-	certsController := certs.NewController(certsRepo, validate)
+	certsController := certs.NewController(certsRepo, validate, plansRepo)
 	certs.AttachRoutes(mux, certsController)
 
 	// Inspector (background tasks)
