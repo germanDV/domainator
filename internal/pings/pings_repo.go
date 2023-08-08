@@ -169,7 +169,7 @@ func (pg *PostgresRepo) GetSettingsByID(ctx context.Context, id uuid.UUID, userI
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `select id, domain, success_code from ping_settings where id = $1 and user_id = $2`
+	q := "select id, domain, success_code from ping_settings where id = $1 and user_id = $2"
 	row := pg.DB.QueryRow(ctx, q, id, userID)
 
 	p := &Settings{}
@@ -185,7 +185,7 @@ func (pg *PostgresRepo) GetSettingsByID(ctx context.Context, id uuid.UUID, userI
 	return p, nil
 }
 
-// GetByID returns a ping by its ID.
+// GetByID returns all pings for a given settings ID.
 func (pg *PostgresRepo) GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) ([]*Ping, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

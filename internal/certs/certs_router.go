@@ -12,8 +12,5 @@ func AttachRoutes(mux *httprouter.Router, controller *Controller) {
 	mux.Handler(http.MethodGet, "/certs", httphelp.Protected.ThenFunc(controller.GetSummary))
 	mux.Handler(http.MethodGet, "/certs-new", httphelp.Protected.ThenFunc(controller.CertsNewForm))
 	mux.Handler(http.MethodPost, "/certs-new", httphelp.Protected.ThenFunc(controller.SaveDomain))
-
-	// TODO: implement
-	// mux.Handler(http.MethodGet, "/certs/:id", httphelp.Protected.ThenFunc(controller.Get))
 	mux.Handler(http.MethodDelete, "/certs/:id", httphelp.Protected.ThenFunc(controller.DeleteByID))
 }
