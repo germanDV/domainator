@@ -312,6 +312,23 @@ label {
   margin-bottom: 9px;
 }
 
+.landing h2 {
+  font-size: 40px;
+  font-weight: lighter;
+}
+
+.landing p {
+  font-size: 20px;
+  margin-bottom: 16px;
+  text-indent: 20px;
+}
+
+.landing ul {
+  list-style: square;
+  list-style-position: inside;
+  margin-left: 40px;
+}
+
 .healthy,
 .ill,
 .unhealthy {

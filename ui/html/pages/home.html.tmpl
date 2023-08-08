@@ -1,3 +1,50 @@
 {{define "main"}}
-  <p>Domainator is a simple tool to ping your domains and keep track of your TLS certificates.</p>
+  <div class="landing">
+    <h2>Keep Track Of Your Domains, The Easy Way.</h2>
+    <p>Domainator is a simple tool to that helps you keep track of your domains by providing two services:</p>
+    <ul>
+      <li>TLS Certs Expiration Monitoring</li>
+      <li>Healthcheck Endpoint Monitoring</li>
+    </ul>
+
+    <section>
+      <h3>TLS Certs Expiration Monitoring</h3>
+      <p>Domainator will monitor your domains TLS certificates and notify you when they are about to expire.</p>
+      <p>
+        We will check your domains TLS certificates every {{.CertCheckInterval}} hours, if the certificate expires
+        in less than {{.ExpirationThreshold}} days, we will notify you.
+      </p>
+    </section>
+    
+    <section>
+      <h3>Healthcheck Endpoint Monitoring</h3>
+      <p>Domainator will monitor your domains healthcheck endpoints and notify you when they are down.</p>
+      <p>
+        We will make a GET request to your healthcheck endpoint every
+        {{.PingInterval}} minutes, if the HTTP response code does not match the
+        one you expected (usually 200 but it's customizable), we will notify you.
+      </p>
+    </section>
+    
+    <section>
+      <h3>Notifications</h3>
+      <p>
+        Domainator can notify you via email and/or Slack. Just make sure to enable notifications and
+        provide the details in the <a href="/settings">settings page</a>.
+      </p>
+    </section>
+
+    <section>
+      <h3>Plans</h3>
+      <p>
+        Domainator is free for one domain and one healthcheck endpoint.
+        That is, you can monitor one domain's TLS certificate <strong>and</strong> one healthcheck endpoint.
+        The endpoint does not need to be on the same domain as the one you are monitoring.
+      </p>
+      <p>
+        No payment information is required for the free plan, you automatically start here when you create your account.
+        If you need to monitor more domains or endpoints, you can upgrade to a paid plan.
+      </p>
+    </section>
+  </div>
 {{end}}
