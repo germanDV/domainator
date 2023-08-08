@@ -7,10 +7,6 @@
         <span style="width:100px;display:inline-block;">Email: </span>
         <strong class="primary">{{.User.Email}}</strong>
       </p>
-      <p>
-        <span style="width:100px;display:inline-block;">Plan: </span>
-        <strong class="primary upper">{{.Plan.Name}}</strong>
-      </p>
     </div>
   </section>
   <hr />
@@ -62,6 +58,22 @@
         </label>
       </div>
     </div>
+  </section>
+  <hr />
+  
+  <section>
+    <h3>Plan</h3>
+      <p>
+        You're currently subscribed to the <strong class="primary upper">{{.Plan.Name}}</strong> plan.
+        Paid plans are not available yet, but we would love to know if you're interested.
+        If you are, please click the button below to let us know.
+      </p>
+      <form class="center" hx-post="/events" hx-swap="outerHTML">
+        <input type="hidden" name="name" value="paid-plan-interest" />
+        <button class="fill-primary">
+          I'm Interested
+        </button>
+      </form>
   </section>
   <hr />
 {{end}}

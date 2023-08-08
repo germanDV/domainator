@@ -400,6 +400,20 @@ button.outline-danger:hover {
   transition: 0.2s ease-in-out;
 }
 
+button.fill-primary {
+  display: flex;
+  padding: 6px;
+  background: var(--link);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+button.fill-primary:hover {
+  text-decoration: none;
+  background: var(--link-hover);
+  transition: 0.2s ease-in-out;
+}
+
 button.btn-icon svg {
   width: 24px;
   height: 24px;
@@ -556,6 +570,17 @@ div.inline {
 
 .upper {
   text-transform: uppercase;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.center button {
+  padding: 8px 48px;
+  font-weight: bold;
 }
 
 /* Toggle Switch */
