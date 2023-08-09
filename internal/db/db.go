@@ -1,4 +1,4 @@
-// Package db contains the database connection initialization
+// Package db contains the database connection initialization.
 package db
 
 import (
@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Init establishes a PostgreSQL connection pool
+// Init establishes a PostgreSQL connection pool.
 func Init(dsn string) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -33,7 +33,7 @@ func Init(dsn string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// MustInit calls Init and panics if there is an error
+// MustInit calls Init and panics if there is an error.
 func MustInit(dsn string) *pgxpool.Pool {
 	pool, err := Init(dsn)
 	if err != nil {

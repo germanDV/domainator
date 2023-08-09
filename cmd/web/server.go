@@ -41,13 +41,13 @@ func buildServer(addr string) (*http.Server, *httprouter.Router) {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	certInterval := config.GetDuration("CHECK_CERT_INTERVAL")
+	healthcheckInterval := config.GetDuration("HEALTHCHECK_INTERVAL")
+	certInterval := config.GetDuration("CERTCHECK_INTERVAL")
 	expiryThreshold := config.GetDuration("CERT_EXPIRY_THRESHOLD")
-	pingInterval := config.GetDuration("PING_TICK_INTERVAL")
 	templateData := tmpl.BaseData(r)
-	templateData["CertCheckInterval"] = certInterval.Hours()
+	templateData["HealthcheckInterval"] = healthcheckInterval.Minutes()
+	templateData["CertcheckInterval"] = certInterval.Hours()
 	templateData["ExpirationThreshold"] = expiryThreshold.Hours() / 24
-	templateData["PingInterval"] = pingInterval.Minutes()
 	tmpl.RenderPage(w, http.StatusOK, "home.html.tmpl", &templateData)
 }
 

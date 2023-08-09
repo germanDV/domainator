@@ -4,7 +4,6 @@ create table if not exists notification_preferences (
   service text not null,
   enabled bool not null default true,
   recipient text not null,
-  webhook_url text,
   created_at timestamp not null default (now() at time zone 'utc')
 );
   

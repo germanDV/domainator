@@ -1,4 +1,4 @@
-package pings
+package endpoints
 
 import (
 	"time"
@@ -15,15 +15,15 @@ type Summary struct {
 	LastCheck time.Time
 }
 
-// CreatePingReq is a struct that represents the payload sent by the user when creating a new ping.
-type CreatePingReq struct {
+// CreateEndpointReq is a struct that represents the payload sent by the user when creating a new Endpoint.
+type CreateEndpointReq struct {
 	Domain      string            `form:"domain" validate:"required,url"`
 	SuccessCode int               `form:"success_code" validate:"required,gte=100,lte=599"`
 	Errors      map[string]string `form:"-"`
 }
 
-// Validate makes CreatePingReq implement the validation.Validatable interface.
-func (cp *CreatePingReq) Validate(validate *validator.Validate) bool {
+// Validate makes CreateEndpointReq implement the validation.Validatable interface.
+func (cp *CreateEndpointReq) Validate(validate *validator.Validate) bool {
 	err := validate.Struct(cp)
 
 	if err != nil {
@@ -47,18 +47,18 @@ func (cp *CreatePingReq) Validate(validate *validator.Validate) bool {
 	return len(cp.Errors) == 0
 }
 
-// Settings represents a domain to ping with its settings
-type Settings struct {
+// Endpoint represents a domain to ping.
+type Endpoint struct {
 	ID          uuid.UUID
 	Domain      string
 	SuccessCode int
 	CreatedAt   time.Time
 }
 
-// Ping represents a check ("ping") to a domain
-type Ping struct {
+// Healthcheck represents a check ("ping") to an Endpoint.
+type Healthcheck struct {
 	ID         uuid.UUID
-	SettingsID uuid.UUID
+	EndpointID uuid.UUID
 	RespStatus int
 	TookMs     int
 	CreatedAt  time.Time

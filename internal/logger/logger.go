@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -38,6 +39,7 @@ func (l *Logit) Error(msgs ...any) {
 // Fatal logs an error message and exits.
 func (l *Logit) Fatal(msgs ...any) {
 	l.ErrorLog.Output(2, join(msgs))
+	os.Exit(1)
 }
 
 func join(values []any) string {

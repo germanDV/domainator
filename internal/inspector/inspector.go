@@ -7,10 +7,10 @@ import (
 	"domainator/internal/certs"
 	"domainator/internal/certstatus"
 	"domainator/internal/config"
+	"domainator/internal/endpoints"
 	"domainator/internal/logger"
 	"domainator/internal/notificators"
 	"domainator/internal/notifier"
-	"domainator/internal/pings"
 	"domainator/internal/users"
 	"fmt"
 	"net"
@@ -23,24 +23,24 @@ import (
 
 // Inspector performs background tasks at a given interval.
 type Inspector struct {
-	usersRepo         users.Repo
-	pingsRepo         pings.Repo
-	certsRepo         certs.Repo
-	pingTickInterval  time.Duration
-	checkCertInterval time.Duration
-	cleanInterval     time.Duration
-	cleanMaxAge       time.Duration
-	failsCh           chan FailedPing
-	badCertsCh        chan BadCert
-	mailer            notifier.Notifier
-	slacker           notifier.Notifier
-	httpclient        *http.Client
-	dialer            *net.Dialer
+	usersRepo           users.Repo
+	endpointsRepo       endpoints.Repo
+	certsRepo           certs.Repo
+	healthcheckInterval time.Duration
+	certcheckInterval   time.Duration
+	cleanInterval       time.Duration
+	cleanMaxAge         time.Duration
+	failsCh             chan FailedHealthcheck
+	badCertsCh          chan BadCert
+	mailer              notifier.Notifier
+	slacker             notifier.Notifier
+	httpclient          *http.Client
+	dialer              *net.Dialer
 }
 
-// FailedPing is a ping to a domain/url that failed.
-type FailedPing struct {
-	SettingsID   uuid.UUID
+// FailedHealthcheck represents a ping to an Endpoint that failed.
+type FailedHealthcheck struct {
+	EndpointID   uuid.UUID
 	CheckID      uuid.UUID
 	URL          string
 	ExpectedCode int
@@ -48,7 +48,7 @@ type FailedPing struct {
 	Time         time.Time
 }
 
-// BadCert is a certificate that failed a check or is about to expire.
+// BadCert represents a certificate that failed a check or is about to expire.
 type BadCert struct {
 	CertID uuid.UUID
 	Domain string
@@ -60,19 +60,19 @@ type BadCert struct {
 // New creates a new Inspector.
 func New(db *pgxpool.Pool) Inspector {
 	return Inspector{
-		usersRepo:         users.NewPostgresRepo(db),
-		pingsRepo:         pings.NewPostgresRepo(db),
-		certsRepo:         certs.NewPostgresRepo(db),
-		pingTickInterval:  config.GetDuration("PING_TICK_INTERVAL"),
-		checkCertInterval: config.GetDuration("CHECK_CERT_INTERVAL"),
-		cleanInterval:     config.GetDuration("CLEAN_INTERVAL"),
-		cleanMaxAge:       config.GetDuration("CLEAN_MAX_AGE"),
-		failsCh:           make(chan FailedPing),
-		badCertsCh:        make(chan BadCert),
-		mailer:            notifier.NewMailer(),
-		slacker:           notifier.NewSlacker(),
-		httpclient:        &http.Client{Timeout: config.GetDuration("PING_TIMEOUT")},
-		dialer:            &net.Dialer{Timeout: config.GetDuration("PING_TIMEOUT")},
+		usersRepo:           users.NewPostgresRepo(db),
+		endpointsRepo:       endpoints.NewPostgresRepo(db),
+		certsRepo:           certs.NewPostgresRepo(db),
+		healthcheckInterval: config.GetDuration("HEALTHCHECK_INTERVAL"),
+		certcheckInterval:   config.GetDuration("CERTCHECK_INTERVAL"),
+		cleanInterval:       config.GetDuration("CLEAN_INTERVAL"),
+		cleanMaxAge:         config.GetDuration("CLEAN_MAX_AGE"),
+		failsCh:             make(chan FailedHealthcheck),
+		badCertsCh:          make(chan BadCert),
+		mailer:              notifier.NewMailer(),
+		slacker:             notifier.NewSlacker(),
+		httpclient:          &http.Client{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
+		dialer:              &net.Dialer{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
 	}
 }
 
@@ -80,22 +80,22 @@ func New(db *pgxpool.Pool) Inspector {
 func (i Inspector) Start() {
 	defer close(i.failsCh)
 
-	bg.Run(i.startPingLoop)
+	bg.Run(i.startHealthcheckLoop)
 	bg.Run(i.startCertsLoop)
 	bg.Run(i.startCleanLoop)
 
 	for {
 		select {
 		case fail := <-i.failsCh:
-			i.handleFailedPing(fail)
+			i.handleFailedHealthcheck(fail)
 		case badCert := <-i.badCertsCh:
 			i.handleBadCert(badCert)
 		}
 	}
 }
 
-func (i Inspector) handleFailedPing(fail FailedPing) {
-	prefs, err := i.usersRepo.GetNotificationPrefsBySettings(context.Background(), fail.SettingsID)
+func (i Inspector) handleFailedHealthcheck(fail FailedHealthcheck) {
+	prefs, err := i.usersRepo.GetNotificationPrefsByEndpoint(context.Background(), fail.EndpointID)
 	if err != nil {
 		logger.Writer.Error(err)
 		return
@@ -109,7 +109,7 @@ func (i Inspector) handleFailedPing(fail FailedPing) {
 	for _, pref := range prefs {
 		switch pref.Service {
 		case notificators.Email:
-			sub, body, err := parseFailedPingTemplate(fail)
+			sub, body, err := parseFailedHealthcheckTemplate(fail)
 			if err != nil {
 				logger.Writer.Error(err)
 				continue
@@ -130,8 +130,8 @@ func (i Inspector) handleFailedPing(fail FailedPing) {
 	}
 }
 
-func parseFailedPingTemplate(fail FailedPing) (string, string, error) {
-	return notifier.ParseTemplate("alert_ping.html.tmpl", map[string]any{
+func parseFailedHealthcheckTemplate(fail FailedHealthcheck) (string, string, error) {
+	return notifier.ParseTemplate("alert_healthcheck.html.tmpl", map[string]any{
 		"URL":      fail.URL,
 		"Expected": fail.ExpectedCode,
 		"Actual":   fail.ActualCode,

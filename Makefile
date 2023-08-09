@@ -14,7 +14,7 @@ confirm:
 ## test: run tests
 .PHONY: test
 test:
-	ENV_FILENAME=.env.test go test -v ./...
+	ENV_FILENAME=.env.test go test ./...
 
 ## test/race: run tests with race detector
 .PHONY: test/race
@@ -45,45 +45,45 @@ build:
 	@echo 'Building for Linux'
 	go build -o=./bin/${BINARY_NAME} ./cmd/web
 
-## pg/up: start PostgreSQL docker container by running docker-compose.yml
-.PHONY: pg/up
-pg/up:
+## db/up: start PostgreSQL docker container by running docker-compose.yml
+.PHONY: db/up
+db/up:
 	@echo 'Starting PostgreSQL docker container'
 	docker compose up -d
 
-## pg/stop: stop PostgreSQL docker container
-.PHONY: pg/stop
-pg/stop:
+## db/stop: stop PostgreSQL docker container
+.PHONY: db/stop
+db/stop:
 	@echo 'Stopping PostgreSQL docker container'
 	docker compose stop
 
-## pg/down: tear down PostgreSQL docker container
-.PHONY: pg/down
-pg/down: confirm
+## db/down: tear down PostgreSQL docker container
+.PHONY: db/down
+db/down: confirm
 	@echo 'Stopping PostgreSQL docker container'
 	docker compose down
 
-## pg/migrate/init: init tern project
-.PHONY: pg/migrate/init
-pg/migrate/init: confirm
+## db/migrate/init: init tern project
+.PHONY: db/migrate/init
+db/migrate/init: confirm
 	@echo 'Initializing tern project'
 	tern init
 
-## pg/migrate/new name=$1: create a new database migration ($ make pg/migrate/new name=create_users_table)
-.PHONY: pg/migrate/new
-pg/migrate/new:
+## db/migrate/new name=$1: create a new database migration ($ make db/migrate/new name=create_users_table)
+.PHONY: db/migrate/new
+db/migrate/new:
 	@echo 'Creating migration files for ${name}...'
 	tern new -m ./migrations ${name}
 
-## pg/migrate/up: run database migrations
-.PHONY: pg/migrate/up
-pg/migrate/up:
+## db/migrate/up: run database migrations
+.PHONY: db/migrate/up
+db/migrate/up:
 	@echo 'Running migrations...'
 	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations
 
-## pg/migrate/down n=$1: rollback database N versions ($ make pg/migrate/down n=2)
-.PHONY: pg/migrate/down
-pg/migrate/down: confirm
+## db/migrate/down n=$1: rollback database N versions ($ make db/migrate/down n=2)
+.PHONY: db/migrate/down
+db/migrate/down: confirm
 	@echo 'Rolling back ${n} migrations..'
 	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations --destination -${n}
 	

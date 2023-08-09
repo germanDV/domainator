@@ -18,10 +18,10 @@ import (
 
 // Repo is an interface that the users repository must implement.
 type Repo interface {
-	Create(ctx context.Context, user *User) (*User, string, error)
+	Save(ctx context.Context, user *User) (*User, string, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
-	GetNotificationPrefsBySettings(ctx context.Context, settingsID uuid.UUID) ([]NotificationPref, error)
+	GetNotificationPrefsByEndpoint(ctx context.Context, settingsID uuid.UUID) ([]NotificationPref, error)
 	GetNotificationPrefsByCert(ctx context.Context, certID uuid.UUID) ([]NotificationPref, error)
 	GetNotificationPrefsByUserID(ctx context.Context, userID uuid.UUID) ([]NotificationPref, error)
 	Verify(ctx context.Context, email string, code string) error
@@ -42,8 +42,8 @@ func NewPostgresRepo(db *pgxpool.Pool) *PostgresRepo {
 	}
 }
 
-// Create inserts the User in the database and generats a verification code
-func (pg *PostgresRepo) Create(ctx context.Context, user *User) (*User, string, error) {
+// Save inserts the User in the database and generats a verification code
+func (pg *PostgresRepo) Save(ctx context.Context, user *User) (*User, string, error) {
 	q1 := `insert into users (id, email, password, created_at, plan_id) values ($1, $2, $3, $4, $5)`
 	args1 := []any{user.ID, user.Email, user.Password.hash, user.CreatedAt, user.PlanID}
 
@@ -132,20 +132,20 @@ func (pg *PostgresRepo) GetByEmail(ctx context.Context, email string) (*User, er
 	return &user, nil
 }
 
-// GetNotificationPrefsBySettings returns a list of notification preferences for a given user, found by settings id
-func (pg *PostgresRepo) GetNotificationPrefsBySettings(ctx context.Context, settingsID uuid.UUID) ([]NotificationPref, error) {
+// GetNotificationPrefsByEndpoint returns a list of notification preferences for a given user, found by settings id
+func (pg *PostgresRepo) GetNotificationPrefsByEndpoint(ctx context.Context, endpointID uuid.UUID) ([]NotificationPref, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := `select np.service, np.recipient
-		from ping_settings ps
+		from endpoints ps
 		join notification_preferences np
 			on np.user_id = ps.user_id
 		where ps.id = $1
 			and np.enabled = true;
 	`
 
-	rows, err := pg.DB.Query(ctx, q, settingsID.String())
+	rows, err := pg.DB.Query(ctx, q, endpointID)
 	if err != nil {
 		return nil, err
 	}

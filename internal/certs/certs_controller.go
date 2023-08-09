@@ -29,14 +29,14 @@ func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo
 	}
 }
 
-// CertsNewForm renders the from to add a new domain.
+// CertsNewForm renders the from to add a new Cert.
 func (c *Controller) CertsNewForm(w http.ResponseWriter, r *http.Request) {
 	templateData := tmpl.BaseData(r)
 	tmpl.RenderPage(w, http.StatusOK, "certs_new.html.tmpl", &templateData)
 }
 
-// SaveDomain saves a new domain for which certificates will be checked.
-func (c *Controller) SaveDomain(w http.ResponseWriter, r *http.Request) {
+// Save saves a new Cert, aka: a domain whose certificate will be checked.
+func (c *Controller) Save(w http.ResponseWriter, r *http.Request) {
 	var payload CreateCertReq
 	httphelp.DecodeForm(r, &payload)
 
@@ -49,7 +49,7 @@ func (c *Controller) SaveDomain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	count, err := c.repo.CountDomains(r.Context(), userID)
+	count, err := c.repo.Count(r.Context(), userID)
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return
@@ -65,7 +65,11 @@ func (c *Controller) SaveDomain(w http.ResponseWriter, r *http.Request) {
 	if count >= plan.CertsLimit {
 		templateData := tmpl.BaseData(r)
 		templateData["Form"] = payload
-		templateData["Flash"] = fmt.Sprintf("You have reached the limit for the %q plan. Please upgrade to track more domains.", plan.Name)
+		templateData["Flash"] = fmt.Sprintf(
+			`You have reached the limit for the %q plan. Please upgrade to track more domains.
+			If this doesn't sound right, please log out and log back in.`,
+			plan.Name,
+		)
 		tmpl.RenderPage(w, http.StatusOK, "certs_new.html.tmpl", &templateData)
 		return
 	}
@@ -79,7 +83,7 @@ func (c *Controller) SaveDomain(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/certs", http.StatusSeeOther)
 }
 
-// GetSummary returns a summary of the certificates for the current user.
+// GetSummary returns a summary of the Certs for the current user.
 func (c *Controller) GetSummary(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
 	certs, err := c.repo.GetSummary(r.Context(), userID)
@@ -93,7 +97,7 @@ func (c *Controller) GetSummary(w http.ResponseWriter, r *http.Request) {
 	tmpl.RenderPage(w, http.StatusOK, "certs.html.tmpl", &templateData)
 }
 
-// DeleteByID deletes a domain whose certificate no longer needs to be checked.
+// DeleteByID deletes a Cert.
 func (c *Controller) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)

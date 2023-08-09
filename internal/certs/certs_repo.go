@@ -17,8 +17,10 @@ type Repo interface {
 	SaveCheck(ctx context.Context, check *Check) error
 	GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error)
 	GetAll(ctx context.Context) ([]*Cert, error)
+	Count(ctx context.Context, userID uuid.UUID) (int, error)
 	DeleteByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
-	CountDomains(ctx context.Context, userID uuid.UUID) (int, error)
+	// TODO:
+	// DeleteOldChecks(ctx context.Context, age time.Duration) (int64, error)
 }
 
 // PostgresRepo is a repository that implements the Repo interface.
@@ -33,7 +35,7 @@ func NewPostgresRepo(db *pgxpool.Pool) *PostgresRepo {
 	}
 }
 
-// Save persists a new domain whose TLS certification will be checked.
+// Save persists a `Cert`, aka: a new domain whose TLS certification will be checked.
 func (pg *PostgresRepo) Save(ctx context.Context, userID uuid.UUID, payload *CreateCertReq) (uuid.UUID, error) {
 	newID := uuid.New()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -53,7 +55,7 @@ func (pg *PostgresRepo) SaveCheck(ctx context.Context, c *Check) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	q := `insert into cert_checks (id, cert_id, resp_status, expiry) values ($1, $2, $3, $4)`
+	q := `insert into certchecks (id, cert_id, resp_status, expiry) values ($1, $2, $3, $4)`
 	_, err := pg.DB.Exec(ctx, q, c.ID, c.CertID, c.RespStatus.String(), c.Expiry)
 	if err != nil {
 		return err
@@ -62,14 +64,14 @@ func (pg *PostgresRepo) SaveCheck(ctx context.Context, c *Check) error {
 	return nil
 }
 
-// GetSummary returns all domains for a user with their latest checks.
+// GetSummary returns all Certs for a user with their latest checks.
 func (pg *PostgresRepo) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Summary, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	q := `
 		with l as (
-			select cert_id, max(created_at) as latest from cert_checks group by cert_id
+			select cert_id, max(created_at) as latest from certchecks group by cert_id
 		)
 		select
 			c.id,
@@ -79,7 +81,7 @@ func (pg *PostgresRepo) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Su
 			max(coalesce(cc.created_at, '0001-01-01')) as last_check
 		from certs c
 		left outer join l on l.cert_id = c.id
-		left outer join cert_checks cc on cc.cert_id = c.id and cc.created_at = l.latest
+		left outer join certchecks cc on cc.cert_id = c.id and cc.created_at = l.latest
 		where c.user_id = $1
 		group by c.id, cc.resp_status;
 	`
@@ -130,7 +132,8 @@ func (pg *PostgresRepo) GetSummary(ctx context.Context, userID uuid.UUID) ([]*Su
 	return summaries, nil
 }
 
-// GetAll returns all domains in the database.
+// GetAll returns all Certs in the database.
+// This is used internally. It is not exposed via the API as it would required admin privileges.
 func (pg *PostgresRepo) GetAll(ctx context.Context) ([]*Cert, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -158,8 +161,8 @@ func (pg *PostgresRepo) GetAll(ctx context.Context) ([]*Cert, error) {
 	return certs, nil
 }
 
-// CountDomains returns the number of domains for a user.
-func (pg *PostgresRepo) CountDomains(ctx context.Context, userID uuid.UUID) (int, error) {
+// Count returns the number of Certs for a user.
+func (pg *PostgresRepo) Count(ctx context.Context, userID uuid.UUID) (int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -172,7 +175,7 @@ func (pg *PostgresRepo) CountDomains(ctx context.Context, userID uuid.UUID) (int
 	return count, nil
 }
 
-// DeleteByID deletes a domain and all its certificate checks.
+// DeleteByID deletes a Cert and all of its checks.
 func (pg *PostgresRepo) DeleteByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -189,7 +192,7 @@ func (pg *PostgresRepo) DeleteByID(ctx context.Context, id uuid.UUID, userID uui
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "delete from cert_checks where cert_id = $1", id)
+	_, err = tx.Exec(ctx, "delete from certchecks where cert_id = $1", id)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err

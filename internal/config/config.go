@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// ProjectName is the name of the project and it's useful to find the root path
+// ProjectName is the name of the project and it's useful to find the root path.
 const ProjectName = "domainator"
 
 // LoadEnv loads env vars and panics if there's an error.

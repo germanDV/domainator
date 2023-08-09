@@ -11,7 +11,7 @@
       <h3>TLS Certs Expiration Monitoring</h3>
       <p>Domainator will monitor your domains TLS certificates and notify you when they are about to expire.</p>
       <p>
-        We will check your domains TLS certificates every {{.CertCheckInterval}} hours, if the certificate expires
+        We will check your domains TLS certificates every {{.CertcheckInterval}} hours, if the certificate expires
         in less than {{.ExpirationThreshold}} days, we will notify you.
       </p>
     </section>
@@ -21,7 +21,7 @@
       <p>Domainator will monitor your domains healthcheck endpoints and notify you when they are down.</p>
       <p>
         We will make a GET request to your healthcheck endpoint every
-        {{.PingInterval}} minutes, if the HTTP response code does not match the
+        {{.HealthcheckInterval}} minutes, if the HTTP response code does not match the
         one you expected (usually 200 but it's customizable), we will notify you.
       </p>
     </section>

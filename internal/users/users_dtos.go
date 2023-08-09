@@ -32,7 +32,7 @@ func newUser(email, password string) (*User, error) {
 		Email:     email,
 		Activated: false,
 		CreatedAt: time.Now().UTC(),
-		Plan:      1,
+		PlanID:    1,
 		Password: pwd{
 			plain: &password,
 			hash:  hashedPwd,

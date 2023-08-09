@@ -3,6 +3,7 @@ create table if not exists users (
   email text not null unique,
   password bytea not null,
   activated bool not null default false,
+  plan_id int not null default 1,
   created_at timestamp not null default (now() at time zone 'utc')
 );
 

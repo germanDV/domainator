@@ -6,10 +6,10 @@ import (
 	"domainator/internal/certs"
 	"domainator/internal/config"
 	"domainator/internal/db"
+	"domainator/internal/endpoints"
 	"domainator/internal/events"
 	"domainator/internal/inspector"
 	"domainator/internal/logger"
-	"domainator/internal/pings"
 	"domainator/internal/plans"
 	"domainator/internal/users"
 	"fmt"
@@ -38,10 +38,10 @@ func main() {
 	usersController := users.NewController(usersRepo, validate, plansRepo)
 	users.AttachRoutes(mux, usersController)
 
-	// Pings
-	pingsRepo := pings.NewPostgresRepo(db)
-	pingsController := pings.NewController(pingsRepo, validate, plansRepo)
-	pings.AttachRoutes(mux, pingsController)
+	// Endpoints
+	endpointsRepo := endpoints.NewPostgresRepo(db)
+	endpointsController := endpoints.NewController(endpointsRepo, validate, plansRepo)
+	endpoints.AttachRoutes(mux, endpointsController)
 
 	// Certs
 	certsRepo := certs.NewPostgresRepo(db)

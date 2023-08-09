@@ -26,7 +26,7 @@ var formDecoder = form.NewDecoder()
 // then sends a generic 500 Internal Server Error response to the user.
 func ServerError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	logger.Writer.ErrorLog.Output(2, trace)
+	logger.Writer.Error(trace)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 

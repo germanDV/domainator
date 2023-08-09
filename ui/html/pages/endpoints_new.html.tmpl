@@ -1,8 +1,8 @@
 {{define "main"}}
-<h2>Add a new ping</h2>
-<form action="/pings-new" method="POST">
+<h2>Add New Endpoint</h2>
+<form action="/endpoints-new" method="POST">
   <div>
-    <label>Domain (include http(s)):</label>
+    <label>Endpoint (include http(s)):</label>
     {{with .Form.Errors.Domain}}
       <label for="domain" class="error">{{.}}</label>
     {{end}}
@@ -23,7 +23,7 @@
     />
   </div>
   <div>
-    <input type="submit" value="Save Ping Settings" />
+    <input type="submit" value="Save Endpoint" />
   </div>
 </form>
 {{end}}

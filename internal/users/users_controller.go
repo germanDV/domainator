@@ -66,7 +66,7 @@ func (c *Controller) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, code, err := c.repo.Create(r.Context(), u)
+	_, code, err := c.repo.Save(r.Context(), u)
 	if err != nil {
 		if errors.Is(err, validation.ErrDuplicateEmail) {
 			templateData["Form"] = payload
@@ -170,7 +170,7 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 		Secure:   true,
 	})
 
-	http.Redirect(w, r, "/pings", http.StatusSeeOther)
+	http.Redirect(w, r, "/endpoints", http.StatusSeeOther)
 }
 
 // Logout logs a user out (expires the cookie with the token).
@@ -374,6 +374,16 @@ func (c *Controller) TogglePref(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		httphelp.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	if id == 0 {
+		w.Write([]byte(
+			`<div>
+				<input class="toggle-checkbox" type="checkbox" name="enabled" hx-put="/settings/toggle/0" hx-swap="outerHTML" hx-indicator="#ind" />
+				<p>Please refresh the page and try again.</p>
+			</div>`,
+		))
 		return
 	}
 

@@ -1,17 +1,17 @@
 {{define "subject"}}
-  Domainator Alert! - Ping Failure
+  Domainator Alert! - Healthcheck Failure
 {{end}}
 
 {{define "body"}}
   <html lang="en">
     <head>
-      <title>Domainator Alert! - Ping Failure</title>
+      <title>Domainator Alert! - Healthcheck Failure</title>
       <meta name="viewport" content="width=device-width" />
       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     </head>
     <body>
       <p>Hi,</p>
-      <h2>Domain {{.URL}} is unhealthy</h2>
+      <h2>Endpoint {{.URL}} is unhealthy</h2>
       <ul>
         <li>Expected Status Code: <strong>{{.Expected}}</strong></li>
         <li>Received Status Code: <strong>{{.Actual}}</strong></li>

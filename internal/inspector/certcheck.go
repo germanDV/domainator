@@ -17,7 +17,7 @@ import (
 // startCertsLoop starts a loop that checks TLS certificates.
 // (it immediately performs a check and then sets the interval)
 func (i Inspector) startCertsLoop() {
-	ticker := time.NewTicker(i.checkCertInterval)
+	ticker := time.NewTicker(i.certcheckInterval)
 	defer ticker.Stop()
 
 	i.checkCerts()

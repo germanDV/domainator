@@ -1,5 +1,5 @@
-// Package pings holds the logic for the pings service.
-package pings
+// Package endpoints holds the logic for the endpoints service.
+package endpoints
 
 import (
 	"domainator/internal/httphelp"
@@ -14,14 +14,14 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// Controller is a controller that handles requests to the pings service.
+// Controller is a controller that handles requests to the endpoints service.
 type Controller struct {
 	repo      Repo
 	validator *validator.Validate
 	plansRepo plans.Repo
 }
 
-// NewController returns a new pings controller.
+// NewController returns a new endpoints controller.
 func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo) *Controller {
 	return &Controller{
 		repo:      repo,
@@ -30,41 +30,41 @@ func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo
 	}
 }
 
-// GetSummary returns a summary of the pings for the current user.
+// GetSummary returns a summary of the endpoints and healthchecks for the current user.
 func (c *Controller) GetSummary(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	pings, err := c.repo.GetSummary(r.Context(), userID)
+	endpoints, err := c.repo.GetSummary(r.Context(), userID)
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return
 	}
 
 	templateData := tmpl.BaseData(r)
-	templateData["Pings"] = pings
-	tmpl.RenderPage(w, http.StatusOK, "pings.html.tmpl", &templateData)
+	templateData["Endpoints"] = endpoints
+	tmpl.RenderPage(w, http.StatusOK, "endpoints.html.tmpl", &templateData)
 }
 
-// PingsNewForm renders the page for creating a new ping.
-func (c *Controller) PingsNewForm(w http.ResponseWriter, r *http.Request) {
+// EndpointNewForm renders the page for creating a new Endpoint.
+func (c *Controller) EndpointNewForm(w http.ResponseWriter, r *http.Request) {
 	templateData := tmpl.BaseData(r)
-	tmpl.RenderPage(w, http.StatusOK, "pings_new.html.tmpl", &templateData)
+	tmpl.RenderPage(w, http.StatusOK, "endpoints_new.html.tmpl", &templateData)
 }
 
-// CreatePing creates a new ping and saves it to the database.
-func (c *Controller) CreatePing(w http.ResponseWriter, r *http.Request) {
-	var payload CreatePingReq
+// CreateEndpoint creates a new Endpoint and saves it to the database.
+func (c *Controller) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
+	var payload CreateEndpointReq
 	httphelp.DecodeForm(r, &payload)
 
 	ok := payload.Validate(c.validator)
 	if !ok {
 		templateData := tmpl.BaseData(r)
 		templateData["Form"] = payload
-		tmpl.RenderPage(w, http.StatusOK, "pings_new.html.tmpl", &templateData)
+		tmpl.RenderPage(w, http.StatusOK, "endpoints_new.html.tmpl", &templateData)
 		return
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	count, err := c.repo.CountSettings(r.Context(), userID)
+	count, err := c.repo.Count(r.Context(), userID)
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return
@@ -80,22 +80,26 @@ func (c *Controller) CreatePing(w http.ResponseWriter, r *http.Request) {
 	if count >= plan.DomainsLimit {
 		templateData := tmpl.BaseData(r)
 		templateData["Form"] = payload
-		templateData["Flash"] = fmt.Sprintf("You have reached the limit for the %q plan. Please upgrade to create more pings.", plan.Name)
-		tmpl.RenderPage(w, http.StatusOK, "pings_new.html.tmpl", &templateData)
+		templateData["Flash"] = fmt.Sprintf(
+			`You have reached the limit for the %q plan. Please upgrade to add more endpoints.
+			If this doesn't sound right, please log out and log back in.`,
+			plan.Name,
+		)
+		tmpl.RenderPage(w, http.StatusOK, "endpoints_new.html.tmpl", &templateData)
 		return
 	}
 
-	_, err = c.repo.SaveSettings(r.Context(), userID, &payload)
+	_, err = c.repo.Save(r.Context(), userID, &payload)
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return
 	}
 
-	http.Redirect(w, r, "/pings", http.StatusSeeOther)
+	http.Redirect(w, r, "/endpoints", http.StatusSeeOther)
 }
 
-// GetPing returns the details for a ping.
-func (c *Controller) GetPing(w http.ResponseWriter, r *http.Request) {
+// GetEndpoint returns the details and Healthchecks of an Endpoint.
+func (c *Controller) GetEndpoint(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -104,7 +108,7 @@ func (c *Controller) GetPing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	settings, err := c.repo.GetSettingsByID(r.Context(), id, userID)
+	endpoint, err := c.repo.GetByID(r.Context(), id, userID)
 	if err != nil {
 		if err == validation.ErrNotFound {
 			httphelp.NotFound(w)
@@ -114,19 +118,19 @@ func (c *Controller) GetPing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pingChecks, err := c.repo.GetByID(r.Context(), id, userID)
+	Healthchecks, err := c.repo.GetHealthcheckByID(r.Context(), id, userID)
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return
 	}
 
 	templateData := tmpl.BaseData(r)
-	templateData["Settings"] = settings
-	templateData["Checks"] = pingChecks
-	tmpl.RenderPage(w, http.StatusOK, "ping.html.tmpl", &templateData)
+	templateData["Endpoint"] = endpoint
+	templateData["Healthchecks"] = Healthchecks
+	tmpl.RenderPage(w, http.StatusOK, "endpoint.html.tmpl", &templateData)
 }
 
-// DeleteByID deletes the ping settings.
+// DeleteByID deletes an Endpoint.
 func (c *Controller) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	idStr := httprouter.ParamsFromContext(r.Context()).ByName("id")
 	id, err := uuid.Parse(idStr)
@@ -136,7 +140,7 @@ func (c *Controller) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := httphelp.GetUserIDFromCtx(w, r)
-	err = c.repo.DeleteSettingsByID(r.Context(), id, userID)
+	err = c.repo.DeleteByID(r.Context(), id, userID)
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return
