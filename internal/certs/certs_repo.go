@@ -19,8 +19,7 @@ type Repo interface {
 	GetAll(ctx context.Context) ([]*Cert, error)
 	Count(ctx context.Context, userID uuid.UUID) (int, error)
 	DeleteByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
-	// TODO:
-	// DeleteOldChecks(ctx context.Context, age time.Duration) (int64, error)
+	DeleteOldChecks(ctx context.Context, age time.Duration) (int64, error)
 }
 
 // PostgresRepo is a repository that implements the Repo interface.
@@ -199,4 +198,17 @@ func (pg *PostgresRepo) DeleteByID(ctx context.Context, id uuid.UUID, userID uui
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (pg *PostgresRepo) DeleteOldChecks(ctx context.Context, age time.Duration) (int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := "delete from certchecks where created_at < $1"
+	arg := time.Now().UTC().Add(-age).Format(time.DateTime)
+	resp, err := pg.DB.Exec(ctx, q, arg)
+	if err != nil {
+		return 0, err
+	}
+	return resp.RowsAffected(), nil
 }
