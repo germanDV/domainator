@@ -13,14 +13,14 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// Controller is a controller that handles requests to the certs service
+// Controller is a controller that handles requests to the certs service.
 type Controller struct {
 	repo      Repo
 	validator *validator.Validate
 	plansRepo plans.Repo
 }
 
-// NewController returns a new certs controller
+// NewController returns a new certs controller.
 func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo) *Controller {
 	return &Controller{
 		repo:      repo,

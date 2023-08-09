@@ -5,7 +5,6 @@ import (
 	"domainator/internal/httphelp"
 	"domainator/internal/logger"
 	"domainator/internal/tmpl"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -24,7 +23,6 @@ func buildServer(addr string) (*http.Server, *httprouter.Router) {
 	// Misc. routes
 	mux.Handler(http.MethodGet, "/", httphelp.Base.ThenFunc(homeHandler))
 	mux.Handler(http.MethodGet, "/healthcheck", httphelp.Base.ThenFunc(healthcheckHandler))
-	mux.Handler(http.MethodPost, "/events", httphelp.Base.ThenFunc(eventHandler))
 	mux.NotFound = http.HandlerFunc(notFoundHandler)
 
 	// Apply standard middleware
@@ -60,23 +58,4 @@ func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	httphelp.NotFound(w)
-}
-
-func eventHandler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		httphelp.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	userID := httphelp.GetUserIDFromCtx(w, r)
-	evName := r.FormValue("name")
-	if evName == "" {
-		httphelp.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	// TODO: store this in the database.
-	fmt.Printf("Event received: %s (from: %s)\n", evName, userID)
-	w.Write([]byte(`<div class="center">Thanks for letting us know!</div>`))
 }

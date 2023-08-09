@@ -6,6 +6,7 @@ import (
 	"domainator/internal/certs"
 	"domainator/internal/config"
 	"domainator/internal/db"
+	"domainator/internal/events"
 	"domainator/internal/inspector"
 	"domainator/internal/logger"
 	"domainator/internal/pings"
@@ -46,6 +47,11 @@ func main() {
 	certsRepo := certs.NewPostgresRepo(db)
 	certsController := certs.NewController(certsRepo, validate, plansRepo)
 	certs.AttachRoutes(mux, certsController)
+
+	// Events
+	eventsRepo := events.NewPostgresRepo(db)
+	eventsController := events.NewController(eventsRepo, validate)
+	events.AttachRoutes(mux, eventsController)
 
 	// Inspector (background tasks)
 	inspctr := inspector.New(db)

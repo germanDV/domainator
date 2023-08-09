@@ -40,7 +40,7 @@ func (pg *PostgresRepo) Save(ctx context.Context, userID uuid.UUID, payload *Cre
 	defer cancel()
 
 	q := `insert into certs (id, user_id, domain) values ($1, $2, $3)`
-	_, err := pg.DB.Exec(ctx, q, newID.String(), userID, payload.Domain)
+	_, err := pg.DB.Exec(ctx, q, newID, userID, payload.Domain)
 	if err != nil {
 		return uuid.Nil, err
 	}
