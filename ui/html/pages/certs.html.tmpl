@@ -20,7 +20,7 @@
   >
     {{range .Certs}}
       <tr>
-        <td><a href="/certs/{{.ID}}">{{.Domain}}</a></td>
+        <td>{{.Domain}}</td>
         <td><div class={{statusToClass .Status}}>{{displayCertStatus .Status}}</div></td>
         <td class="right">{{humanDateShort .Expiry}}</td>
         <td class="right">{{humanDateShort .LastCheck}}</td>
