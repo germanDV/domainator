@@ -147,14 +147,14 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"sub": u.ID,
 		"pln": u.PlanID,
 		"exp": time.Now().Add(config.GetDuration("TOKEN_EXP")).Unix(),
 		"aud": "domainator",
 	})
 
-	t, err := token.SignedString([]byte(config.GetString("JWT_SECRET")))
+	t, err := token.SignedString(config.GetPrivateKey())
 	if err != nil {
 		httphelp.ServerError(w, err)
 		return

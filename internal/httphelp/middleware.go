@@ -72,10 +72,10 @@ func authenticate(next http.Handler) http.Handler {
 		}
 
 		token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (any, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte(config.GetString("JWT_SECRET")), nil
+			return config.GetPublicKey(), nil
 		})
 		if err != nil {
 			next.ServeHTTP(w, r)

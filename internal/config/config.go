@@ -2,6 +2,8 @@
 package config
 
 import (
+	"crypto/ecdsa"
+	"domainator/internal/keys"
 	"fmt"
 	"os"
 	"regexp"
@@ -13,6 +15,12 @@ import (
 
 // ProjectName is the name of the project and it's useful to find the root path.
 const ProjectName = "domainator"
+
+// Keep them as (unexported) globals so we do the parsing only once.
+var (
+	privateKey *ecdsa.PrivateKey
+	publicKey  *ecdsa.PublicKey
+)
 
 // LoadEnv loads env vars and panics if there's an error.
 // If ENV_FILENAME is set, it will load env vars from ProjectName/ENV_FILENAME.
@@ -94,4 +102,30 @@ func GetRootPath() string {
 	}
 
 	return root
+}
+
+// GetPrivateKey returns the private key used to sign JWTs.
+func GetPrivateKey() *ecdsa.PrivateKey {
+	if privateKey == nil {
+		str := get("JWT_PRIVATE_KEY")
+		var err error
+		privateKey, err = keys.DecodePrivate(str)
+		if err != nil {
+			panic(fmt.Errorf("Could not parse JWT Private Key, %s", err))
+		}
+	}
+	return privateKey
+}
+
+// GetPublicKey returns the public key used to verify JWTs.
+func GetPublicKey() *ecdsa.PublicKey {
+	if publicKey == nil {
+		str := get("JWT_PUBLIC_KEY")
+		var err error
+		publicKey, err = keys.DecodePublic(str)
+		if err != nil {
+			panic(fmt.Errorf("Could not parse JWT Public Key, %s", err))
+		}
+	}
+	return publicKey
 }
