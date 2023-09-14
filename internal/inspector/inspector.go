@@ -3,7 +3,6 @@ package inspector
 
 import (
 	"context"
-	"domainator/internal/bg"
 	"domainator/internal/certs"
 	"domainator/internal/certstatus"
 	"domainator/internal/config"
@@ -60,19 +59,19 @@ type BadCert struct {
 // New creates a new Inspector.
 func New(db *pgxpool.Pool) Inspector {
 	return Inspector{
-		usersRepo:           users.NewPostgresRepo(db),
-		endpointsRepo:       endpoints.NewPostgresRepo(db),
-		certsRepo:           certs.NewPostgresRepo(db),
-		healthcheckInterval: config.GetDuration("HEALTHCHECK_INTERVAL"),
-		certcheckInterval:   config.GetDuration("CERTCHECK_INTERVAL"),
-		cleanInterval:       config.GetDuration("CLEAN_INTERVAL"),
-		cleanMaxAge:         config.GetDuration("CLEAN_MAX_AGE"),
-		failsCh:             make(chan FailedHealthcheck),
-		badCertsCh:          make(chan BadCert),
-		mailer:              notifier.NewMailer(),
-		slacker:             notifier.NewSlacker(),
-		httpclient:          &http.Client{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
-		dialer:              &net.Dialer{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
+		usersRepo:     users.NewPostgresRepo(db),
+		endpointsRepo: endpoints.NewPostgresRepo(db),
+		certsRepo:     certs.NewPostgresRepo(db),
+		// healthcheckInterval: config.GetDuration("HEALTHCHECK_INTERVAL"),
+		// certcheckInterval:   config.GetDuration("CERTCHECK_INTERVAL"),
+		// cleanInterval:       config.GetDuration("CLEAN_INTERVAL"),
+		cleanMaxAge: config.GetDuration("CLEAN_MAX_AGE"),
+		failsCh:     make(chan FailedHealthcheck),
+		badCertsCh:  make(chan BadCert),
+		mailer:      notifier.NewMailer(),
+		slacker:     notifier.NewSlacker(),
+		httpclient:  &http.Client{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
+		dialer:      &net.Dialer{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
 	}
 }
 
@@ -80,9 +79,14 @@ func New(db *pgxpool.Pool) Inspector {
 func (i Inspector) Start() {
 	defer close(i.failsCh)
 
-	bg.Run(i.startHealthcheckLoop)
-	bg.Run(i.startCertsLoop)
-	bg.Run(i.startCleanLoop)
+	doneCh := make(chan struct{})
+	tasks := 4
+	done := 0
+
+	go i.doHealthChecks(doneCh)
+	go i.doCertChecks(doneCh)
+	go i.cleanHealthchecks(doneCh)
+	go i.cleanCertchecks(doneCh)
 
 	for {
 		select {
@@ -90,6 +94,11 @@ func (i Inspector) Start() {
 			i.handleFailedHealthcheck(fail)
 		case badCert := <-i.badCertsCh:
 			i.handleBadCert(badCert)
+		case <-doneCh:
+			done++
+			if done == tasks {
+				return
+			}
 		}
 	}
 }

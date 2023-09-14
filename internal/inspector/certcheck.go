@@ -9,36 +9,37 @@ import (
 	"domainator/internal/config"
 	"domainator/internal/logger"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// startCertsLoop starts a loop that checks TLS certificates.
-// (it immediately performs a check and then sets the interval)
-func (i Inspector) startCertsLoop() {
-	ticker := time.NewTicker(i.certcheckInterval)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		i.checkCerts()
-	}
-}
-
-// checkCerts gets all domains from the database and checks their certificates.
-func (i Inspector) checkCerts() {
+// doCertChecks gets all domains from the database and checks their certificates.
+func (i Inspector) doCertChecks(doneCh chan<- struct{}) {
 	domains, err := i.certsRepo.GetAll(context.Background())
 	if err != nil {
 		logger.Writer.Error(err)
 		return
 	}
 
-	// TODO: implement a semaphore to limit the number of concurrent checks.
+	logger.Writer.Info("Domains to check: ", len(domains))
+
+	// TODO: implement a worker pool to limit the number of concurrent checks.
+
+	wg := sync.WaitGroup{}
 
 	for _, d := range domains {
+		wg.Add(1)
 		dd := d
-		go bg.Run(func() { i.checkCert(dd) })
+		go bg.Run(func() {
+			i.checkCert(dd)
+			wg.Done()
+		})
 	}
+
+	wg.Wait()
+	doneCh <- struct{}{}
 }
 
 // checkCert checks the certificate of a domain.

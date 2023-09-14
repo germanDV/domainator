@@ -95,3 +95,12 @@ deps: confirm
 	@echo 'Installing `tern` for db migrations'
 	go install github.com/jackc/tern/v2@latest
 
+## cli: run cmd/cli/
+.PHONY: cli
+cli:
+	go run ./cmd/cli
+	
+## worker: run cmd/worker/
+.PHONY: worker
+worker:
+	go run ./cmd/worker

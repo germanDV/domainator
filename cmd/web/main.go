@@ -1,14 +1,12 @@
-// Package main is the entry point for the application.
+// Package contains the web server.
 package main
 
 import (
-	"domainator/internal/bg"
 	"domainator/internal/certs"
 	"domainator/internal/config"
 	"domainator/internal/db"
 	"domainator/internal/endpoints"
 	"domainator/internal/events"
-	"domainator/internal/inspector"
 	"domainator/internal/logger"
 	"domainator/internal/plans"
 	"domainator/internal/users"
@@ -52,10 +50,6 @@ func main() {
 	eventsRepo := events.NewPostgresRepo(db)
 	eventsController := events.NewController(eventsRepo, validate)
 	events.AttachRoutes(mux, eventsController)
-
-	// Inspector (background tasks)
-	inspctr := inspector.New(db)
-	bg.Run(inspctr.Start)
 
 	// Start server
 	logger.Writer.Info(fmt.Sprintf("Starting server on %s", addr))

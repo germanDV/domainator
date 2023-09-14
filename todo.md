@@ -3,4 +3,3 @@
 - [ ] Use `pgx` scan features instead of manually mapping from SQL to Structs
 - [ ] Reset password
 - [ ] Forgot password
-- [ ] Use a real domain in `resend` and check if it works

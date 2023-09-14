@@ -8,35 +8,37 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// startHealthcheckLoop starts a loop that gets Endpoints from the db and pings them at a set interval.
-func (i Inspector) startHealthcheckLoop() {
-	ticker := time.NewTicker(i.healthcheckInterval)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		i.doHealthchecks()
-	}
-}
-
-// doHealthchecks gets all Endpoints from the database and fires off a goroutine to check each one.
-func (i Inspector) doHealthchecks() {
+// doHealthChecks gets all Endpoints from the database and fires off a goroutine to check each one.
+func (i Inspector) doHealthChecks(doneCh chan<- struct{}) {
 	endpoints, err := i.endpointsRepo.GetAll(context.Background())
 	if err != nil {
 		logger.Writer.Error(err)
 		return
 	}
 
-	// TODO: implement a semaphore to limit the number of concurrent requests
+	logger.Writer.Info("Endpoints to check: ", len(endpoints))
+
+	// TODO: implement a worker pool to limit the number of concurrent requests
+
+	wg := sync.WaitGroup{}
 
 	for _, e := range endpoints {
+		wg.Add(1)
 		ee := e
-		bg.Run(func() { i.ping(ee) })
+		bg.Run(func() {
+			i.ping(ee)
+			wg.Done()
+		})
 	}
+
+	wg.Wait()
+	doneCh <- struct{}{}
 }
 
 // ping makes a Healthcheck and saves the result to the database.
