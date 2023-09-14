@@ -52,6 +52,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: add git revision
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }

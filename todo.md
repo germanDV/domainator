@@ -1,6 +1,6 @@
+- [ ] Run the `inspector` scripts with pprof and check that we don't leak goroutines
 - [ ] More tests
 - [ ] Use `pgx` scan features instead of manually mapping from SQL to Structs
-- [ ] Check if there is any good use-case for the new features in Go 1.21
 - [ ] Reset password
 - [ ] Forgot password
 - [ ] Use a real domain in `resend` and check if it works

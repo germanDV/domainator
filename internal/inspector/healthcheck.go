@@ -31,6 +31,8 @@ func (i Inspector) doHealthchecks() {
 		return
 	}
 
+	// TODO: implement a semaphore to limit the number of concurrent requests
+
 	for _, e := range endpoints {
 		ee := e
 		bg.Run(func() { i.ping(ee) })

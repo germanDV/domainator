@@ -13,8 +13,10 @@ func (i Inspector) startCleanLoop() {
 	ticker := time.NewTicker(i.cleanInterval)
 	defer ticker.Stop()
 
+	// Perform a clean immediately
 	i.cleanHealthchecks()
 	i.cleanCertchecks()
+
 	for range ticker.C {
 		i.cleanHealthchecks()
 		i.cleanCertchecks()

@@ -20,7 +20,6 @@ func (i Inspector) startCertsLoop() {
 	ticker := time.NewTicker(i.certcheckInterval)
 	defer ticker.Stop()
 
-	i.checkCerts()
 	for range ticker.C {
 		i.checkCerts()
 	}
@@ -33,6 +32,8 @@ func (i Inspector) checkCerts() {
 		logger.Writer.Error(err)
 		return
 	}
+
+	// TODO: implement a semaphore to limit the number of concurrent checks.
 
 	for _, d := range domains {
 		dd := d
