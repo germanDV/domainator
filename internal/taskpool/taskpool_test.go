@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"go.uber.org/goleak"
 )
 
 type out struct {
@@ -15,11 +17,13 @@ type out struct {
 }
 
 func TestPool(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
 	out := out{buf: bytes.Buffer{}}
 	pool := New(3)
 
 	// Introduce a small delay afer each pool.Add to
-	// ensure the order in which tasks are picked up.
+	// ensure the order in which tasks are finished.
 	pool.Add(func() { mock(1, &out) })
 	time.Sleep(5 * time.Millisecond)
 
@@ -58,13 +62,11 @@ func TestPool(t *testing.T) {
 }
 
 func mock(id int, o *out) {
-	t := 200
-
 	o.mu.Lock()
 	o.buf.WriteString(fmt.Sprintf("Started #%d", id))
 	o.mu.Unlock()
 
-	time.Sleep(time.Duration(t) * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 
 	o.mu.Lock()
 	o.buf.WriteString(fmt.Sprintf("Finished #%d", id))

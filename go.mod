@@ -12,6 +12,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/justinas/alice v1.2.0
+	go.uber.org/goleak v1.2.1
 	golang.org/x/crypto v0.9.0
 )
 
