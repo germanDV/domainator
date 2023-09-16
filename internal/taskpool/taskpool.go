@@ -7,20 +7,12 @@ import (
 
 type task func()
 
-type worker struct {
-	stopCh chan struct{}
-}
+type worker struct{}
 
 func (w *worker) do(ch <-chan task, wg *sync.WaitGroup) {
-loop:
-	for {
-		select {
-		case t := <-ch:
-			t()
-			wg.Done()
-		case <-w.stopCh:
-			break loop
-		}
+	for t := range ch {
+		t()
+		wg.Done()
 	}
 }
 
@@ -35,7 +27,7 @@ type Pool struct {
 func New(maxConcurrency int) *Pool {
 	workers := []worker{}
 	for i := 0; i < maxConcurrency; i++ {
-		w := worker{make(chan struct{})}
+		w := worker{}
 		workers = append(workers, w)
 	}
 
@@ -61,8 +53,5 @@ func (p *Pool) Add(task task) {
 // Wait waits until all tasks added to the Pool have finished.
 func (p *Pool) Wait() {
 	p.wg.Wait()
-	for i := range p.workers {
-		p.workers[i].stopCh <- struct{}{}
-	}
 	close(p.tasksCh)
 }
