@@ -16,8 +16,14 @@ func init() {
 
 func main() {
 	logger.Writer.Info("Worker started")
+
 	db := db.MustInit(config.GetString("DSN"))
+	logger.Writer.Info("DB connection established")
+
 	worker := inspector.New(db)
 	worker.Start()
 	logger.Writer.Info("Worker ended")
+
+	db.Close()
+	logger.Writer.Info("DB connection closed")
 }
