@@ -1,5 +1,0 @@
-- [ ] Run the `inspector` scripts with pprof and check that we don't leak goroutines
-- [ ] More tests
-- [ ] Use `pgx` scan features instead of manually mapping from SQL to Structs
-- [ ] Reset password
-- [ ] Forgot password
