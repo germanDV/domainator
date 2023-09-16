@@ -62,16 +62,13 @@ func New(db *pgxpool.Pool) Inspector {
 		usersRepo:     users.NewPostgresRepo(db),
 		endpointsRepo: endpoints.NewPostgresRepo(db),
 		certsRepo:     certs.NewPostgresRepo(db),
-		// healthcheckInterval: config.GetDuration("HEALTHCHECK_INTERVAL"),
-		// certcheckInterval:   config.GetDuration("CERTCHECK_INTERVAL"),
-		// cleanInterval:       config.GetDuration("CLEAN_INTERVAL"),
-		cleanMaxAge: config.GetDuration("CLEAN_MAX_AGE"),
-		failsCh:     make(chan FailedHealthcheck),
-		badCertsCh:  make(chan BadCert),
-		mailer:      notifier.NewMailer(),
-		slacker:     notifier.NewSlacker(),
-		httpclient:  &http.Client{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
-		dialer:      &net.Dialer{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
+		cleanMaxAge:   config.GetDuration("CLEAN_MAX_AGE"),
+		failsCh:       make(chan FailedHealthcheck),
+		badCertsCh:    make(chan BadCert),
+		mailer:        notifier.NewMailer(),
+		slacker:       notifier.NewSlacker(),
+		httpclient:    &http.Client{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
+		dialer:        &net.Dialer{Timeout: config.GetDuration("HEALTHCHECK_TIMEOUT")},
 	}
 }
 

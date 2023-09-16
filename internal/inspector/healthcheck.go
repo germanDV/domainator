@@ -2,13 +2,12 @@ package inspector
 
 import (
 	"context"
-	"domainator/internal/bg"
 	"domainator/internal/endpoints"
 	"domainator/internal/logger"
+	"domainator/internal/taskpool"
 	"fmt"
 	"io"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,22 +21,18 @@ func (i Inspector) doHealthChecks(doneCh chan<- struct{}) {
 		return
 	}
 
-	logger.Writer.Info("Endpoints to check: ", len(endpoints))
+	epCount := len(endpoints)
+	logger.Writer.Info("Endpoints to check: ", epCount)
 
-	// TODO: implement a worker pool to limit the number of concurrent requests
-
-	wg := sync.WaitGroup{}
+	workerCount := min(epCount, 50)
+	pool := taskpool.New(workerCount)
 
 	for _, e := range endpoints {
-		wg.Add(1)
 		ee := e
-		bg.Run(func() {
-			i.ping(ee)
-			wg.Done()
-		})
+		pool.Add(func() { i.ping(ee) })
 	}
 
-	wg.Wait()
+	pool.Wait()
 	doneCh <- struct{}{}
 }
 

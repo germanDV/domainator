@@ -3,13 +3,12 @@ package inspector
 import (
 	"context"
 	"crypto/tls"
-	"domainator/internal/bg"
 	"domainator/internal/certs"
 	"domainator/internal/certstatus"
 	"domainator/internal/config"
 	"domainator/internal/logger"
+	"domainator/internal/taskpool"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,22 +22,18 @@ func (i Inspector) doCertChecks(doneCh chan<- struct{}) {
 		return
 	}
 
-	logger.Writer.Info("Domains to check: ", len(domains))
+	domainCount := len(domains)
+	logger.Writer.Info("Domains to check: ", domainCount)
 
-	// TODO: implement a worker pool to limit the number of concurrent checks.
-
-	wg := sync.WaitGroup{}
+	workerCount := min(domainCount, 50)
+	pool := taskpool.New(workerCount)
 
 	for _, d := range domains {
-		wg.Add(1)
 		dd := d
-		go bg.Run(func() {
-			i.checkCert(dd)
-			wg.Done()
-		})
+		pool.Add(func() { i.checkCert(dd) })
 	}
 
-	wg.Wait()
+	pool.Wait()
 	doneCh <- struct{}{}
 }
 
