@@ -3,8 +3,8 @@ package main
 import (
 	"domainator/internal/config"
 	"domainator/internal/httphelp"
-	"domainator/internal/logger"
 	"domainator/internal/tmpl"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 
 // buildServer builds the HTTP server, applying standard middleware and common/misc. routes.
 // It returns the server and the router (to attach routes to).
-func buildServer(addr string) (*http.Server, *httprouter.Router) {
+func buildServer(addr string, logger *slog.Logger) (*http.Server, *httprouter.Router) {
 	mux := httprouter.New()
 
 	// Static files
@@ -26,11 +26,11 @@ func buildServer(addr string) (*http.Server, *httprouter.Router) {
 	mux.NotFound = http.HandlerFunc(notFoundHandler)
 
 	// Apply standard middleware
-	handler := httphelp.Standard.Then(mux)
+	handler := httphelp.Standard(logger).Then(mux)
 
 	srv := &http.Server{
 		Addr:         addr,
-		ErrorLog:     logger.Writer.ErrorLog,
+		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		Handler:      handler,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
@@ -49,12 +49,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.RenderPage(w, http.StatusOK, "home.html.tmpl", &templateData)
 }
 
-func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
+func healthcheckHandler(w http.ResponseWriter, _ *http.Request) {
 	// TODO: add git revision
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+func notFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	httphelp.NotFound(w)
 }

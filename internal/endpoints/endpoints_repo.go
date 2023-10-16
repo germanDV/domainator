@@ -253,13 +253,11 @@ func (pg *PostgresRepo) DeleteByID(ctx context.Context, id uuid.UUID, userID uui
 
 	resp, err := tx.Exec(ctx, "delete from endpoints where id = $1 and user_id = $2", id, userID)
 	if err != nil || resp.RowsAffected() == 0 {
-		tx.Rollback(ctx)
 		return err
 	}
 
 	_, err = tx.Exec(ctx, "delete from healthchecks where endpoint_id = $1", id)
 	if err != nil {
-		tx.Rollback(ctx)
 		return err
 	}
 

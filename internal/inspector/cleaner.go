@@ -2,7 +2,6 @@ package inspector
 
 import (
 	"context"
-	"domainator/internal/logger"
 	"fmt"
 )
 
@@ -10,9 +9,9 @@ import (
 func (i Inspector) cleanHealthchecks(doneCh chan<- struct{}) {
 	deleted, err := i.endpointsRepo.DeleteOldHealthchecks(context.Background(), i.cleanMaxAge)
 	if err != nil {
-		logger.Writer.Error(fmt.Sprintf("Error cleaning healthchecks: %v", err))
+		i.logger.Error(fmt.Sprintf("Error cleaning healthchecks: %v", err))
 	} else {
-		logger.Writer.Info(fmt.Sprintf("Removed %d healthchecks", deleted))
+		i.logger.Info(fmt.Sprintf("Removed %d healthchecks", deleted))
 	}
 	doneCh <- struct{}{}
 }
@@ -21,9 +20,9 @@ func (i Inspector) cleanHealthchecks(doneCh chan<- struct{}) {
 func (i Inspector) cleanCertchecks(doneCh chan<- struct{}) {
 	deleted, err := i.certsRepo.DeleteOldChecks(context.Background(), i.cleanMaxAge)
 	if err != nil {
-		logger.Writer.Error(fmt.Sprintf("Error cleaning certchecks: %v", err))
+		i.logger.Error(fmt.Sprintf("Error cleaning certchecks: %v", err))
 	} else {
-		logger.Writer.Info(fmt.Sprintf("Removed %d certchecks", deleted))
+		i.logger.Info(fmt.Sprintf("Removed %d certchecks", deleted))
 	}
 	doneCh <- struct{}{}
 }

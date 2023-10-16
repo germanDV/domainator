@@ -3,7 +3,9 @@ package events
 
 import (
 	"domainator/internal/httphelp"
+	"log/slog"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -12,13 +14,15 @@ import (
 type Controller struct {
 	repo      Repo
 	validator *validator.Validate
+	logger    *slog.Logger
 }
 
 // NewController returns a new events controller.
-func NewController(repo Repo, validate *validator.Validate) *Controller {
+func NewController(repo Repo, validate *validator.Validate, logger *slog.Logger) *Controller {
 	return &Controller{
 		repo:      repo,
 		validator: validate,
+		logger:    logger,
 	}
 }
 
@@ -36,6 +40,7 @@ func (c *Controller) Save(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
 	_, err := c.repo.Save(r.Context(), userID, &payload)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "Save", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}

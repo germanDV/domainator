@@ -5,7 +5,6 @@ import (
 	"domainator/internal/bg"
 	"domainator/internal/config"
 	"domainator/internal/httphelp"
-	"domainator/internal/logger"
 	"domainator/internal/notificators"
 	"domainator/internal/notifier"
 	"domainator/internal/plans"
@@ -13,8 +12,10 @@ import (
 	"domainator/internal/validation"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -29,15 +30,17 @@ type Controller struct {
 	validator *validator.Validate
 	mailer    notifier.Notifier
 	plansRepo plans.Repo
+	logger    *slog.Logger
 }
 
 // NewController returns a new users controller
-func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo) *Controller {
+func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo, logger *slog.Logger) *Controller {
 	return &Controller{
 		repo:      repo,
 		validator: validate,
 		mailer:    notifier.NewMailer(),
 		plansRepo: plansRepo,
+		logger:    logger,
 	}
 }
 
@@ -62,6 +65,7 @@ func (c *Controller) Signup(w http.ResponseWriter, r *http.Request) {
 
 	u, err := newUser(payload.Email, payload.Password)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "Signup", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -73,6 +77,7 @@ func (c *Controller) Signup(w http.ResponseWriter, r *http.Request) {
 			templateData["Flash"] = "Email already in use"
 			tmpl.RenderPage(w, http.StatusOK, "signup.html.tmpl", &templateData)
 		} else {
+			c.logger.Error(err.Error(), "handler", "Signup", "trace", debug.Stack())
 			httphelp.ServerError(w, err)
 		}
 		return
@@ -81,7 +86,7 @@ func (c *Controller) Signup(w http.ResponseWriter, r *http.Request) {
 	bg.Run(func() {
 		sub, body, err := notifier.ParseTemplate("verification.html.tmpl", map[string]any{"Code": code})
 		if err != nil {
-			logger.Writer.Error(err)
+			c.logger.Error(err.Error(), "handler", "Signup", "step", "parsing email template")
 			return
 		}
 
@@ -128,6 +133,7 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		c.logger.Error(err.Error(), "handler", "Login", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -156,6 +162,7 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 
 	t, err := token.SignedString(config.GetPrivateKey())
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "Login", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -217,6 +224,7 @@ func (c *Controller) Verify(w http.ResponseWriter, r *http.Request) {
 			templateData["Flash"] = err.Error()
 			tmpl.RenderPage(w, http.StatusOK, "verify.html.tmpl", &templateData)
 		} else {
+			c.logger.Error(err.Error(), "handler", "Verify", "trace", debug.Stack())
 			httphelp.ServerError(w, err)
 		}
 		return
@@ -237,6 +245,7 @@ func (c *Controller) GetSettings(w http.ResponseWriter, r *http.Request) {
 
 	prefs, err := c.repo.GetNotificationPrefsByUserID(r.Context(), userID)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "GetSettings", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -250,6 +259,7 @@ func (c *Controller) GetSettings(w http.ResponseWriter, r *http.Request) {
 
 	plan, err := c.plansRepo.GetByID(r.Context(), user.PlanID)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "GetNotificationPrefsByUserID", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -302,6 +312,7 @@ func (c *Controller) UpsertEmailSetting(w http.ResponseWriter, r *http.Request) 
 		pref, err = c.repo.UpdateNotification(r.Context(), id, userID, payload.Email)
 	}
 	if e != nil {
+		c.logger.Error(e.Error(), "handler", "UpsertEmailSetting", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -354,6 +365,7 @@ func (c *Controller) UpsertSlackSetting(w http.ResponseWriter, r *http.Request) 
 		pref, err = c.repo.UpdateNotification(r.Context(), id, userID, payload.Webhook)
 	}
 	if e != nil {
+		c.logger.Error(e.Error(), "handler", "UpsertSlackSetting", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -393,6 +405,7 @@ func (c *Controller) TogglePref(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, validation.ErrNotFound) {
 			httphelp.ClientError(w, http.StatusNotFound)
 		} else {
+			c.logger.Error(err.Error(), "handler", "TogglePref", "trace", debug.Stack())
 			httphelp.ServerError(w, err)
 		}
 		return

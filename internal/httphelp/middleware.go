@@ -3,8 +3,8 @@ package httphelp
 import (
 	"context"
 	"domainator/internal/config"
-	"domainator/internal/logger"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,16 +17,27 @@ var (
 	Base = alice.New(authenticate)
 	// Protected builds on Base and requires authentication
 	Protected = Base.Append(requireAuth)
-	// Standard is the middleware that applies to all requests
-	Standard = alice.New(recoverPanic, logRequest, secureHeaders)
 )
 
-func logRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		msg := fmt.Sprintf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
-		logger.Writer.Info(msg)
-		next.ServeHTTP(w, r)
-	})
+// Standard is the middleware that applies to all requests
+func Standard(logger *slog.Logger) alice.Chain {
+	logRequest := createLogger(logger)
+	return alice.New(recoverPanic, logRequest, secureHeaders)
+}
+
+func createLogger(logger *slog.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Info(
+				"received request",
+				"ip", r.RemoteAddr,
+				"proto", r.Proto,
+				"method", r.Method,
+				"url", r.URL.RequestURI(),
+			)
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func recoverPanic(next http.Handler) http.Handler {
@@ -34,7 +45,7 @@ func recoverPanic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
-				ServerError(w, fmt.Errorf("Recovered from panic. %v", err))
+				ServerError(w, fmt.Errorf("recovered from panic. %v", err))
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -73,7 +84,7 @@ func authenticate(next http.Handler) http.Handler {
 
 		token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return config.GetPublicKey(), nil
 		})

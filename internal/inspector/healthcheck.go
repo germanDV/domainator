@@ -3,7 +3,6 @@ package inspector
 import (
 	"context"
 	"domainator/internal/endpoints"
-	"domainator/internal/logger"
 	"domainator/internal/taskpool"
 	"fmt"
 	"io"
@@ -17,12 +16,12 @@ import (
 func (i Inspector) doHealthChecks(doneCh chan<- struct{}) {
 	endpoints, err := i.endpointsRepo.GetAll(context.Background())
 	if err != nil {
-		logger.Writer.Error(err)
+		i.logger.Error(err.Error())
 		return
 	}
 
 	epCount := len(endpoints)
-	logger.Writer.Info("Endpoints to check: ", epCount)
+	i.logger.Info(fmt.Sprintf("Endpoints to check: %d", epCount))
 
 	workerCount := min(epCount, 50)
 	pool := taskpool.New(workerCount)
@@ -38,7 +37,7 @@ func (i Inspector) doHealthChecks(doneCh chan<- struct{}) {
 
 // ping makes a Healthcheck and saves the result to the database.
 func (i Inspector) ping(s *endpoints.Endpoint) {
-	logger.Writer.Info(fmt.Sprintf("Pinging %q", s.Domain))
+	i.logger.Info(fmt.Sprintf("Pinging %q", s.Domain))
 
 	start := time.Now()
 	var status int
@@ -64,7 +63,7 @@ func (i Inspector) ping(s *endpoints.Endpoint) {
 		CreatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
-		logger.Writer.Error(fmt.Sprintf("Error saving healthcheck to db (%q): %s", s.Domain, err.Error()))
+		i.logger.Error(fmt.Sprintf("Error saving healthcheck to db (%q): %s", s.Domain, err.Error()))
 		return
 	}
 

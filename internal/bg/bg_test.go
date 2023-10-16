@@ -1,24 +1,15 @@
 package bg
 
 import (
-	"domainator/internal/logger"
-	"io"
+	"log/slog"
 	"os"
 	"sync"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	setup()
-	exitCode := m.Run()
-	os.Exit(exitCode)
-}
-
-func setup() {
-	logger.Init(io.Discard, io.Discard)
-}
-
 func TestRun(t *testing.T) {
+	Init(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+
 	t.Run("runs task in goroutine successfully", func(t *testing.T) {
 		ch := make(chan int)
 		ans := 42

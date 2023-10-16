@@ -6,7 +6,6 @@ import (
 	"domainator/internal/certs"
 	"domainator/internal/certstatus"
 	"domainator/internal/config"
-	"domainator/internal/logger"
 	"domainator/internal/taskpool"
 	"fmt"
 	"time"
@@ -18,12 +17,12 @@ import (
 func (i Inspector) doCertChecks(doneCh chan<- struct{}) {
 	domains, err := i.certsRepo.GetAll(context.Background())
 	if err != nil {
-		logger.Writer.Error(err)
+		i.logger.Error(err.Error())
 		return
 	}
 
 	domainCount := len(domains)
-	logger.Writer.Info("Domains to check: ", domainCount)
+	i.logger.Info(fmt.Sprintf("Domains to check: %d", domainCount))
 
 	workerCount := min(domainCount, 50)
 	pool := taskpool.New(workerCount)
@@ -39,7 +38,7 @@ func (i Inspector) doCertChecks(doneCh chan<- struct{}) {
 
 // checkCert checks the certificate of a domain.
 func (i Inspector) checkCert(c *certs.Cert) {
-	logger.Writer.Info(fmt.Sprintf("Checking cert for %q", c.Domain))
+	i.logger.Info(fmt.Sprintf("Checking cert for %q", c.Domain))
 
 	conn, err := tls.DialWithDialer(i.dialer, "tcp", c.Domain+":443", nil)
 	if err != nil {
@@ -75,7 +74,7 @@ func (i Inspector) checkCert(c *certs.Cert) {
 func (i Inspector) saveAndSendBadCert(c *certs.Cert, status certstatus.Status, expiry time.Time) {
 	err := i.saveCheck(c, status, expiry)
 	if err != nil {
-		logger.Writer.Error(fmt.Sprintf("Error saving cert check: %s", err))
+		i.logger.Error(fmt.Sprintf("Error saving cert check: %s", err))
 		return
 	}
 

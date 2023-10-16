@@ -2,24 +2,12 @@ package main
 
 import (
 	"bytes"
-	"domainator/internal/logger"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 )
-
-func TestMain(m *testing.M) {
-	setup()
-	exitCode := m.Run()
-	os.Exit(exitCode)
-}
-
-func setup() {
-	logger.Init(io.Discard, io.Discard)
-}
 
 func TestHealthcheckHandler(t *testing.T) {
 	rr := httptest.NewRecorder()

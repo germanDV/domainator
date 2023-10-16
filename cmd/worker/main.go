@@ -5,25 +5,25 @@ import (
 	"domainator/internal/config"
 	"domainator/internal/db"
 	"domainator/internal/inspector"
-	"domainator/internal/logger"
+	"log/slog"
 	"os"
 )
 
 func init() {
 	config.LoadEnv()
-	logger.Init(os.Stdout, os.Stderr)
 }
 
 func main() {
-	logger.Writer.Info("Worker started")
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger.Info("Worker started")
 
 	db := db.MustInit(config.GetString("DSN"))
-	logger.Writer.Info("DB connection established")
+	logger.Info("DB connection established")
 
 	worker := inspector.New(db)
 	worker.Start()
-	logger.Writer.Info("Worker ended")
+	logger.Info("Worker ended")
 
 	db.Close()
-	logger.Writer.Info("DB connection closed")
+	logger.Info("DB connection closed")
 }

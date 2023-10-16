@@ -7,11 +7,11 @@ import (
 	"domainator/internal/certstatus"
 	"domainator/internal/config"
 	"domainator/internal/endpoints"
-	"domainator/internal/logger"
 	"domainator/internal/notificators"
 	"domainator/internal/notifier"
 	"domainator/internal/users"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -35,6 +35,7 @@ type Inspector struct {
 	slacker             notifier.Notifier
 	httpclient          *http.Client
 	dialer              *net.Dialer
+	logger              *slog.Logger
 }
 
 // FailedHealthcheck represents a ping to an Endpoint that failed.
@@ -103,12 +104,12 @@ func (i Inspector) Start() {
 func (i Inspector) handleFailedHealthcheck(fail FailedHealthcheck) {
 	prefs, err := i.usersRepo.GetNotificationPrefsByEndpoint(context.Background(), fail.EndpointID)
 	if err != nil {
-		logger.Writer.Error(err)
+		i.logger.Error(err.Error())
 		return
 	}
 
 	if len(prefs) == 0 {
-		logger.Writer.Info("User does not have any notification preferences set")
+		i.logger.Info("User does not have any notification preferences set")
 		return
 	}
 
@@ -117,7 +118,7 @@ func (i Inspector) handleFailedHealthcheck(fail FailedHealthcheck) {
 		case notificators.Email:
 			sub, body, err := parseFailedHealthcheckTemplate(fail)
 			if err != nil {
-				logger.Writer.Error(err)
+				i.logger.Error(err.Error())
 				continue
 			}
 			i.mailer.Notify(notifier.Message{
@@ -131,7 +132,7 @@ func (i Inspector) handleFailedHealthcheck(fail FailedHealthcheck) {
 				Body: fmt.Sprintf("Domain %q is unhealthy. Want: %d, got: %d", fail.URL, fail.ExpectedCode, fail.ActualCode),
 			})
 		default:
-			logger.Writer.Info(fmt.Sprintf("Unknown notification type %q", pref.Service))
+			i.logger.Info(fmt.Sprintf("Unknown notification type %q", pref.Service))
 		}
 	}
 }
@@ -148,12 +149,12 @@ func parseFailedHealthcheckTemplate(fail FailedHealthcheck) (string, string, err
 func (i Inspector) handleBadCert(badCert BadCert) {
 	prefs, err := i.usersRepo.GetNotificationPrefsByCert(context.Background(), badCert.CertID)
 	if err != nil {
-		logger.Writer.Error(err)
+		i.logger.Error(err.Error())
 		return
 	}
 
 	if len(prefs) == 0 {
-		logger.Writer.Info("User does not have any notification preferences set")
+		i.logger.Info("User does not have any notification preferences set")
 		return
 	}
 
@@ -162,7 +163,7 @@ func (i Inspector) handleBadCert(badCert BadCert) {
 		case notificators.Email:
 			sub, body, err := parseBadCertTemplate(badCert)
 			if err != nil {
-				logger.Writer.Error(err)
+				i.logger.Error(err.Error())
 				continue
 			}
 			i.mailer.Notify(notifier.Message{
@@ -176,7 +177,7 @@ func (i Inspector) handleBadCert(badCert BadCert) {
 				Body: fmt.Sprintf("Trouble with certificate for domain %q: %s.", badCert.Domain, badCert.Status),
 			})
 		default:
-			logger.Writer.Info(fmt.Sprintf("Unknown notification type %q", pref.Service))
+			i.logger.Info(fmt.Sprintf("Unknown notification type %q", pref.Service))
 		}
 	}
 }

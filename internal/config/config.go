@@ -98,7 +98,7 @@ func GetRootPath() string {
 	re := regexp.MustCompile("^.*" + ProjectName)
 	root := re.FindString(cwd)
 	if root == "" {
-		panic(fmt.Errorf("Could not find root path; is the ProjectName %q correct?", ProjectName))
+		panic(fmt.Errorf("could not find root path; is the ProjectName %q correct?", ProjectName))
 	}
 
 	return root
@@ -111,7 +111,7 @@ func GetPrivateKey() *ecdsa.PrivateKey {
 		var err error
 		privateKey, err = keys.DecodePrivate(str)
 		if err != nil {
-			panic(fmt.Errorf("Could not parse JWT Private Key, %s", err))
+			panic(fmt.Errorf("could not parse JWT Private Key, %s", err))
 		}
 	}
 	return privateKey
@@ -124,7 +124,7 @@ func GetPublicKey() *ecdsa.PublicKey {
 		var err error
 		publicKey, err = keys.DecodePublic(str)
 		if err != nil {
-			panic(fmt.Errorf("Could not parse JWT Public Key, %s", err))
+			panic(fmt.Errorf("could not parse JWT Public Key, %s", err))
 		}
 	}
 	return publicKey

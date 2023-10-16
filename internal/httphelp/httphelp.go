@@ -2,10 +2,7 @@
 package httphelp
 
 import (
-	"domainator/internal/logger"
-	"fmt"
 	"net/http"
-	"runtime/debug"
 
 	"github.com/go-playground/form/v4"
 	"github.com/google/uuid"
@@ -24,9 +21,7 @@ var formDecoder = form.NewDecoder()
 
 // ServerError helper writes an error message and stack trace to the errorLog,
 // then sends a generic 500 Internal Server Error response to the user.
-func ServerError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	logger.Writer.Error(trace)
+func ServerError(w http.ResponseWriter, _ error) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
@@ -41,7 +36,7 @@ func NotFound(w http.ResponseWriter) {
 }
 
 // GetUserIDFromCtx returns the user ID from the request context.
-func GetUserIDFromCtx(w http.ResponseWriter, r *http.Request) uuid.UUID {
+func GetUserIDFromCtx(_ http.ResponseWriter, r *http.Request) uuid.UUID {
 	userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
 	if !ok || userID == uuid.Nil || userID.String() == "" {
 		return uuid.Nil
@@ -50,7 +45,7 @@ func GetUserIDFromCtx(w http.ResponseWriter, r *http.Request) uuid.UUID {
 }
 
 // GetPlanIDFromCtx returns the subscribed plan ID from the request context.
-func GetPlanIDFromCtx(w http.ResponseWriter, r *http.Request) int {
+func GetPlanIDFromCtx(_ http.ResponseWriter, r *http.Request) int {
 	planID, ok := r.Context().Value(PlanIDContextKey).(int)
 	if !ok {
 		return 0

@@ -6,7 +6,9 @@ import (
 	"domainator/internal/plans"
 	"domainator/internal/tmpl"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -18,14 +20,16 @@ type Controller struct {
 	repo      Repo
 	validator *validator.Validate
 	plansRepo plans.Repo
+	logger    *slog.Logger
 }
 
 // NewController returns a new certs controller.
-func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo) *Controller {
+func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo, logger *slog.Logger) *Controller {
 	return &Controller{
 		repo:      repo,
 		validator: validate,
 		plansRepo: plansRepo,
+		logger:    logger,
 	}
 }
 
@@ -51,6 +55,7 @@ func (c *Controller) Save(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
 	count, err := c.repo.Count(r.Context(), userID)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "Save", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -58,6 +63,7 @@ func (c *Controller) Save(w http.ResponseWriter, r *http.Request) {
 	planID := httphelp.GetPlanIDFromCtx(w, r)
 	plan, err := c.plansRepo.GetByID(r.Context(), planID)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "GetPlanIDFromCtx", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -76,6 +82,7 @@ func (c *Controller) Save(w http.ResponseWriter, r *http.Request) {
 
 	_, err = c.repo.Save(r.Context(), userID, &payload)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "Save", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -88,6 +95,7 @@ func (c *Controller) GetSummary(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
 	certs, err := c.repo.GetSummary(r.Context(), userID)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "GetSummary", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
@@ -109,6 +117,7 @@ func (c *Controller) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	userID := httphelp.GetUserIDFromCtx(w, r)
 	err = c.repo.DeleteByID(r.Context(), id, userID)
 	if err != nil {
+		c.logger.Error(err.Error(), "handler", "DeleteByID", "trace", debug.Stack())
 		httphelp.ServerError(w, err)
 		return
 	}
