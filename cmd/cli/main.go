@@ -1,4 +1,3 @@
-// Package main implements a simple CLI to perform secondary tasks.
 package main
 
 import (
@@ -8,8 +7,7 @@ import (
 
 func main() {
 	// This could potentially hold several commands,
-	// but for now it's just used to generate a key-pair
-	// to be used for signing and verifying JWTs.
+	// but for now it's just used to generate a key-pair to be used for signing and verifying JWTs.
 	// So we invoke newKeyPair() directly.
 	newKeyPair()
 }

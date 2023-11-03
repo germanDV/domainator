@@ -1,4 +1,3 @@
-// Package main contains the web server.
 package main
 
 import (

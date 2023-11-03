@@ -1,4 +1,3 @@
-// Package validation provides some utilities regarding validation and errors.
 package validation
 
 import (
@@ -14,11 +13,11 @@ type Validatable interface {
 
 var (
 	// ErrNotFound is an error that is returned when no records are found in the db
-	ErrNotFound = errors.New("No records found")
+	ErrNotFound = errors.New("no records found")
 	// ErrDuplicateDomain is an error that is returned when a domain is already in use
-	ErrDuplicateDomain = errors.New("Duplicate domain")
+	ErrDuplicateDomain = errors.New("duplicate domain")
 	// ErrDuplicateEmail is an error that is returned when an email is already in use
-	ErrDuplicateEmail = errors.New("Duplicate email")
+	ErrDuplicateEmail = errors.New("duplicate email")
 	// ErrInvalidCode is an error that is returned when verification code is invalid
-	ErrInvalidCode = errors.New("Invalid or expired verification code")
+	ErrInvalidCode = errors.New("invalid or expired verification code")
 )

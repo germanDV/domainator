@@ -48,11 +48,13 @@ func (ccr *CreateCertReq) Validate(validate *validator.Validate) bool {
 		ccr.Errors = make(map[string]string)
 		for _, e := range err.(validator.ValidationErrors) {
 			tag := e.Tag()
-			if tag == "required" {
+
+			switch tag {
+			case "required":
 				ccr.Errors[e.Field()] = "This field is required"
-			} else if tag == "hostname" {
+			case "hostname":
 				ccr.Errors[e.Field()] = "This field must be a valid hostname (e.g. example.com)"
-			} else {
+			default:
 				ccr.Errors[e.Field()] = e.Error()
 			}
 		}

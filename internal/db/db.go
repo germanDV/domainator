@@ -1,4 +1,3 @@
-// Package db contains the database connection initialization.
 package db
 
 import (

@@ -1,4 +1,3 @@
-// Package contains workers to perform background tasks.
 package main
 
 import (
@@ -14,7 +13,7 @@ func init() {
 }
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	logger.Info("Worker started")
 
 	db := db.MustInit(config.GetString("DSN"))
