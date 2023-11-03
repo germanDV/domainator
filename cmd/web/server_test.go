@@ -25,14 +25,9 @@ func TestHealthcheckHandler(t *testing.T) {
 	}
 
 	defer rs.Body.Close()
-	body, err := io.ReadAll(rs.Body)
+	_, err = io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	bytes.TrimSpace(body)
-	if string(body) != "OK" {
-		t.Errorf("want %q, got %q", "OK", string(body))
 	}
 }
 

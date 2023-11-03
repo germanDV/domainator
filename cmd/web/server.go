@@ -4,8 +4,10 @@ import (
 	"domainator/internal/config"
 	"domainator/internal/httphelp"
 	"domainator/internal/tmpl"
+	"encoding/json"
 	"log/slog"
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -50,9 +52,37 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthcheckHandler(w http.ResponseWriter, _ *http.Request) {
-	// TODO: add git revision
+	var revision string
+	var dirty bool
+	var lastCommit time.Time
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error reading build info"))
+		return
+	}
+
+	for _, data := range info.Settings {
+		switch data.Key {
+		case "vcs.revision":
+			revision = data.Value
+		case "vcs.modified":
+			dirty = true
+		case "vcs.time":
+			lastCommit, _ = time.Parse(time.RFC3339, data.Value)
+		}
+	}
+
+	resp := map[string]any{
+		"revision":   revision,
+		"dirty":      dirty,
+		"lastCommit": lastCommit,
+		"go":         info.GoVersion,
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	enc := json.NewEncoder(w)
+	enc.Encode(resp)
 }
 
 func notFoundHandler(w http.ResponseWriter, _ *http.Request) {
