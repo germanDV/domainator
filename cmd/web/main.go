@@ -46,17 +46,17 @@ func main() {
 
 	// Users
 	usersRepo := users.NewPostgresRepo(db)
-	usersController := users.NewController(usersRepo, validate, plansRepo, logger)
+	usersController := users.NewController(usersRepo, validate, plansRepo.GetByID, logger)
 	users.AttachRoutes(mux, usersController)
 
 	// Endpoints
 	endpointsRepo := endpoints.NewPostgresRepo(db)
-	endpointsController := endpoints.NewController(endpointsRepo, validate, plansRepo, logger)
+	endpointsController := endpoints.NewController(endpointsRepo, validate, plansRepo.GetByID, logger)
 	endpoints.AttachRoutes(mux, endpointsController)
 
 	// Certs
 	certsRepo := certs.NewPostgresRepo(db)
-	certsController := certs.NewController(certsRepo, validate, plansRepo, logger)
+	certsController := certs.NewController(certsRepo, validate, plansRepo.GetByID, logger)
 	certs.AttachRoutes(mux, certsController)
 
 	// Events

@@ -18,19 +18,19 @@ import (
 
 // Controller is a controller that handles requests to the endpoints service.
 type Controller struct {
-	repo      Repo
-	validator *validator.Validate
-	plansRepo plans.Repo
-	logger    *slog.Logger
+	repo       Repo
+	validator  *validator.Validate
+	planGetter plans.Getter
+	logger     *slog.Logger
 }
 
 // NewController returns a new endpoints controller.
-func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo, logger *slog.Logger) *Controller {
+func NewController(repo Repo, validate *validator.Validate, planGetter plans.Getter, logger *slog.Logger) *Controller {
 	return &Controller{
-		repo:      repo,
-		validator: validate,
-		plansRepo: plansRepo,
-		logger:    logger,
+		repo:       repo,
+		validator:  validate,
+		planGetter: planGetter,
+		logger:     logger,
 	}
 }
 
@@ -77,7 +77,7 @@ func (c *Controller) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	planID := httphelp.GetPlanIDFromCtx(w, r)
-	plan, err := c.plansRepo.GetByID(r.Context(), planID)
+	plan, err := c.planGetter(r.Context(), planID)
 	if err != nil {
 		c.logger.Error(err.Error(), "handler", "CreateEndpoint", "trace", debug.Stack())
 		httphelp.ServerError(w, err)

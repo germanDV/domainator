@@ -43,7 +43,6 @@ func (pg *PostgresRepo) Save(ctx context.Context, userID uuid.UUID, ev *CreateEv
 }
 
 // GetAll returns all events with a given name.
-// TODO: test this
 func (pg *PostgresRepo) GetAll(ctx context.Context, eventName string) ([]Event, error) {
 	rows, _ := pg.DB.Query(ctx, `select id, user_id, name from events where name = $1`, eventName)
 	return pgx.CollectRows(rows, pgx.RowToStructByNameLax[Event])

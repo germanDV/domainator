@@ -26,21 +26,21 @@ import (
 
 // Controller is a controller that handles requests to the users service
 type Controller struct {
-	repo      Repo
-	validator *validator.Validate
-	mailer    notifier.Notifier
-	plansRepo plans.Repo
-	logger    *slog.Logger
+	repo       Repo
+	validator  *validator.Validate
+	mailer     notifier.Notifier
+	planGetter plans.Getter
+	logger     *slog.Logger
 }
 
 // NewController returns a new users controller
-func NewController(repo Repo, validate *validator.Validate, plansRepo plans.Repo, logger *slog.Logger) *Controller {
+func NewController(repo Repo, validate *validator.Validate, planGetter plans.Getter, logger *slog.Logger) *Controller {
 	return &Controller{
-		repo:      repo,
-		validator: validate,
-		mailer:    notifier.NewMailer(),
-		plansRepo: plansRepo,
-		logger:    logger,
+		repo:       repo,
+		validator:  validate,
+		mailer:     notifier.NewMailer(),
+		planGetter: planGetter,
+		logger:     logger,
 	}
 }
 
@@ -257,7 +257,7 @@ func (c *Controller) GetSettings(w http.ResponseWriter, r *http.Request) {
 		return p.Service == notificators.Slack
 	})
 
-	plan, err := c.plansRepo.GetByID(r.Context(), user.PlanID)
+	plan, err := c.planGetter(r.Context(), user.PlanID)
 	if err != nil {
 		c.logger.Error(err.Error(), "handler", "GetNotificationPrefsByUserID", "trace", debug.Stack())
 		httphelp.ServerError(w, err)

@@ -55,6 +55,9 @@ func (pg *PostgresRepo) GetAll(ctx context.Context) ([]*Plan, error) {
 	return plans, nil
 }
 
+// Getter is a function that returns a plan by its ID.
+type Getter func(ctx context.Context, id int) (*Plan, error)
+
 // GetByID returns a plan by its ID.
 func (pg *PostgresRepo) GetByID(ctx context.Context, id int) (*Plan, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
