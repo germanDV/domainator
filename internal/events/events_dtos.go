@@ -8,10 +8,10 @@ import (
 
 // Event represents an application event that we want to store in the database.
 type Event struct {
-	ID      uuid.UUID
-	UserID  uuid.UUID
-	Name    string
-	Payload map[string]any
+	ID      uuid.UUID      `db:"id"`
+	UserID  uuid.UUID      `db:"user_id"`
+	Name    string         `db:"name"`
+	Payload map[string]any `db:"payload"`
 }
 
 // CreateEventReq represents the request to create an event.
@@ -29,11 +29,12 @@ func (ecr *CreateEventReq) Validate(validate *validator.Validate) bool {
 		ecr.Errors = make(map[string]string)
 		for _, e := range err.(validator.ValidationErrors) {
 			tag := e.Tag()
-			if tag == "required" {
+			switch tag {
+			case "required":
 				ecr.Errors[e.Field()] = "This field is required"
-			} else if tag == "lte" {
+			case "lte":
 				ecr.Errors[e.Field()] = "This field must have at most 64 characters"
-			} else {
+			default:
 				ecr.Errors[e.Field()] = e.Error()
 			}
 		}

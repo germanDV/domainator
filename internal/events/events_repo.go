@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Repo is an interface that represents a repository for events.
 type Repo interface {
 	Save(ctx context.Context, userID uuid.UUID, payload *CreateEventReq) (uuid.UUID, error)
+	GetAll(ctx context.Context, eventName string) ([]Event, error)
 }
 
 // PostgresRepo is a repository that implements the Repo interface.
@@ -38,4 +40,11 @@ func (pg *PostgresRepo) Save(ctx context.Context, userID uuid.UUID, ev *CreateEv
 	}
 
 	return newID, nil
+}
+
+// GetAll returns all events with a given name.
+// TODO: test this
+func (pg *PostgresRepo) GetAll(ctx context.Context, eventName string) ([]Event, error) {
+	rows, _ := pg.DB.Query(ctx, `select id, user_id, name from events where name = $1`, eventName)
+	return pgx.CollectRows(rows, pgx.RowToStructByNameLax[Event])
 }
