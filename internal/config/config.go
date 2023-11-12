@@ -22,20 +22,25 @@ var (
 	publicKey  *ecdsa.PublicKey
 )
 
+var configLoaded = false
+
 // LoadEnv loads env vars and panics if there's an error.
 // If ENV_FILENAME is set, it will load env vars from ProjectName/ENV_FILENAME.
 // Otherwise, it will load env vars from .env.
 func LoadEnv() {
-	envFilename, ok := os.LookupEnv("ENV_FILENAME")
-	var err error
-	if ok {
-		rootPath := GetRootPath()
-		err = godotenv.Load(rootPath + "/" + envFilename)
-	} else {
-		err = godotenv.Load()
-	}
-	if err != nil {
-		panic(err)
+	if !configLoaded {
+		envFilename, ok := os.LookupEnv("ENV_FILENAME")
+		var err error
+		if ok {
+			rootPath := GetRootPath()
+			err = godotenv.Load(rootPath + "/" + envFilename)
+		} else {
+			err = godotenv.Load()
+		}
+		if err != nil {
+			panic(err)
+		}
+		configLoaded = true
 	}
 }
 

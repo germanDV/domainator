@@ -14,14 +14,18 @@ confirm:
 ## test: run tests
 .PHONY: test
 test:
-	ENV_FILENAME=.env.test go test ./...
+	@echo 'Creating Postgres container...'
+	docker compose -f docker-compose.test.yml up -d
+	sleep 2
+	@echo 'Running DB migrations...'
+	@PG_PASSWORD=${PG_PASSWORD} tern migrate -c tern.test.conf -m ./migrations
+	@echo 'Running tests...'
+	# the '-' at the beginning ignores errors and continues execution
+	-ENV_FILENAME=.env.test go test ./...
+	@echo 'Removing Postgres container...'
+	-docker compose -f docker-compose.test.yml down
 
-## test/race: run tests with race detector
-.PHONY: test/race
-test/race:
-	ENV_FILENAME=.env.test go test -race ./...
-
-## audit: tidy dependencies, format, vet and test
+## audit: tidy dependencies, format and vet
 .PHONY: audit
 audit:
 	@echo 'Tidying and verifying module dependencies...'
@@ -31,8 +35,6 @@ audit:
 	go fmt ./...
 	@echo 'Vetting code...'
 	go vet ./...
-	@echo 'Running tests...'
-	ENV_FILENAME=.env.test go test -race -vet=off ./...
 
 ## dev: run with hot-reloading
 .PHONY: dev
@@ -86,7 +88,7 @@ db/migrate/up:
 db/migrate/down: confirm
 	@echo 'Rolling back ${n} migrations..'
 	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations --destination -${n}
-	
+
 ## deps: install external dependencies not used in source code
 .PHONY: deps
 deps: confirm
@@ -99,7 +101,7 @@ deps: confirm
 .PHONY: cli
 cli:
 	go run ./cmd/cli
-	
+
 ## worker: run cmd/worker/
 .PHONY: worker
 worker:

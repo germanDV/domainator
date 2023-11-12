@@ -1,8 +1,8 @@
 version: '3.1'
 
 services:
-  db:
-    container_name: domainator_pg
+  db_test:
+    container_name: domainator_test_pg
     image: postgres:15-alpine
     restart: on-failure
     healthcheck:
@@ -13,9 +13,6 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pass123
-      POSTGRES_DB: domainator
+      POSTGRES_DB: domainatortest
     ports:
-      - 5432:5432
-    # user: postgres
-    # volumes:
-    #   - ./data/postgres:/var/lib/postgresql/data
+      - 54340:5432
