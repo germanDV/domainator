@@ -96,11 +96,17 @@ db/migrate/down: confirm
 	@echo 'Rolling back ${n} migrations..'
 	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations --destination -${n}
 
-## upgrade
+## upgrade: upgrade all dependencies
 .PHONY: upgrade
 upgrade:
 	@echo 'Upgrading dependencies to latest versions...'
 	go get -t -u ./...
+
+## upgrade/patch: upgrade dependencies to latest patch version
+.PHONY: upgrade/patch
+upgrade:
+	@echo 'Upgrading dependencies to latest patch versions...'
+	go get -u=patch ./...
 
 ## deps: install external dependencies not used in source code
 .PHONY: deps
