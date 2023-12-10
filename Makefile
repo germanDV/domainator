@@ -25,6 +25,11 @@ test:
 	@echo 'Removing Postgres container...'
 	-docker compose -f docker-compose.test.yml down
 
+## vuln: check for vulnerabilities
+.PHONY: vuln
+vuln:
+	govulncheck ./...
+
 ## audit: tidy dependencies, format and vet
 .PHONY: audit
 audit:
@@ -35,6 +40,8 @@ audit:
 	go fmt ./...
 	@echo 'Vetting code...'
 	go vet ./...
+	@echo 'Checking dependencies for vulnerabilities...'
+	govulncheck ./...
 
 ## dev: run with hot-reloading
 .PHONY: dev
@@ -88,6 +95,12 @@ db/migrate/up:
 db/migrate/down: confirm
 	@echo 'Rolling back ${n} migrations..'
 	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations --destination -${n}
+
+## upgrade
+.PHONY: upgrade
+upgrade:
+	@echo 'Upgrading dependencies to latest versions...'
+	go get -t -u ./...
 
 ## deps: install external dependencies not used in source code
 .PHONY: deps
