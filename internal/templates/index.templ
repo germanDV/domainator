@@ -1,0 +1,30 @@
+package templates
+
+templ Index() {
+  <div hx-ext="response-targets">
+    <h2>Welcome to Domainator</h2>
+    <form
+      hx-post="/domain"
+      hx-trigger="submit"
+      hx-swap="outerHTML"
+      hx-target-400="#error"
+    >
+      <input
+        type="text"
+        name="domain"
+        placeholder="Enter a domain"
+        required
+      />
+      <button type="submit">Register Domain</button>
+    </form>
+    <div id="error"></div>
+  </div>
+}
+
+templ RegisterDomainSuccess(domain string) {
+  <p>Success! {domain} has been registered.</p>
+}
+
+templ RegisterDomainError(msg string) {
+  <p>Error: {msg}</p>
+}

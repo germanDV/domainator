@@ -1,0 +1,6 @@
+tmp/
+bin/
+data/
+cmd/lab/
+legacy/
+.env
