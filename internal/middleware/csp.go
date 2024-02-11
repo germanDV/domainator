@@ -26,6 +26,9 @@ func generateRandomString(len int) string {
 }
 
 func CSP(next http.Handler) http.Handler {
+	// The hash of the CSS that HTMX injects
+	htmxCSSHash := "sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg="
+
 	htmxNonce := generateRandomString(32)
 	respTrgtNonce := generateRandomString(32)
 	stylesNonce := generateRandomString(32)
@@ -36,8 +39,8 @@ func CSP(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cspHeader := fmt.Sprintf(
-			"default-src 'self'; script-src 'nonce-%s' 'nonce-%s'; style-src 'nonce-%s';",
-			htmxNonce, respTrgtNonce, stylesNonce,
+			"default-src 'self'; script-src 'nonce-%s' 'nonce-%s' 'unsafe-eval'; style-src 'nonce-%s' '%s';",
+			htmxNonce, respTrgtNonce, stylesNonce, htmxCSSHash,
 		)
 
 		w.Header().Set("Content-Security-Policy", cspHeader)

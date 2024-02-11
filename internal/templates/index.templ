@@ -1,13 +1,19 @@
 package templates
 
-templ Index() {
+import "github.com/germandv/domainator/internal/domains/certs"
+
+templ Index(certificates []certs.CertDto) {
   <div hx-ext="response-targets">
-    <h2>Welcome to Domainator</h2>
+    <h1>The Home Of The <span class="primary-color">Domainator</span></h1>
+
     <form
       hx-post="/domain"
       hx-trigger="submit"
-      hx-swap="outerHTML"
+      hx-target="#table"
+      hx-swap="beforeend"
       hx-target-400="#error"
+      hx-on::before-request="document.querySelector('#error').innerHTML = ''"
+      hx-on::after-request="if(event.detail.xhr.status < 300) this.reset()"
     >
       <input
         type="text"
@@ -16,13 +22,19 @@ templ Index() {
         required
       />
       <button type="submit">Register Domain</button>
+
+      <div class="loader-container">
+        <div class="loader"><div></div><div></div><div></div></div>
+      </div>
     </form>
     <div id="error"></div>
+
+    @certsTable(certificates)
   </div>
 }
 
-templ RegisterDomainSuccess(domain string) {
-  <p>Success! {domain} has been registered.</p>
+templ RegisterDomainSuccess(id string, domain string) {
+  <div>{id} - <strong>{domain}</strong></div>
 }
 
 templ RegisterDomainError(msg string) {

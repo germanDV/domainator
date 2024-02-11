@@ -1,28 +1,32 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
+	"time"
 
+	"github.com/germandv/domainator/internal/domains/certs"
 	"github.com/germandv/domainator/internal/templates"
 )
 
-func RegisterDomain(w http.ResponseWriter, r *http.Request) {
-	domain := strings.TrimSpace(r.FormValue("domain"))
+func RegisterDomain(certsService certs.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		domain := r.FormValue("domain")
+		resp, err := certsService.RegisterCert(certs.RegisterCertReq{Domain: domain})
+		if err != nil {
+			w.WriteHeader(400)
+			e := templates.RegisterDomainError(err.Error()).Render(r.Context(), w)
+			if e != nil {
+				http.Error(w, "Error rendering template", http.StatusInternalServerError)
+			}
+			return
+		}
 
-	if domain == "" || !strings.HasSuffix(domain, ".xyz") {
-		w.WriteHeader(400)
-		msg := fmt.Sprintf("%q is not a valid domain", domain)
-		err := templates.RegisterDomainError(msg).Render(r.Context(), w)
+		// TODO: remove after testing
+		time.Sleep(1 * time.Second)
+
+		err = templates.RegisterDomainSuccess(resp.ID, domain).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		}
-		return
-	}
-
-	err := templates.RegisterDomainSuccess(domain).Render(r.Context(), w)
-	if err != nil {
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
 }

@@ -3,4 +3,5 @@ bin/
 data/
 cmd/lab/
 legacy/
+brainstorm/
 .env

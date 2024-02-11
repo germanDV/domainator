@@ -1,0 +1,18 @@
+package templates
+
+import "github.com/germandv/domainator/internal/domains/certs"
+
+templ certRow(c certs.CertDto) {
+  <div class="row">
+    <span>{c.ID}</span>
+    <span>{c.Domain}</span>
+    <button
+      hx-delete={"/domain/"+c.ID}
+      hx-target="closest div"
+      hx-swap="outerHTML swap:1s"
+      hx-confirm="Are you sure?"
+    >
+      delete
+    </button>
+  </div>
+}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/germandv/domainator/internal/configstruct"
+	"github.com/germandv/domainator/internal/domains/certs"
 	"github.com/germandv/domainator/internal/handlers"
 	"github.com/germandv/domainator/internal/middleware"
 )
@@ -34,13 +35,15 @@ func main() {
 		panic(err)
 	}
 
+	certsService := certs.NewService()
 	fileServer := http.FileServer(http.Dir("./static"))
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck)
-	mux.HandleFunc("GET /", handlers.GetHome)
-	mux.HandleFunc("POST /domain", handlers.RegisterDomain)
+	mux.HandleFunc("GET /", handlers.GetHome(certsService))
+	mux.HandleFunc("POST /domain", handlers.RegisterDomain(certsService))
+	mux.HandleFunc("DELETE /domain/{id}", handlers.DeleteDomain(certsService))
 
 	addr := fmt.Sprintf(":%d", config.Port)
 	srv := &http.Server{

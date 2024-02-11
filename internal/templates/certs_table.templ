@@ -1,0 +1,15 @@
+package templates
+
+import "github.com/germandv/domainator/internal/domains/certs"
+
+templ certsTable(certificates []certs.CertDto) {
+    if len(certificates) == 0 {
+      <p>Nothing To See Here</p>
+    } else {
+      <div id="table" class="table">
+        for _, c := range certificates {
+          @certRow(c)
+        }
+      </div>
+    }
+}
