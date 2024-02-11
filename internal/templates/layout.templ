@@ -1,13 +1,29 @@
 package templates
 
+import "github.com/germandv/domainator/internal/middleware"
+
 templ header(title string) {
   <head>
     <title>{title}</title>
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-		<script src="static/scripts/htmx.min.js"></script>
-		<script src="static/scripts/response-targets.js"></script>
-		<link rel="stylesheet" href="static/styles/main.css" />
+
+		<script
+      src="static/scripts/htmx.min.js"
+      nonce={ctx.Value(middleware.HtmxNonceKey).(string)}
+    ></script>
+
+		<script
+      src="static/scripts/response-targets.js"
+      nonce={ctx.Value(middleware.RespTrgtNonceKey).(string)}
+    ></script>
+
+		<link
+      rel="stylesheet"
+      href="static/styles/main.css"
+      nonce={ctx.Value(middleware.StylesNonceKey).(string)}
+    />
+
     <link rel="icon" type="image/png" href="static/images/favicon.png" />
   </head>
 }
