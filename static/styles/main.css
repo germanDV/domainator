@@ -6,65 +6,120 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Ubuntu', 'Roboto', 'Oxygen', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --primary-bg: #2E3440;
-  --secondary-bg: #4C566A;
-  --primary-fg: #D8DEE9;
-  --secondary-fg: #ECEFF4;
-  --accent-blue: #5E81AC;
-  --accent-teal: #8FBCBB;
-  --accent-violet: #B48EAD;
+  --primary-white: #ECEFF4;
+  --secondary-white: #D8DEE9;
+  --primary-black: #2E3440;
+  --secondary-black: #4C566A;
   --error: #BF616A;
   --warning: #D08770;
   --success: #A3BE8C;
+  --foother-h: 48px;
 }
 
 body {
-  background: var(--primary-bg);
-  color: var(--primary-fg);
-  min-height: 100vh;
+  background: var(--primary-white);
+  color: var(--primary-black);
+}
+
+main {
+  min-height: calc(100vh - var(--foother-h));
+  padding: 32px;
+}
+
+footer {
+  height: var(--foother-h);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--secondary-white);
+}
+
+section {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 h1 {
-  font-size: 3em;
+  font-size: 2.5em;
   font-weight: lighter;
+  margin: 16px 0;
 }
 
-.primary-color {
-  color: var(--accent-blue);
+h3 {
+  font-size: 1.5em;
   font-weight: normal;
+  color: var(--secondary-black);
+}
+
+.hero {
+  margin-bottom: 200px;
 }
 
 input {
   font-size: 1.1em;
-  background: var(--primary-bg);
-  color: var(--primary-fg);
-  border: 1px solid var(--secondary-bg);
+  background: var(--primary-white);
+  color: var(--primary-black);
+  border: 1px solid var(--secondary-white);
+  border-radius: 4px;
   padding: 8px 16px;
+  &:focus {
+    border: 1px solid var(--primary-black);
+  }
 }
 
 button {
   font-size: 1.1em;
-  border: 1px solid var(--accent-blue);
-  background: var(--primary-bg);
-  color: var(--accent-blue);
+  border: 1px solid var(--primary-black);
+  border-radius: 4px;
+  background: var(--primary-black);
+  color: var(--primary-white);
   padding: 8px 16px;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
-
   &:hover {
-    background: var(--accent-blue);
-    color: var(--primary-fg);
+    background: var(--secondary-black);
   }
 }
 
-.table {
-  margin: 48px 0;
-  border: 1px solid var(--secondary-bg);
+button.btn-danger {
+  border: 1px solid var(--error);
+  background: var(--primary-white);
+  color: var(--error);
+  padding: 4px 8px;
+  &:hover {
+    background: var(--error);
+    color: var(--primary-white);
+  }
+}
+
+table {
+  margin: 24px 0;
   padding: 16px;
+  width: 100%;
+  border-collapse: collapse;
+
+  tr {
+    border-bottom: 1px solid var(--secondary-white);
+  }
+
+  thead {
+    color: var(--secondary-black);
+    th {
+      font-weight: normal;
+    }
+  }
+
+  td,th {
+    padding: 12px;
+  }
+
+  th {
+    text-align: left;
+  }
+
+  .row {
+    padding: 8px 4px;
+  }
 
   .row.htmx-swapping {
     opacity: 0;
@@ -78,6 +133,12 @@ form {
   }
 }
 
+form.inline {
+  display: flex;
+  align-items: center;
+  column-gap: 12px;
+}
+
 form.htmx-request {
   button {
     opacity: 0.5;
@@ -87,6 +148,10 @@ form.htmx-request {
   .loader-container {
     display: inline-block;
   }
+}
+
+.error-text {
+  color: var(--error);
 }
 
 .loader {
@@ -100,7 +165,7 @@ form.htmx-request {
   position: absolute;
   left: 0px;
   width: 8px;
-  background: var(--accent-violet);
+  background: var(--secondary-black);
   animation: loader-animation 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
 }
 .loader div:nth-child(1) {

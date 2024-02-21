@@ -3,10 +3,14 @@ package templates
 import "github.com/germandv/domainator/internal/domains/certs"
 
 templ Index(certificates []certs.CertDto) {
-  <div hx-ext="response-targets">
-    <h1>The Home Of The <span class="primary-color">Domainator</span></h1>
+  <section hx-ext="response-targets">
+    <div class="hero">
+      <h1>The Home Of The Domainator</h1>
+      <h3>Manage your TLS certificates</h3>
+    </div>
 
     <form
+      class="inline"
       hx-post="/domain"
       hx-trigger="submit"
       hx-target="#table"
@@ -18,10 +22,10 @@ templ Index(certificates []certs.CertDto) {
       <input
         type="text"
         name="domain"
-        placeholder="Enter a domain"
+        placeholder="Add New Domain"
         required
       />
-      <button type="submit">Register Domain</button>
+      <button type="submit">Add</button>
 
       <div class="loader-container">
         <div class="loader"><div></div><div></div><div></div></div>
@@ -30,13 +34,13 @@ templ Index(certificates []certs.CertDto) {
     <div id="error"></div>
 
     @certsTable(certificates)
-  </div>
+  </section>
 }
 
-templ RegisterDomainSuccess(id string, domain string) {
-  <div>{id} - <strong>{domain}</strong></div>
+templ RegisterDomainSuccess(c certs.CertDto) {
+  @certRow(c)
 }
 
 templ RegisterDomainError(msg string) {
-  <p>Error: {msg}</p>
+  <p class="error-text">Error: {msg}</p>
 }

@@ -3,7 +3,7 @@ package certs
 import "time"
 
 type Service interface {
-	RegisterCert(dto RegisterCertReq) (RegisterCertResp, error)
+	RegisterCert(dto RegisterCertReq) (CertDto, error)
 	GetAll() ([]CertDto, error)
 	Delete(id string) error
 }
@@ -19,17 +19,23 @@ func NewService() *CertsService {
 	repo.Save(Cert{
 		ID:        NewID(),
 		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().AddDate(0, 6, 0),
 		Domain:    Domain("go.dev"),
+		Issuer:    Issuer("Let's Encrypt"),
 	})
 	repo.Save(Cert{
 		ID:        NewID(),
 		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().AddDate(0, -2, 0),
 		Domain:    Domain("archlinux.org"),
+		Issuer:    Issuer("Certigo"),
 	})
 	repo.Save(Cert{
 		ID:        NewID(),
 		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().AddDate(0, 0, 10),
 		Domain:    Domain("debian.org"),
+		Issuer:    Issuer("Comodo"),
 	})
 
 	return &CertsService{
@@ -37,19 +43,27 @@ func NewService() *CertsService {
 	}
 }
 
-func (s *CertsService) RegisterCert(dto RegisterCertReq) (RegisterCertResp, error) {
+func (s *CertsService) RegisterCert(dto RegisterCertReq) (CertDto, error) {
 	domain, err := NewDomain(dto.Domain)
 	if err != nil {
-		return RegisterCertResp{}, err
+		return CertDto{}, err
 	}
 
-	cert := New(domain)
+	// TODO: do this for real
+	issuer, err := NewIssuer("Let's Encrypt")
+	if err != nil {
+		return CertDto{}, err
+	}
+
+	expiresAt := time.Now().AddDate(0, 3, 0)
+
+	cert := New(domain, issuer, expiresAt)
 	err = s.repo.Save(cert)
 	if err != nil {
-		return RegisterCertResp{}, err
+		return CertDto{}, err
 	}
 
-	return RegisterCertResp{ID: cert.ID.String()}, nil
+	return toDTO(cert), nil
 }
 
 func (s *CertsService) GetAll() ([]CertDto, error) {
@@ -60,11 +74,7 @@ func (s *CertsService) GetAll() ([]CertDto, error) {
 
 	dtos := []CertDto{}
 	for _, c := range certificates {
-		dtos = append(dtos, CertDto{
-			ID:        c.ID.String(),
-			Domain:    c.Domain.String(),
-			CreatedAt: c.CreatedAt,
-		})
+		dtos = append(dtos, toDTO(c))
 	}
 
 	return dtos, nil
@@ -77,4 +87,23 @@ func (s *CertsService) Delete(id string) error {
 	}
 
 	return s.repo.Delete(parsedID)
+}
+
+func toDTO(c Cert) CertDto {
+	today := time.Now()
+	status := "valid"
+	if c.ExpiresAt.Before(today) {
+		status = "expired"
+	} else if c.ExpiresAt.Before(today.AddDate(0, 0, 10)) {
+		status = "expires_soon"
+	}
+
+	return CertDto{
+		ID:        c.ID.String(),
+		CreatedAt: c.CreatedAt.Format(time.DateOnly),
+		ExpiresAt: c.ExpiresAt.Format(time.DateOnly),
+		Domain:    c.Domain.String(),
+		Issuer:    c.Issuer.String(),
+		Status:    status,
+	}
 }

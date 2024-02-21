@@ -3,13 +3,20 @@ package templates
 import "github.com/germandv/domainator/internal/domains/certs"
 
 templ certsTable(certificates []certs.CertDto) {
-    if len(certificates) == 0 {
-      <p>Nothing To See Here</p>
-    } else {
-      <div id="table" class="table">
+    <table id="table">
+      <thead>
+        <tr>
+          <th scope="col">Domain</th>
+          <th scope="col">Expires</th>
+          <th scope="col">Issuer</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
         for _, c := range certificates {
           @certRow(c)
         }
-      </div>
-    }
+      </tbody>
+    </table>
 }
