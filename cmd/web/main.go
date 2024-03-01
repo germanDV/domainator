@@ -15,6 +15,7 @@ import (
 	"github.com/germandv/domainator/internal/domains/certs"
 	"github.com/germandv/domainator/internal/handlers"
 	"github.com/germandv/domainator/internal/middleware"
+	"github.com/germandv/domainator/internal/tlser"
 )
 
 type AppConfig struct {
@@ -35,7 +36,9 @@ func main() {
 		panic(err)
 	}
 
-	certsService := certs.NewService()
+	tlsClient := tlser.New(5 * time.Second)
+	certsService := certs.NewService(tlsClient)
+
 	fileServer := http.FileServer(http.Dir("./static"))
 
 	mux := http.NewServeMux()

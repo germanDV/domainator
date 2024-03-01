@@ -7,7 +7,11 @@ templ certRow(c certs.CertDto) {
     <th scope="row">{c.Domain}</th>
     <td>{c.ExpiresAt}</td>
     <td>{c.Issuer}</td>
-    <td>{c.Status}</td>
+    <td>
+      <span class={"chip", templ.KV("error-text", c.Status == "Expired")}>
+        {c.Status}
+      </span>
+    </td>
     <td>
       <button
         hx-delete={"/domain/"+c.ID}

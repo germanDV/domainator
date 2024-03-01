@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/germandv/domainator/internal/domains/certs"
 	"github.com/germandv/domainator/internal/templates"
@@ -20,9 +19,6 @@ func RegisterDomain(certsService certs.Service) http.HandlerFunc {
 			}
 			return
 		}
-
-		// TODO: remove after testing
-		time.Sleep(1 * time.Second)
 
 		err = templates.RegisterDomainSuccess(cert).Render(r.Context(), w)
 		if err != nil {

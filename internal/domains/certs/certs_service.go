@@ -1,6 +1,11 @@
 package certs
 
-import "time"
+import (
+	"fmt"
+	"time"
+
+	"github.com/germandv/domainator/internal/tlser"
+)
 
 type Service interface {
 	RegisterCert(dto RegisterCertReq) (CertDto, error)
@@ -9,10 +14,11 @@ type Service interface {
 }
 
 type CertsService struct {
-	repo Repo
+	repo      Repo
+	tlsClient tlser.Client
 }
 
-func NewService() *CertsService {
+func NewService(tlsClient tlser.Client) *CertsService {
 	repo := NewRepo()
 
 	// Add some dummy data
@@ -39,7 +45,8 @@ func NewService() *CertsService {
 	})
 
 	return &CertsService{
-		repo: repo,
+		repo:      repo,
+		tlsClient: tlsClient,
 	}
 }
 
@@ -49,15 +56,17 @@ func (s *CertsService) RegisterCert(dto RegisterCertReq) (CertDto, error) {
 		return CertDto{}, err
 	}
 
-	// TODO: do this for real
-	issuer, err := NewIssuer("Let's Encrypt")
+	data := s.tlsClient.GetCertData(domain.String())
+	if data.Status != tlser.StatusOK {
+		return CertDto{}, fmt.Errorf("TLS error: %s", data.Status)
+	}
+
+	issuer, err := NewIssuer(data.Issuer)
 	if err != nil {
 		return CertDto{}, err
 	}
 
-	expiresAt := time.Now().AddDate(0, 3, 0)
-
-	cert := New(domain, issuer, expiresAt)
+	cert := New(domain, issuer, data.Expiry)
 	err = s.repo.Save(cert)
 	if err != nil {
 		return CertDto{}, err
@@ -90,12 +99,13 @@ func (s *CertsService) Delete(id string) error {
 }
 
 func toDTO(c Cert) CertDto {
-	today := time.Now()
-	status := "valid"
-	if c.ExpiresAt.Before(today) {
-		status = "expired"
-	} else if c.ExpiresAt.Before(today.AddDate(0, 0, 10)) {
-		status = "expires_soon"
+	now := time.Now()
+	diffDays := c.ExpiresAt.Sub(now).Hours() / 24
+	status := ""
+	if diffDays < 0 {
+		status = "Expired"
+	} else {
+		status = fmt.Sprintf("Expires in %d days", int(diffDays))
 	}
 
 	return CertDto{

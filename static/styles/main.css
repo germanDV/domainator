@@ -82,13 +82,13 @@ button {
 }
 
 button.btn-danger {
-  border: 1px solid var(--error);
+  border: 1px solid var(--secondary-black);
   background: var(--primary-white);
-  color: var(--error);
+  color: var(--secondary-black);
   padding: 4px 8px;
   &:hover {
-    background: var(--error);
-    color: var(--primary-white);
+    border: 1px solid var(--error);
+    color: var(--error);
   }
 }
 
@@ -152,6 +152,13 @@ form.htmx-request {
 
 .error-text {
   color: var(--error);
+}
+
+.chip {
+  font-weight: bold;
+  border-radius: 16px;
+  border: 1px solid var(--secondary-white);
+  padding: 4px 8px;
 }
 
 .loader {
