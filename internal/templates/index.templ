@@ -37,10 +37,6 @@ templ Index(certificates []certs.CertDto) {
   </section>
 }
 
-templ RegisterDomainSuccess(c certs.CertDto) {
-  @certRow(c)
-}
-
 templ RegisterDomainError(msg string) {
   <p class="error-text">Error: {msg}</p>
 }

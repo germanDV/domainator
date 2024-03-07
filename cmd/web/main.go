@@ -46,6 +46,7 @@ func main() {
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck)
 	mux.HandleFunc("GET /", handlers.GetHome(certsService))
 	mux.HandleFunc("POST /domain", handlers.RegisterDomain(certsService))
+	mux.HandleFunc("PUT /domain/{id}", handlers.UpdateDomain(certsService))
 	mux.HandleFunc("DELETE /domain/{id}", handlers.DeleteDomain(certsService))
 
 	addr := fmt.Sprintf(":%d", config.Port)

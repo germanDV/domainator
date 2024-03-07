@@ -11,4 +11,5 @@ type CertDto struct {
 	Domain    string
 	Issuer    string
 	Status    string
+	Error     string
 }

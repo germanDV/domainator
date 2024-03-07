@@ -81,11 +81,29 @@ button {
   }
 }
 
+button.htmx-request {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+button.btn-sm {
+  padding: 4px 8px;
+}
+
+button.btn-secondary {
+  border: 1px solid var(--secondary-black);
+  background: var(--primary-white);
+  color: var(--secondary-black);
+  &:hover {
+    border: 1px solid var(--primary-black);
+    color: var(--primary-black);
+  }
+}
+
 button.btn-danger {
   border: 1px solid var(--secondary-black);
   background: var(--primary-white);
   color: var(--secondary-black);
-  padding: 4px 8px;
   &:hover {
     border: 1px solid var(--error);
     color: var(--error);

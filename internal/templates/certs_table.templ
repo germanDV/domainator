@@ -15,7 +15,7 @@ templ certsTable(certificates []certs.CertDto) {
       </thead>
       <tbody>
         for _, c := range certificates {
-          @certRow(c)
+          @CertRow(c)
         }
       </tbody>
     </table>

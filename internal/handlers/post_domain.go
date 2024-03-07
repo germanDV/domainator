@@ -20,7 +20,7 @@ func RegisterDomain(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
-		err = templates.RegisterDomainSuccess(cert).Render(r.Context(), w)
+		err = templates.CertRow(cert).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering template", http.StatusInternalServerError)
 		}

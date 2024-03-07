@@ -30,7 +30,7 @@ func certsTable(certificates []certs.CertDto) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, c := range certificates {
-			templ_7745c5c3_Err = certRow(c).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = CertRow(c).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
