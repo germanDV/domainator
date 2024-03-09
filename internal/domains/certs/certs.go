@@ -45,9 +45,9 @@ func New(domain Domain, issuer Issuer, expiresAt time.Time) Cert {
 	}
 }
 
-// TODO: use ULID (UUIDv7) instead of UUIDv4
 func NewID() ID {
-	return ID(uuid.NewString())
+	id, _ := uuid.NewV7()
+	return ID(id.String())
 }
 
 func ParseID(id string) (ID, error) {
