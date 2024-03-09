@@ -13,9 +13,9 @@ var (
 
 // RealIP is a middleware that sets the http.Request's RemoteAddr to the results
 // of parsing either the True-Client-IP, X-Real-IP or the X-Forwarded-For headers (in that order).
-func RealIP(next http.Handler) http.Handler {
+func realIP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := realIP(r)
+		ip := getIP(r)
 		if ip != "" {
 			r.RemoteAddr = ip
 		}
@@ -23,7 +23,7 @@ func RealIP(next http.Handler) http.Handler {
 	})
 }
 
-func realIP(r *http.Request) string {
+func getIP(r *http.Request) string {
 	var ip string
 
 	if tcip := r.Header.Get(trueClientIP); tcip != "" {

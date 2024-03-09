@@ -3,7 +3,7 @@ package middleware
 import "net/http"
 
 // source: https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html#security-headers
-func Helmet(next http.Handler) http.Handler {
+func helmet(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// To protect against drag-and-drop style clickjacking attacks.
 		w.Header().Set("X-Frame-Options", "DENY")

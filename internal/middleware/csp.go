@@ -25,7 +25,7 @@ func generateRandomString(len int) string {
 	return hex.EncodeToString(bytes)
 }
 
-func CSP(next http.Handler) http.Handler {
+func csp(next http.Handler) http.Handler {
 	// The hash of the CSS that HTMX injects
 	htmxCSSHash := "sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg="
 

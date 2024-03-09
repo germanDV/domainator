@@ -3,12 +3,16 @@ package cache
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
 type Client interface {
 	Ping() error
+	Close() error
+	Increment(key string) (int64, error)
+	Expire(key string, duration time.Duration) error
 }
 
 type RedisClient struct {
@@ -21,6 +25,18 @@ func (rc *RedisClient) Ping() error {
 		return err
 	}
 	return nil
+}
+
+func (rc *RedisClient) Close() error {
+	return rc.client.Close()
+}
+
+func (rc *RedisClient) Increment(key string) (int64, error) {
+	return rc.client.Incr(context.Background(), key).Result()
+}
+
+func (rc *RedisClient) Expire(key string, duration time.Duration) error {
+	return rc.client.Expire(context.Background(), key, duration).Err()
 }
 
 func New(host string, port int, password string) Client {

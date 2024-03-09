@@ -54,10 +54,11 @@ func main() {
 	mux.HandleFunc("DELETE /domain/{id}", handlers.DeleteDomain(certsService))
 
 	addr := fmt.Sprintf(":%d", config.Port)
+	commonMiddleware := middleware.CommonBuilder(logger, cacheClient)
 	srv := &http.Server{
 		Addr:         addr,
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
-		Handler:      middleware.Common(mux),
+		Handler:      commonMiddleware(mux),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -83,6 +84,11 @@ func main() {
 	<-killSig
 
 	logger.Info("Shutting down server")
+
+	err = cacheClient.Close()
+	if err != nil {
+		logger.Error("Error closing redis", "err", err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

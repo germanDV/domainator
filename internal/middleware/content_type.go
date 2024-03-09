@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func ContentType(next http.Handler) http.Handler {
+func contentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/static/") {
 			next.ServeHTTP(w, r)
