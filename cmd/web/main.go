@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/germandv/domainator/internal/cache"
 	"github.com/germandv/domainator/internal/configstruct"
 	"github.com/germandv/domainator/internal/domains/certs"
 	"github.com/germandv/domainator/internal/handlers"
@@ -19,10 +20,13 @@ import (
 )
 
 type AppConfig struct {
-	LogFormat   string `env:"LOG_FORMAT"`
-	Port        int    `env:"PORT"`
-	AuthPublKey string `env:"AUTH_PUBLIC_KEY"`
-	AuthPrivKey string `env:"AUTH_PRIVATE_KEY"`
+	LogFormat     string `env:"LOG_FORMAT"`
+	Port          int    `env:"PORT"`
+	AuthPublKey   string `env:"AUTH_PUBLIC_KEY"`
+	AuthPrivKey   string `env:"AUTH_PRIVATE_KEY"`
+	RedisHost     string `env:"REDIS_HOST"`
+	RedisPort     int    `env:"REDIS_PORT"`
+	RedisPassword string `env:"REDIS_PASSWORD" default:" "`
 }
 
 func main() {
@@ -36,14 +40,14 @@ func main() {
 		panic(err)
 	}
 
+	cacheClient := cache.New(config.RedisHost, config.RedisPort, config.RedisPassword)
 	tlsClient := tlser.New(5 * time.Second)
 	certsService := certs.NewService(tlsClient)
-
 	fileServer := http.FileServer(http.Dir("./static"))
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
-	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck)
+	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient))
 	mux.HandleFunc("GET /", handlers.GetHome(certsService))
 	mux.HandleFunc("POST /domain", handlers.RegisterDomain(certsService))
 	mux.HandleFunc("PUT /domain/{id}", handlers.UpdateDomain(certsService))

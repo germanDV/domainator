@@ -51,22 +51,22 @@ build: templgen
 	@echo 'Building for Linux'
 	go build -o=./bin/${BINARY_NAME} ./cmd/web
 
-## db/up: start PostgreSQL docker container by running docker-compose.yml
-.PHONY: db/up
-db/up:
-	@echo 'Starting PostgreSQL docker container'
+## docker/up: start PostgreSQL + Redis docker containers
+.PHONY: docker/up
+docker/up:
+	@echo 'Starting docker-compose'
 	docker compose up -d
 
-## db/stop: stop PostgreSQL docker container
-.PHONY: db/stop
-db/stop:
-	@echo 'Stopping PostgreSQL docker container'
+## docker/stop: stop docker containers
+.PHONY: docker/stop
+docker/stop:
+	@echo 'Stopping docker-compose'
 	docker compose stop
 
-## db/down: tear down PostgreSQL docker container
-.PHONY: db/down
-db/down: confirm
-	@echo 'Stopping PostgreSQL docker container'
+## docker/down: tear down PostgreSQL docker container
+.PHONY: docker/down
+docker/down: confirm
+	@echo 'Stopping docker-compose'
 	docker compose down
 
 ## db/migrate/init: init tern project
