@@ -33,11 +33,11 @@ func CSP(next http.Handler) http.Handler {
 	respTrgtNonce := generateRandomString(32)
 	stylesNonce := generateRandomString(32)
 
-	ctx := context.WithValue(context.Background(), HtmxNonceKey, htmxNonce)
-	ctx = context.WithValue(ctx, RespTrgtNonceKey, respTrgtNonce)
-	ctx = context.WithValue(ctx, StylesNonceKey, stylesNonce)
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), HtmxNonceKey, htmxNonce)
+		ctx = context.WithValue(ctx, RespTrgtNonceKey, respTrgtNonce)
+		ctx = context.WithValue(ctx, StylesNonceKey, stylesNonce)
+
 		cspHeader := fmt.Sprintf(
 			"default-src 'self'; script-src 'nonce-%s' 'nonce-%s' 'unsafe-eval'; style-src 'nonce-%s' '%s';",
 			htmxNonce, respTrgtNonce, stylesNonce, htmxCSSHash,
