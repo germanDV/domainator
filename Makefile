@@ -114,3 +114,9 @@ deps/ext: confirm
 	go install github.com/jackc/tern/v2@latest
 	@echo 'Installing `templ` for html templating'
 	go install github.com/a-h/templ/cmd/templ@latest
+
+## keys: generate new key-pair
+.PHONY: keys
+keys:
+	@echo 'Generating keys...'
+	go run ./cmd/keys
