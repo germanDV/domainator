@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/germandv/domainator/internal/cache"
+	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/configstruct"
-	"github.com/germandv/domainator/internal/domains/certs"
 	"github.com/germandv/domainator/internal/handlers"
 	"github.com/germandv/domainator/internal/middleware"
 	"github.com/germandv/domainator/internal/tlser"

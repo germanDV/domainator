@@ -10,7 +10,7 @@ import "context"
 import "io"
 import "bytes"
 
-import "github.com/germandv/domainator/internal/domains/certs"
+import "github.com/germandv/domainator/internal/certs"
 
 func certsTable(certificates []certs.CertDto) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {

@@ -43,7 +43,7 @@ func GetHealthcheck(cacheClient cache.Client) http.HandlerFunc {
 			"dirty":      dirty,
 			"lastCommit": lastCommit,
 			"go":         info.GoVersion,
-			"cache":      cacheStatus,
+			"redis":      cacheStatus,
 		}
 
 		w.WriteHeader(http.StatusOK)

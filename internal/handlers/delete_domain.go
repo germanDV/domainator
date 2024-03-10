@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/germandv/domainator/internal/domains/certs"
+	"github.com/germandv/domainator/internal/certs"
 )
 
 func DeleteDomain(certsService certs.Service) http.HandlerFunc {
