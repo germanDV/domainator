@@ -115,8 +115,12 @@ deps/ext: confirm
 	@echo 'Installing `templ` for html templating'
 	go install github.com/a-h/templ/cmd/templ@latest
 
-## keys: generate new key-pair
-.PHONY: keys
-keys:
-	@echo 'Generating keys...'
+## scripts/keys: generate new key-pair
+.PHONY: scripts/keys
+scripts/keys:
 	go run ./cmd/keys
+
+## scripts/token u=$1: generate an auth token ($ make scripts/token u=<user_id>)
+.PHONY: scripts/token
+scripts/token:
+	go run ./cmd/token "$u"
