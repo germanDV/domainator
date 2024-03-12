@@ -17,6 +17,7 @@ import (
 	"github.com/germandv/domainator/internal/handlers"
 	"github.com/germandv/domainator/internal/middleware"
 	"github.com/germandv/domainator/internal/tlser"
+	"github.com/germandv/domainator/internal/tokenauth"
 )
 
 type AppConfig struct {
@@ -45,13 +46,21 @@ func main() {
 	certsService := certs.NewService(tlsClient)
 	fileServer := http.FileServer(http.Dir("./static"))
 
+	authService, err := tokenauth.New(config.AuthPrivKey, config.AuthPublKey)
+	if err != nil {
+		panic(err)
+	}
+	authn := middleware.AuthBuilder(authService, false)
+	authz := middleware.AuthBuilder(authService, true)
+
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient))
-	mux.HandleFunc("GET /", handlers.GetHome(certsService))
-	mux.HandleFunc("POST /domain", handlers.RegisterDomain(certsService))
-	mux.HandleFunc("PUT /domain/{id}", handlers.UpdateDomain(certsService))
-	mux.HandleFunc("DELETE /domain/{id}", handlers.DeleteDomain(certsService))
+	mux.Handle("GET /", authn(handlers.GetHome(certsService)))
+	mux.HandleFunc("GET /login", handlers.GetAccess())
+	mux.Handle("POST /domain", authz(handlers.RegisterDomain(certsService)))
+	mux.Handle("PUT /domain/{id}", authz(handlers.UpdateDomain(certsService)))
+	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(certsService)))
 
 	addr := fmt.Sprintf(":%d", config.Port)
 	commonMiddleware := middleware.CommonBuilder(logger, cacheClient)

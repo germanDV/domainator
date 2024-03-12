@@ -1,0 +1,16 @@
+@url = http://localhost:4000
+@JWT = eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkb21haW5hdG9yIiwiZXhwIjoxNzEwMzE0MTQ4LCJpYXQiOjE3MTAyODUzNDgsImlzcyI6ImRvbWFpbmF0b3IiLCJzdWIiOiJhYmMxMjMifQ.P00V8itJmRn4ARKTfWNYI-H5lA0vzZLQQ7on2TdwtlPWzMlqL7KuMTHyx2C_jSa3t_fUeVF1Rng6T1DDQI8Iow
+
+### Healthcheck
+GET {{url}}/healthcheck HTTP/1.1
+Accept: application/json
+
+### Refresh certificate state
+PUT {{url}}/domain/018e2fd2-ed3c-7dc4-9c95-1de10f387aa6 HTTP/1.1
+Accept: text/plain
+Cookie: token={{JWT}}
+
+### Delete domain
+DELETE {{url}}/domain/018e2fd2-ed3c-7cc5-a619-0ddc98398d9c HTTP/1.1
+Accept: text/plain
+Cookie: token={{JWT}}
