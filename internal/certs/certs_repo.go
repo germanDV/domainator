@@ -1,11 +1,19 @@
 package certs
 
 import (
+	"errors"
 	"time"
+
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/net/context"
 )
 
+const AnonymousUser = "00000000-0000-0000-0000-000000000000"
+
 type Repo interface {
-	Save(cert Cert) error
+	Save(context.Context, Cert) error
 	Get(id ID) (Cert, error)
 	GetAll() ([]Cert, error)
 	Delete(id ID) error
@@ -13,64 +21,45 @@ type Repo interface {
 }
 
 type CertsRepo struct {
-	db map[string]Cert
+	db *pgxpool.Pool
 }
 
-func NewRepo() *CertsRepo {
-	return &CertsRepo{
-		db: make(map[string]Cert),
-	}
+func NewRepo(db *pgxpool.Pool) *CertsRepo {
+	return &CertsRepo{db}
 }
 
-func (r *CertsRepo) Save(cert Cert) error {
-	if r.isDuplicate(cert.Domain) {
-		return ErrDuplicateDomain
+func (r *CertsRepo) Save(ctx context.Context, cert Cert) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	q := `insert into certificates (id, user_id, domain, issuer, expires_at)
+    values ($1, $2, $3, $4, $5)`
+
+	_, err := r.db.Exec(ctx, q, cert.ID, AnonymousUser, cert.Domain, cert.Issuer, cert.ExpiresAt)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return ErrDuplicateDomain
+		}
+		return err
 	}
 
-	r.db[cert.ID.String()] = cert
 	return nil
 }
 
 func (r *CertsRepo) Get(id ID) (Cert, error) {
-	cert, ok := r.db[id.String()]
-	if !ok {
-		return Cert{}, ErrNotFound
-	}
-	return cert, nil
+	return Cert{}, ErrNotFound
 }
 
 func (r *CertsRepo) GetAll() ([]Cert, error) {
-	certs := make([]Cert, 0, len(r.db))
-	for _, cert := range r.db {
-		certs = append(certs, cert)
-	}
+	certs := make([]Cert, 0, 0)
 	return certs, nil
 }
 
 func (r *CertsRepo) Delete(id ID) error {
-	delete(r.db, id.String())
 	return nil
 }
 
 func (r *CertsRepo) Update(id ID, expiry time.Time, issuer Issuer, e string) (Cert, error) {
-	cert, ok := r.db[id.String()]
-	if !ok {
-		return Cert{}, ErrNotFound
-	}
-
-	cert.ExpiresAt = expiry
-	cert.Issuer = issuer
-	cert.Error = e
-	r.db[id.String()] = cert
-
-	return cert, nil
-}
-
-func (r *CertsRepo) isDuplicate(domain Domain) bool {
-	for _, v := range r.db {
-		if v.Domain.String() == domain.String() {
-			return true
-		}
-	}
-	return false
+	return Cert{}, ErrNotFound
 }

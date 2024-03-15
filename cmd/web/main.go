@@ -14,6 +14,7 @@ import (
 	"github.com/germandv/domainator/internal/cache"
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/configstruct"
+	"github.com/germandv/domainator/internal/db"
 	"github.com/germandv/domainator/internal/handlers"
 	"github.com/germandv/domainator/internal/middleware"
 	"github.com/germandv/domainator/internal/tlser"
@@ -21,13 +22,19 @@ import (
 )
 
 type AppConfig struct {
-	LogFormat     string `env:"LOG_FORMAT"`
-	Port          int    `env:"PORT"`
-	AuthPublKey   string `env:"AUTH_PUBLIC_KEY"`
-	AuthPrivKey   string `env:"AUTH_PRIVATE_KEY"`
-	RedisHost     string `env:"REDIS_HOST"`
-	RedisPort     int    `env:"REDIS_PORT"`
-	RedisPassword string `env:"REDIS_PASSWORD" default:" "`
+	Env              string `env:"APP_ENV" default:"dev"`
+	LogFormat        string `env:"LOG_FORMAT"`
+	Port             int    `env:"PORT"`
+	AuthPublKey      string `env:"AUTH_PUBLIC_KEY"`
+	AuthPrivKey      string `env:"AUTH_PRIVATE_KEY"`
+	RedisHost        string `env:"REDIS_HOST"`
+	RedisPort        int    `env:"REDIS_PORT"`
+	RedisPassword    string `env:"REDIS_PASSWORD" default:" "`
+	PostgresHost     string `env:"POSTGRES_HOST"`
+	PostgresPort     int    `env:"POSTGRES_PORT"`
+	PostgresUser     string `env:"POSTGRES_USER"`
+	PostgresPassword string `env:"POSTGRES_PASSWORD"`
+	PostgresDatabase string `env:"POSTGRES_DB"`
 }
 
 func main() {
@@ -41,9 +48,22 @@ func main() {
 		panic(err)
 	}
 
+	db, err := db.Init(
+		config.PostgresUser,
+		config.PostgresPassword,
+		config.PostgresHost,
+		config.PostgresPort,
+		config.PostgresDatabase,
+		config.Env != "dev",
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	certsRepo := certs.NewRepo(db)
 	cacheClient := cache.New(config.RedisHost, config.RedisPort, config.RedisPassword)
 	tlsClient := tlser.New(5 * time.Second)
-	certsService := certs.NewService(tlsClient)
+	certsService := certs.NewService(tlsClient, certsRepo)
 	fileServer := http.FileServer(http.Dir("./static"))
 
 	authService, err := tokenauth.New(config.AuthPrivKey, config.AuthPublKey)
@@ -98,6 +118,8 @@ func main() {
 	if err != nil {
 		logger.Error("Error closing redis", "err", err)
 	}
+
+	db.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

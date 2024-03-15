@@ -1,6 +1,7 @@
 package certs
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,43 +20,7 @@ type CertsService struct {
 	tlsClient tlser.Client
 }
 
-func NewService(tlsClient tlser.Client) *CertsService {
-	repo := NewRepo()
-
-	// Add some dummy data
-	repo.Save(Cert{
-		ID:        NewID(),
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().AddDate(0, 6, 0),
-		Domain:    Domain("go.dev"),
-		Issuer:    Issuer("Let's Encrypt"),
-		Error:     "",
-	})
-	repo.Save(Cert{
-		ID:        NewID(),
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().AddDate(0, -2, 0),
-		Domain:    Domain("archlinux.org"),
-		Issuer:    Issuer("Certigo"),
-		Error:     "",
-	})
-	repo.Save(Cert{
-		ID:        NewID(),
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().AddDate(0, 0, 10),
-		Domain:    Domain("debian.org"),
-		Issuer:    Issuer("Comodo"),
-		Error:     "",
-	})
-	repo.Save(Cert{
-		ID:        NewID(),
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().AddDate(0, 0, 10),
-		Domain:    Domain("yahoo.xyz"),
-		Issuer:    Issuer("Comodo"),
-		Error:     "Could not connect",
-	})
-
+func NewService(tlsClient tlser.Client, repo Repo) *CertsService {
 	return &CertsService{
 		repo:      repo,
 		tlsClient: tlsClient,
@@ -79,7 +44,7 @@ func (s *CertsService) RegisterCert(dto RegisterCertReq) (CertDto, error) {
 	}
 
 	cert := New(domain, issuer, data.Expiry)
-	err = s.repo.Save(cert)
+	err = s.repo.Save(context.Background(), cert)
 	if err != nil {
 		return CertDto{}, err
 	}

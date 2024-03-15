@@ -1,5 +1,5 @@
 BINARY_NAME=domainator
-PG_PASSWORD ?= pass123
+POSTGRES_PASSWORD ?= postgres
 
 ## help: print this help message
 .PHONY: help
@@ -85,13 +85,13 @@ db/migrate/new:
 .PHONY: db/migrate/up
 db/migrate/up:
 	@echo 'Running migrations...'
-	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations
+	@POSTGRES_PASSWORD=${POSTGRES_PASSWORD} tern migrate -m ./migrations
 
 ## db/migrate/down n=$1: rollback database N versions ($ make db/migrate/down n=2)
 .PHONY: db/migrate/down
 db/migrate/down: confirm
 	@echo 'Rolling back ${n} migrations..'
-	@PG_PASSWORD=${PG_PASSWORD} tern migrate -m ./migrations --destination -${n}
+	@POSTGRES_PASSWORD=${POSTGRES_PASSWORD} tern migrate -m ./migrations --destination -${n}
 
 ## deps/upgrade/all: upgrade all dependencies
 .PHONY: deps/upgrade/all
