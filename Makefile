@@ -93,6 +93,12 @@ db/migrate/down: confirm
 	@echo 'Rolling back ${n} migrations..'
 	@POSTGRES_PASSWORD=${POSTGRES_PASSWORD} tern migrate -m ./migrations --destination -${n}
 
+## db/cli: connect to local database using pgcli
+.PHONY: db/cli
+db/cli:
+	@echo 'Connecting to database...'
+	pgcli -h localhost -p 5432 -U postgres -d domainator
+
 ## deps/upgrade/all: upgrade all dependencies
 .PHONY: deps/upgrade/all
 deps/upgrade/all:

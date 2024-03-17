@@ -1,15 +1,12 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 
+	"github.com/germandv/domainator/internal/cntxt"
 	"github.com/germandv/domainator/internal/tokenauth"
 )
 
-type ContextKey string
-
-const ContextKeyUserID = ContextKey("userID")
 const AuthCookieName = "token"
 
 // AuthBuilder returns a middleware that checks if there is an auth cookie,
@@ -35,7 +32,7 @@ func AuthBuilder(auth tokenauth.Service, required bool) func(next http.Handler) 
 			}
 
 			if e == nil && userID != "" {
-				r = r.WithContext(context.WithValue(r.Context(), ContextKeyUserID, userID))
+				r = cntxt.SetUserID(r, userID)
 				next.ServeHTTP(w, r)
 			} else {
 				if required {

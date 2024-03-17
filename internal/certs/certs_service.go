@@ -9,8 +9,8 @@ import (
 )
 
 type Service interface {
-	RegisterCert(dto RegisterCertReq) (CertDto, error)
-	GetAll() ([]CertDto, error)
+	Save(dto RegisterCertReq) (CertDto, error)
+	GetAll(dto GetAllCertsReq) ([]CertDto, error)
 	Delete(id string) error
 	Update(id string) (CertDto, error)
 }
@@ -27,7 +27,12 @@ func NewService(tlsClient tlser.Client, repo Repo) *CertsService {
 	}
 }
 
-func (s *CertsService) RegisterCert(dto RegisterCertReq) (CertDto, error) {
+func (s *CertsService) Save(dto RegisterCertReq) (CertDto, error) {
+	userID, err := ParseID(dto.UserID)
+	if err != nil {
+		return CertDto{}, err
+	}
+
 	domain, err := NewDomain(dto.Domain)
 	if err != nil {
 		return CertDto{}, err
@@ -43,7 +48,7 @@ func (s *CertsService) RegisterCert(dto RegisterCertReq) (CertDto, error) {
 		return CertDto{}, err
 	}
 
-	cert := New(domain, issuer, data.Expiry)
+	cert := New(userID, domain, issuer, data.Expiry)
 	err = s.repo.Save(context.Background(), cert)
 	if err != nil {
 		return CertDto{}, err
@@ -52,8 +57,13 @@ func (s *CertsService) RegisterCert(dto RegisterCertReq) (CertDto, error) {
 	return toDTO(cert), nil
 }
 
-func (s *CertsService) GetAll() ([]CertDto, error) {
-	certificates, err := s.repo.GetAll()
+func (s *CertsService) GetAll(dto GetAllCertsReq) ([]CertDto, error) {
+	userID, err := ParseID(dto.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	certificates, err := s.repo.GetAll(context.Background(), userID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +82,7 @@ func (s *CertsService) Delete(id string) error {
 		return err
 	}
 
-	return s.repo.Delete(parsedID)
+	return s.repo.Delete(context.Background(), parsedID)
 }
 
 func (s *CertsService) Update(id string) (CertDto, error) {
@@ -81,7 +91,7 @@ func (s *CertsService) Update(id string) (CertDto, error) {
 		return CertDto{}, err
 	}
 
-	cert, err := s.repo.Get(parsedID)
+	cert, err := s.repo.Get(context.Background(), parsedID)
 	if err != nil {
 		return CertDto{}, err
 	}
@@ -97,12 +107,18 @@ func (s *CertsService) Update(id string) (CertDto, error) {
 		return CertDto{}, ErrInvalidIssuer
 	}
 
-	c, err := s.repo.Update(parsedID, data.Expiry, issuer, e)
+	now := time.Now().UTC()
+	err = s.repo.Update(context.Background(), parsedID, data.Expiry, issuer, now, e)
 	if err != nil {
 		return CertDto{}, err
 	}
 
-	return toDTO(c), nil
+	cert.UpdatedAt = now
+	cert.Issuer = issuer
+	cert.ExpiresAt = data.Expiry
+	cert.Error = e
+
+	return toDTO(cert), nil
 }
 
 func toDTO(c Cert) CertDto {

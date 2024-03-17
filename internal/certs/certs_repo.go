@@ -5,19 +5,20 @@ import (
 	"time"
 
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/net/context"
 )
 
-const AnonymousUser = "00000000-0000-0000-0000-000000000000"
+const QueryTimeout = 5 * time.Second
 
 type Repo interface {
-	Save(context.Context, Cert) error
-	Get(id ID) (Cert, error)
-	GetAll() ([]Cert, error)
-	Delete(id ID) error
-	Update(id ID, expiry time.Time, issuer Issuer, e string) (Cert, error)
+	Save(ctx context.Context, cert Cert) error
+	GetAll(ctx context.Context, userID ID) ([]Cert, error)
+	Get(ctx context.Context, id ID) (Cert, error)
+	Update(ctx context.Context, id ID, expiry time.Time, issuer Issuer, updatedAt time.Time, e string) error
+	Delete(ctx context.Context, id ID) error
 }
 
 type CertsRepo struct {
@@ -29,13 +30,13 @@ func NewRepo(db *pgxpool.Pool) *CertsRepo {
 }
 
 func (r *CertsRepo) Save(ctx context.Context, cert Cert) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
 	q := `insert into certificates (id, user_id, domain, issuer, expires_at)
     values ($1, $2, $3, $4, $5)`
 
-	_, err := r.db.Exec(ctx, q, cert.ID, AnonymousUser, cert.Domain, cert.Issuer, cert.ExpiresAt)
+	_, err := r.db.Exec(ctx, q, cert.ID, cert.UserID, cert.Domain, cert.Issuer, cert.ExpiresAt)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -47,19 +48,77 @@ func (r *CertsRepo) Save(ctx context.Context, cert Cert) error {
 	return nil
 }
 
-func (r *CertsRepo) Get(id ID) (Cert, error) {
-	return Cert{}, ErrNotFound
+func (r *CertsRepo) GetAll(ctx context.Context, userID ID) ([]Cert, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `
+    select
+      id, user_id, domain, issuer, expires_at, created_at, updated_at, coalesce(error, '') as error
+    from
+      certificates
+    where
+      user_id = $1`
+
+	rows, _ := r.db.Query(ctx, q, userID)
+	return pgx.CollectRows(rows, pgx.RowToStructByName[Cert])
 }
 
-func (r *CertsRepo) GetAll() ([]Cert, error) {
-	certs := make([]Cert, 0, 0)
-	return certs, nil
+func (r *CertsRepo) Get(ctx context.Context, id ID) (Cert, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `
+    select
+      id, user_id, domain, issuer, expires_at, created_at, updated_at, coalesce(error, '') as error
+    from
+      certificates
+    where
+      id = $1`
+
+	rows, _ := r.db.Query(ctx, q, id)
+	return pgx.CollectOneRow(rows, pgx.RowToStructByName[Cert])
 }
 
-func (r *CertsRepo) Delete(id ID) error {
+func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer Issuer, updatedAt time.Time, e string) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `
+    update
+      certificates
+    set
+      issuer = $2,
+      expires_at = $3,
+      updated_at = $4,
+      error = nullif($5, '')
+    where
+      id = $1`
+
+	res, err := r.db.Exec(ctx, q, id, issuer, expiry, updatedAt, e)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
 	return nil
 }
 
-func (r *CertsRepo) Update(id ID, expiry time.Time, issuer Issuer, e string) (Cert, error) {
-	return Cert{}, ErrNotFound
+// TODO: make it a soft delete
+func (r *CertsRepo) Delete(ctx context.Context, id ID) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `delete from certificates where id = $1`
+	res, err := r.db.Exec(ctx, q, id)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
