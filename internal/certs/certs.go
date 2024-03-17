@@ -26,17 +26,20 @@ type Issuer string
 
 // Cert is an aggregate root that represents the information for a TLS certificate.
 type Cert struct {
-	ID        ID
-	CreatedAt time.Time
-	ExpiresAt time.Time
-	Domain    Domain
-	Issuer    Issuer
-	Error     string
+	ID        ID        `db:"id"`
+	UserID    ID        `db:"user_id"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+	ExpiresAt time.Time `db:"expires_at"`
+	Domain    Domain    `db:"domain"`
+	Issuer    Issuer    `db:"issuer"`
+	Error     string    `db:"error"`
 }
 
-func New(domain Domain, issuer Issuer, expiresAt time.Time) Cert {
+func New(userID ID, domain Domain, issuer Issuer, expiresAt time.Time) Cert {
 	return Cert{
 		ID:        NewID(),
+		UserID:    userID,
 		CreatedAt: time.Now(),
 		ExpiresAt: expiresAt,
 		Domain:    domain,

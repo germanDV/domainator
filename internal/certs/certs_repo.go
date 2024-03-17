@@ -1,76 +1,124 @@
 package certs
 
 import (
+	"errors"
 	"time"
+
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/net/context"
 )
 
+const QueryTimeout = 5 * time.Second
+
 type Repo interface {
-	Save(cert Cert) error
-	Get(id ID) (Cert, error)
-	GetAll() ([]Cert, error)
-	Delete(id ID) error
-	Update(id ID, expiry time.Time, issuer Issuer, e string) (Cert, error)
+	Save(ctx context.Context, cert Cert) error
+	GetAll(ctx context.Context, userID ID) ([]Cert, error)
+	Get(ctx context.Context, id ID) (Cert, error)
+	Update(ctx context.Context, id ID, expiry time.Time, issuer Issuer, updatedAt time.Time, e string) error
+	Delete(ctx context.Context, id ID) error
 }
 
 type CertsRepo struct {
-	db map[string]Cert
+	db *pgxpool.Pool
 }
 
-func NewRepo() *CertsRepo {
-	return &CertsRepo{
-		db: make(map[string]Cert),
-	}
+func NewRepo(db *pgxpool.Pool) *CertsRepo {
+	return &CertsRepo{db}
 }
 
-func (r *CertsRepo) Save(cert Cert) error {
-	if r.isDuplicate(cert.Domain) {
-		return ErrDuplicateDomain
-	}
+func (r *CertsRepo) Save(ctx context.Context, cert Cert) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
 
-	r.db[cert.ID.String()] = cert
-	return nil
-}
+	q := `insert into certificates (id, user_id, domain, issuer, expires_at)
+    values ($1, $2, $3, $4, $5)`
 
-func (r *CertsRepo) Get(id ID) (Cert, error) {
-	cert, ok := r.db[id.String()]
-	if !ok {
-		return Cert{}, ErrNotFound
-	}
-	return cert, nil
-}
-
-func (r *CertsRepo) GetAll() ([]Cert, error) {
-	certs := make([]Cert, 0, len(r.db))
-	for _, cert := range r.db {
-		certs = append(certs, cert)
-	}
-	return certs, nil
-}
-
-func (r *CertsRepo) Delete(id ID) error {
-	delete(r.db, id.String())
-	return nil
-}
-
-func (r *CertsRepo) Update(id ID, expiry time.Time, issuer Issuer, e string) (Cert, error) {
-	cert, ok := r.db[id.String()]
-	if !ok {
-		return Cert{}, ErrNotFound
-	}
-
-	cert.ExpiresAt = expiry
-	cert.Issuer = issuer
-	cert.Error = e
-	r.db[id.String()] = cert
-
-	return cert, nil
-}
-
-func (r *CertsRepo) isDuplicate(domain Domain) bool {
-	for _, v := range r.db {
-		if v.Domain.String() == domain.String() {
-			return true
+	_, err := r.db.Exec(ctx, q, cert.ID, cert.UserID, cert.Domain, cert.Issuer, cert.ExpiresAt)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return ErrDuplicateDomain
 		}
+		return err
 	}
-	return false
+
+	return nil
+}
+
+func (r *CertsRepo) GetAll(ctx context.Context, userID ID) ([]Cert, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `
+    select
+      id, user_id, domain, issuer, expires_at, created_at, updated_at, coalesce(error, '') as error
+    from
+      certificates
+    where
+      user_id = $1`
+
+	rows, _ := r.db.Query(ctx, q, userID)
+	return pgx.CollectRows(rows, pgx.RowToStructByName[Cert])
+}
+
+func (r *CertsRepo) Get(ctx context.Context, id ID) (Cert, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `
+    select
+      id, user_id, domain, issuer, expires_at, created_at, updated_at, coalesce(error, '') as error
+    from
+      certificates
+    where
+      id = $1`
+
+	rows, _ := r.db.Query(ctx, q, id)
+	return pgx.CollectOneRow(rows, pgx.RowToStructByName[Cert])
+}
+
+func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer Issuer, updatedAt time.Time, e string) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `
+    update
+      certificates
+    set
+      issuer = $2,
+      expires_at = $3,
+      updated_at = $4,
+      error = nullif($5, '')
+    where
+      id = $1`
+
+	res, err := r.db.Exec(ctx, q, id, issuer, expiry, updatedAt, e)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+// TODO: make it a soft delete
+func (r *CertsRepo) Delete(ctx context.Context, id ID) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	q := `delete from certificates where id = $1`
+	res, err := r.db.Exec(ctx, q, id)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }

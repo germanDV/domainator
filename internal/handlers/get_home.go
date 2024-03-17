@@ -4,12 +4,14 @@ import (
 	"net/http"
 
 	"github.com/germandv/domainator/internal/certs"
+	"github.com/germandv/domainator/internal/cntxt"
 	"github.com/germandv/domainator/internal/templates"
 )
 
 func GetHome(certsService certs.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		certificates, err := certsService.GetAll()
+		userID := cntxt.GetUserID(r)
+		certificates, err := certsService.GetAll(certs.GetAllCertsReq{UserID: userID})
 		if err != nil {
 			http.Error(w, "Error getting certificates", http.StatusInternalServerError)
 			return
