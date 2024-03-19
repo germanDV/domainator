@@ -11,6 +11,11 @@ import (
 func GetHome(certsService certs.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := cntxt.GetUserID(r)
+		if userID == "" {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
 		certificates, err := certsService.GetAll(certs.GetAllCertsReq{UserID: userID})
 		if err != nil {
 			http.Error(w, "Error getting certificates", http.StatusInternalServerError)

@@ -77,7 +77,7 @@ func main() {
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient))
 	mux.Handle("GET /", authn(handlers.GetHome(certsService)))
-	mux.HandleFunc("GET /login", handlers.GetAccess())
+	mux.Handle("GET /login", authn(handlers.GetAccess()))
 	mux.Handle("POST /domain", authz(handlers.RegisterDomain(certsService)))
 	mux.Handle("PUT /domain/{id}", authz(handlers.UpdateDomain(certsService)))
 	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(certsService)))

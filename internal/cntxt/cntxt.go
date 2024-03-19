@@ -14,5 +14,9 @@ func SetUserID(r *http.Request, userID string) *http.Request {
 }
 
 func GetUserID(r *http.Request) string {
-	return r.Context().Value(contextKeyUserID).(string)
+	id, ok := r.Context().Value(contextKeyUserID).(string)
+	if !ok {
+		return ""
+	}
+	return id
 }
