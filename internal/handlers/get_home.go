@@ -16,7 +16,7 @@ func GetHome(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
-		certificates, err := certsService.GetAll(certs.GetAllCertsReq{UserID: userID})
+		certificates, err := certsService.GetAll(r.Context(), certs.GetAllCertsReq{UserID: userID})
 		if err != nil {
 			http.Error(w, "Error getting certificates", http.StatusInternalServerError)
 			return

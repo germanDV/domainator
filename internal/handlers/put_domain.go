@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/germandv/domainator/internal/certs"
@@ -15,9 +16,13 @@ func UpdateDomain(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
-		c, err := certsService.Update(id)
+		c, err := certsService.Update(r.Context(), certs.UpdateCertReq{UserID: id})
 		if err != nil {
-			http.Error(w, "Error updating domain", http.StatusInternalServerError)
+			if errors.Is(err, certs.ErrNotFound) {
+				http.Error(w, "Domain not found", http.StatusNotFound)
+			} else {
+				http.Error(w, "Error updating domain", http.StatusInternalServerError)
+			}
 			return
 		}
 

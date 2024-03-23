@@ -9,6 +9,14 @@ type GetAllCertsReq struct {
 	UserID string
 }
 
+type UpdateCertReq struct {
+	UserID string
+}
+
+type DeleteCertReq struct {
+	UserID string
+}
+
 type CertDto struct {
 	ID        string
 	CreatedAt string

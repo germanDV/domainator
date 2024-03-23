@@ -110,26 +110,21 @@ func main() {
 
 	logger.Info("Starting server", "addr", addr)
 
+	// Gracefully shutdown
 	<-killSig
-
 	logger.Info("Shutting down server")
-
 	err = cacheClient.Close()
 	if err != nil {
 		logger.Error("Error closing redis", "err", err)
 	}
-
 	db.Close()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
 	err = srv.Shutdown(ctx)
 	if err != nil {
 		logger.Error("Failed to shut down gracefully", "err", err)
 		os.Exit(1)
 	}
-
 	logger.Info("Server shutdown complete")
 }
 

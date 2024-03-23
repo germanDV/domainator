@@ -77,7 +77,15 @@ func (r *CertsRepo) Get(ctx context.Context, id ID) (Cert, error) {
       id = $1`
 
 	rows, _ := r.db.Query(ctx, q, id)
-	return pgx.CollectOneRow(rows, pgx.RowToStructByName[Cert])
+	cert, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Cert])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Cert{}, ErrNotFound
+		}
+		return Cert{}, err
+	}
+
+	return cert, nil
 }
 
 func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer Issuer, updatedAt time.Time, e string) error {

@@ -9,10 +9,10 @@ import (
 )
 
 type Service interface {
-	Save(dto RegisterCertReq) (CertDto, error)
-	GetAll(dto GetAllCertsReq) ([]CertDto, error)
-	Delete(id string) error
-	Update(id string) (CertDto, error)
+	Save(context.Context, RegisterCertReq) (CertDto, error)
+	GetAll(context.Context, GetAllCertsReq) ([]CertDto, error)
+	Delete(context.Context, DeleteCertReq) error
+	Update(context.Context, UpdateCertReq) (CertDto, error)
 }
 
 type CertsService struct {
@@ -27,7 +27,7 @@ func NewService(tlsClient tlser.Client, repo Repo) *CertsService {
 	}
 }
 
-func (s *CertsService) Save(dto RegisterCertReq) (CertDto, error) {
+func (s *CertsService) Save(ctx context.Context, dto RegisterCertReq) (CertDto, error) {
 	userID, err := ParseID(dto.UserID)
 	if err != nil {
 		return CertDto{}, err
@@ -49,7 +49,7 @@ func (s *CertsService) Save(dto RegisterCertReq) (CertDto, error) {
 	}
 
 	cert := New(userID, domain, issuer, data.Expiry)
-	err = s.repo.Save(context.Background(), cert)
+	err = s.repo.Save(ctx, cert)
 	if err != nil {
 		return CertDto{}, err
 	}
@@ -57,13 +57,13 @@ func (s *CertsService) Save(dto RegisterCertReq) (CertDto, error) {
 	return toDTO(cert), nil
 }
 
-func (s *CertsService) GetAll(dto GetAllCertsReq) ([]CertDto, error) {
+func (s *CertsService) GetAll(ctx context.Context, dto GetAllCertsReq) ([]CertDto, error) {
 	userID, err := ParseID(dto.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	certificates, err := s.repo.GetAll(context.Background(), userID)
+	certificates, err := s.repo.GetAll(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,22 +76,22 @@ func (s *CertsService) GetAll(dto GetAllCertsReq) ([]CertDto, error) {
 	return dtos, nil
 }
 
-func (s *CertsService) Delete(id string) error {
-	parsedID, err := ParseID(id)
+func (s *CertsService) Delete(ctx context.Context, dto DeleteCertReq) error {
+	parsedID, err := ParseID(dto.UserID)
 	if err != nil {
 		return err
 	}
 
-	return s.repo.Delete(context.Background(), parsedID)
+	return s.repo.Delete(ctx, parsedID)
 }
 
-func (s *CertsService) Update(id string) (CertDto, error) {
-	parsedID, err := ParseID(id)
+func (s *CertsService) Update(ctx context.Context, dto UpdateCertReq) (CertDto, error) {
+	parsedID, err := ParseID(dto.UserID)
 	if err != nil {
 		return CertDto{}, err
 	}
 
-	cert, err := s.repo.Get(context.Background(), parsedID)
+	cert, err := s.repo.Get(ctx, parsedID)
 	if err != nil {
 		return CertDto{}, err
 	}
@@ -108,7 +108,7 @@ func (s *CertsService) Update(id string) (CertDto, error) {
 	}
 
 	now := time.Now().UTC()
-	err = s.repo.Update(context.Background(), parsedID, data.Expiry, issuer, now, e)
+	err = s.repo.Update(ctx, parsedID, data.Expiry, issuer, now, e)
 	if err != nil {
 		return CertDto{}, err
 	}

@@ -1,19 +1,11 @@
 package certs
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-)
-
-var (
-	ErrInvalidDomain   = errors.New("domain is required and must be a valid hostname")
-	ErrDuplicateDomain = errors.New("domain already exists")
-	ErrInvalidIssuer   = errors.New("issuer is required")
-	ErrNotFound        = errors.New("not found")
 )
 
 var hostnameRegexRFC952 = regexp.MustCompile(`^[a-zA-Z]([a-zA-Z0-9\-]+[\.]?)*[a-zA-Z0-9]$`)
@@ -24,7 +16,6 @@ type Domain string
 
 type Issuer string
 
-// Cert is an aggregate root that represents the information for a TLS certificate.
 type Cert struct {
 	ID        ID        `db:"id"`
 	UserID    ID        `db:"user_id"`

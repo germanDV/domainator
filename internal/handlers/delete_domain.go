@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/germandv/domainator/internal/certs"
@@ -14,9 +15,13 @@ func DeleteDomain(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
-		err := certsService.Delete(id)
+		err := certsService.Delete(r.Context(), certs.DeleteCertReq{UserID: id})
 		if err != nil {
-			http.Error(w, "Error deleting domain", http.StatusInternalServerError)
+			if errors.Is(err, certs.ErrNotFound) {
+				http.Error(w, "Domain not found", http.StatusNotFound)
+			} else {
+				http.Error(w, "Error deleting domain", http.StatusInternalServerError)
+			}
 			return
 		}
 

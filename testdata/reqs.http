@@ -1,9 +1,14 @@
 @url = http://localhost:4000
-@JWT = eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkb21haW5hdG9yIiwiZXhwIjoxNzEwMzE0MTQ4LCJpYXQiOjE3MTAyODUzNDgsImlzcyI6ImRvbWFpbmF0b3IiLCJzdWIiOiJhYmMxMjMifQ.P00V8itJmRn4ARKTfWNYI-H5lA0vzZLQQ7on2TdwtlPWzMlqL7KuMTHyx2C_jSa3t_fUeVF1Rng6T1DDQI8Iow
+@JWT = eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkb21haW5hdG9yIiwiZXhwIjoxNzExMjQ1MzAwLCJpYXQiOjE3MTEyMTY1MDAsImlzcyI6ImRvbWFpbmF0b3IiLCJzdWIiOiIwMThlNGRhOC0wMzcyLTdkMWEtYjc5Yy0xZjFkMGZmOWI1YjMifQ.2G-lMEZZOQvmJTxa09xnnae538EvlPMegbFbxAsGXaLSIznW_PohwZ5KjiSryt_B8E9MFvRLxDvd_sO5dXH6ZQ
 
 ### Healthcheck
 GET {{url}}/healthcheck HTTP/1.1
 Accept: application/json
+
+### Homepage
+GET {{url}}/ HTTP/1.1
+Accept: text/plain
+Cookie: token={{JWT}}
 
 ### Refresh certificate state
 PUT {{url}}/domain/018e2fd2-ed3c-7dc4-9c95-1de10f387aa6 HTTP/1.1
