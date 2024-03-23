@@ -14,10 +14,10 @@ import (
 const QueryTimeout = 5 * time.Second
 
 type Repo interface {
-	Save(ctx context.Context, cert Cert) error
-	GetAll(ctx context.Context, userID ID) ([]Cert, error)
-	Get(ctx context.Context, id ID) (Cert, error)
-	Update(ctx context.Context, id ID, expiry time.Time, issuer Issuer, updatedAt time.Time, e string) error
+	Save(ctx context.Context, cert repoCert) error
+	GetAll(ctx context.Context, userID ID) ([]repoCert, error)
+	Get(ctx context.Context, id ID) (repoCert, error)
+	Update(ctx context.Context, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
 	Delete(ctx context.Context, id ID) error
 }
 
@@ -29,7 +29,7 @@ func NewRepo(db *pgxpool.Pool) *CertsRepo {
 	return &CertsRepo{db}
 }
 
-func (r *CertsRepo) Save(ctx context.Context, cert Cert) error {
+func (r *CertsRepo) Save(ctx context.Context, cert repoCert) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -48,7 +48,7 @@ func (r *CertsRepo) Save(ctx context.Context, cert Cert) error {
 	return nil
 }
 
-func (r *CertsRepo) GetAll(ctx context.Context, userID ID) ([]Cert, error) {
+func (r *CertsRepo) GetAll(ctx context.Context, userID ID) ([]repoCert, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -61,10 +61,10 @@ func (r *CertsRepo) GetAll(ctx context.Context, userID ID) ([]Cert, error) {
       user_id = $1`
 
 	rows, _ := r.db.Query(ctx, q, userID)
-	return pgx.CollectRows(rows, pgx.RowToStructByName[Cert])
+	return pgx.CollectRows(rows, pgx.RowToStructByName[repoCert])
 }
 
-func (r *CertsRepo) Get(ctx context.Context, id ID) (Cert, error) {
+func (r *CertsRepo) Get(ctx context.Context, id ID) (repoCert, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -77,18 +77,18 @@ func (r *CertsRepo) Get(ctx context.Context, id ID) (Cert, error) {
       id = $1`
 
 	rows, _ := r.db.Query(ctx, q, id)
-	cert, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Cert])
+	cert, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[repoCert])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return Cert{}, ErrNotFound
+			return repoCert{}, ErrNotFound
 		}
-		return Cert{}, err
+		return repoCert{}, err
 	}
 
 	return cert, nil
 }
 
-func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer Issuer, updatedAt time.Time, e string) error {
+func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 

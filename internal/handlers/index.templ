@@ -1,8 +1,6 @@
-package templates
+package handlers
 
-import "github.com/germandv/domainator/internal/certs"
-
-templ Index(certificates []certs.CertDto) {
+templ Index(certificates []TransportCert) {
   <section hx-ext="response-targets">
     <div class="hero">
       <h1>The Home Of The Domainator</h1>

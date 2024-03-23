@@ -1,6 +1,4 @@
-package templates
-
-import "github.com/germandv/domainator/internal/middleware"
+package handlers
 
 templ header(title string) {
   <head>
@@ -10,18 +8,18 @@ templ header(title string) {
 
 		<script
       src="static/scripts/htmx.min.js"
-      nonce={ctx.Value(middleware.HtmxNonceKey).(string)}
+      nonce={ctx.Value(HtmxNonceKey).(string)}
     ></script>
 
 		<script
       src="static/scripts/response-targets.js"
-      nonce={ctx.Value(middleware.RespTrgtNonceKey).(string)}
+      nonce={ctx.Value(RespTrgtNonceKey).(string)}
     ></script>
 
 		<link
       rel="stylesheet"
       href="static/styles/main.css"
-      nonce={ctx.Value(middleware.StylesNonceKey).(string)}
+      nonce={ctx.Value(StylesNonceKey).(string)}
     />
 
     <link rel="icon" type="image/png" href="static/images/favicon.png" />

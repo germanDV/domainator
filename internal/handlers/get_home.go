@@ -5,7 +5,6 @@ import (
 
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/cntxt"
-	"github.com/germandv/domainator/internal/templates"
 )
 
 func GetHome(certsService certs.Service) http.HandlerFunc {
@@ -16,14 +15,26 @@ func GetHome(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
-		certificates, err := certsService.GetAll(r.Context(), certs.GetAllCertsReq{UserID: userID})
+		req := GetAllCertsReq{UserID: userID}
+		parsedReq, err := req.Parse()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		certificates, err := certsService.GetAll(r.Context(), parsedReq)
 		if err != nil {
 			http.Error(w, "Error getting certificates", http.StatusInternalServerError)
 			return
 		}
 
-		c := templates.Index(certificates)
-		err = templates.Layout(c, "The Home Of The Domainator").Render(r.Context(), w)
+		transportCerts := make([]TransportCert, len(certificates))
+		for i, cert := range certificates {
+			transportCerts[i] = serviceToTransportAdapter(cert)
+		}
+
+		c := Index(transportCerts)
+		err = Layout(c, "The Home Of The Domainator").Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering template", http.StatusInternalServerError)
 			return

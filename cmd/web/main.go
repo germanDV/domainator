@@ -16,7 +16,6 @@ import (
 	"github.com/germandv/domainator/internal/configstruct"
 	"github.com/germandv/domainator/internal/db"
 	"github.com/germandv/domainator/internal/handlers"
-	"github.com/germandv/domainator/internal/middleware"
 	"github.com/germandv/domainator/internal/tlser"
 	"github.com/germandv/domainator/internal/tokenauth"
 )
@@ -70,8 +69,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	authn := middleware.AuthBuilder(authService, false)
-	authz := middleware.AuthBuilder(authService, true)
+	authn := handlers.AuthBuilder(authService, false)
+	authz := handlers.AuthBuilder(authService, true)
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
@@ -83,7 +82,7 @@ func main() {
 	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(certsService)))
 
 	addr := fmt.Sprintf(":%d", config.Port)
-	commonMiddleware := middleware.CommonBuilder(logger, cacheClient)
+	commonMiddleware := handlers.CommonBuilder(logger, cacheClient)
 	srv := &http.Server{
 		Addr:         addr,
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),

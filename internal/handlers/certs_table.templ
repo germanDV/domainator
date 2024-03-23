@@ -1,8 +1,6 @@
-package templates
+package handlers
 
-import "github.com/germandv/domainator/internal/certs"
-
-templ certsTable(certificates []certs.CertDto) {
+templ certsTable(certificates []TransportCert) {
     <table id="table">
       <thead>
         <tr>
