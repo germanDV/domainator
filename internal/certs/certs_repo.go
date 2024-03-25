@@ -17,8 +17,8 @@ type Repo interface {
 	Save(ctx context.Context, cert repoCert) error
 	GetAll(ctx context.Context, userID ID) ([]repoCert, error)
 	Get(ctx context.Context, id ID) (repoCert, error)
-	Update(ctx context.Context, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
-	Delete(ctx context.Context, id ID) error
+	Update(ctx context.Context, userID ID, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
+	Delete(ctx context.Context, userID ID, id ID) error
 }
 
 type CertsRepo struct {
@@ -88,7 +88,7 @@ func (r *CertsRepo) Get(ctx context.Context, id ID) (repoCert, error) {
 	return cert, nil
 }
 
-func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error {
+func (r *CertsRepo) Update(ctx context.Context, userID ID, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -101,9 +101,9 @@ func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer 
       updated_at = $4,
       error = nullif($5, '')
     where
-      id = $1`
+      id = $1 and user_id = $6`
 
-	res, err := r.db.Exec(ctx, q, id, issuer, expiry, updatedAt, e)
+	res, err := r.db.Exec(ctx, q, id, issuer, expiry, updatedAt, e, userID)
 	if err != nil {
 		return err
 	}
@@ -115,12 +115,12 @@ func (r *CertsRepo) Update(ctx context.Context, id ID, expiry time.Time, issuer 
 }
 
 // TODO: make it a soft delete
-func (r *CertsRepo) Delete(ctx context.Context, id ID) error {
+func (r *CertsRepo) Delete(ctx context.Context, userID ID, id ID) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	q := `delete from certificates where id = $1`
-	res, err := r.db.Exec(ctx, q, id)
+	q := `delete from certificates where id = $1 and user_id = $2`
+	res, err := r.db.Exec(ctx, q, id, userID)
 	if err != nil {
 		return err
 	}

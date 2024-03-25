@@ -1,5 +1,5 @@
 @url = http://localhost:4000
-@JWT = eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkb21haW5hdG9yIiwiZXhwIjoxNzExMjQ1MzAwLCJpYXQiOjE3MTEyMTY1MDAsImlzcyI6ImRvbWFpbmF0b3IiLCJzdWIiOiIwMThlNGRhOC0wMzcyLTdkMWEtYjc5Yy0xZjFkMGZmOWI1YjMifQ.2G-lMEZZOQvmJTxa09xnnae538EvlPMegbFbxAsGXaLSIznW_PohwZ5KjiSryt_B8E9MFvRLxDvd_sO5dXH6ZQ
+@JWT = eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkb21haW5hdG9yIiwiZXhwIjoxNzExNDM2NjU2LCJpYXQiOjE3MTE0MDc4NTYsImlzcyI6ImRvbWFpbmF0b3IiLCJzdWIiOiIwMThlNGRhOC0wMzcyLTdkMWEtYjc5Yy0xZjFkMGZmOWI1YjMifQ.Adbm0hWHdKgZdoBI7pvJUvIt4qYQkrDw2jVNzfBPdMpX3Bhai1ESSrtishie3wruAoWbuNwfhwOp8DCYdLLeWg
 
 ### Healthcheck
 GET {{url}}/healthcheck?deep=true HTTP/1.1
@@ -11,11 +11,11 @@ Accept: text/plain
 Cookie: token={{JWT}}
 
 ### Refresh certificate state
-PUT {{url}}/domain/018e2fd2-ed3c-7dc4-9c95-1de10f387aa6 HTTP/1.1
+PUT {{url}}/domain/018e77ed-c715-7628-869b-58702d02750b HTTP/1.1
 Accept: text/plain
 Cookie: token={{JWT}}
 
 ### Delete domain
-DELETE {{url}}/domain/018e2fd2-ed3c-7cc5-a619-0ddc98398d9c HTTP/1.1
+DELETE {{url}}/domain/018e77ed-c715-7628-869b-58702d02750b HTTP/1.1
 Accept: text/plain
 Cookie: token={{JWT}}

@@ -66,8 +66,7 @@ func (s *CertsService) GetAll(ctx context.Context, req GetAllReq) ([]Cert, error
 }
 
 func (s *CertsService) Delete(ctx context.Context, req DeleteReq) error {
-	// TODO: include userID to validate ownership of the cert
-	return s.repo.Delete(ctx, req.ID)
+	return s.repo.Delete(ctx, req.UserID, req.ID)
 }
 
 func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) {
@@ -88,8 +87,7 @@ func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) 
 	}
 
 	now := time.Now().UTC()
-	// TODO: include userID to validate ownership of the cert
-	err = s.repo.Update(ctx, req.ID, data.Expiry, issuer.value, now, e)
+	err = s.repo.Update(ctx, req.UserID, req.ID, data.Expiry, issuer.value, now, e)
 	if err != nil {
 		return Cert{}, err
 	}
