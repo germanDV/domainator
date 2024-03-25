@@ -7,7 +7,7 @@ import (
 	"github.com/germandv/domainator/internal/cache"
 )
 
-func CommonBuilder(logger *slog.Logger, cacheClient cache.Client) func(next http.Handler) http.Handler {
+func CommonMdwBuilder(logger *slog.Logger, cacheClient cache.Client) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		reqLogger := loggerBuilder(logger)
 		rateLimiter := rateLimiterBuilder(logger, cacheClient)

@@ -7,7 +7,6 @@ import (
 
 var hostnameRegexRFC952 = regexp.MustCompile(`^[a-zA-Z]([a-zA-Z0-9\-]+[\.]?)*[a-zA-Z0-9]$`)
 
-// TODO: rename `Domain` to `Hostname` everywhere
 type Domain struct {
 	value string
 }

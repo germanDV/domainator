@@ -69,12 +69,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	authn := handlers.AuthBuilder(authService, false)
-	authz := handlers.AuthBuilder(authService, true)
+	authn := handlers.AuthMdwBuilder(authService, false)
+	authz := handlers.AuthMdwBuilder(authService, true)
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
-	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient))
+	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient, db))
 	mux.Handle("GET /", authn(handlers.GetHome(certsService)))
 	mux.Handle("GET /login", authn(handlers.GetAccess()))
 	mux.Handle("POST /domain", authz(handlers.RegisterDomain(certsService)))
@@ -82,7 +82,7 @@ func main() {
 	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(certsService)))
 
 	addr := fmt.Sprintf(":%d", config.Port)
-	commonMiddleware := handlers.CommonBuilder(logger, cacheClient)
+	commonMiddleware := handlers.CommonMdwBuilder(logger, cacheClient)
 	srv := &http.Server{
 		Addr:         addr,
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),

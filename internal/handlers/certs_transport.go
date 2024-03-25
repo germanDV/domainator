@@ -12,6 +12,7 @@ type RegisterCertReq struct {
 	UserID string
 }
 
+// Parse converts it from the Transport layer to the Service layer.
 func (r RegisterCertReq) Parse() (certs.RegisterReq, error) {
 	domain, err := certs.ParseDomain(r.Domain)
 	if err != nil {
@@ -33,6 +34,7 @@ type GetAllCertsReq struct {
 	UserID string
 }
 
+// Parse converts it from the Transport layer to the Service layer.
 func (r GetAllCertsReq) Parse() (certs.GetAllReq, error) {
 	userID, err := certs.ParseID(r.UserID)
 	if err != nil {
@@ -49,6 +51,7 @@ type UpdateCertReq struct {
 	UserID string
 }
 
+// Parse converts it from the Transport layer to the Service layer.
 func (r UpdateCertReq) Parse() (certs.UpdateReq, error) {
 	id, err := certs.ParseID(r.ID)
 	if err != nil {
@@ -71,6 +74,7 @@ type DeleteCertReq struct {
 	UserID string
 }
 
+// Parse converts it from the Transport layer to the Service layer.
 func (r DeleteCertReq) Parse() (certs.DeleteReq, error) {
 	id, err := certs.ParseID(r.ID)
 	if err != nil {

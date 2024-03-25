@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"runtime/debug"
@@ -9,8 +10,15 @@ import (
 	"github.com/germandv/domainator/internal/cache"
 )
 
-func GetHealthcheck(cacheClient cache.Client) http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
+type DbPinger interface {
+	Ping(context.Context) error
+}
+
+func GetHealthcheck(cacheClient cache.Client, db DbPinger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		deep := q.Get("deep")
+
 		var revision string
 		var dirty bool
 		var lastCommit time.Time
@@ -32,18 +40,29 @@ func GetHealthcheck(cacheClient cache.Client) http.HandlerFunc {
 			}
 		}
 
-		cacheStatus := "up"
-		err := cacheClient.Ping()
-		if err != nil {
-			cacheStatus = "down"
-		}
-
 		resp := map[string]any{
 			"revision":   revision,
 			"dirty":      dirty,
 			"lastCommit": lastCommit,
 			"go":         info.GoVersion,
-			"redis":      cacheStatus,
+		}
+
+		if deep == "true" {
+			cacheStatus := "up"
+			err := cacheClient.Ping()
+			if err != nil {
+				cacheStatus = "down"
+			}
+			resp["redis"] = cacheStatus
+
+			dbStatus := "up"
+			ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+			defer cancel()
+			err = db.Ping(ctx)
+			if err != nil {
+				dbStatus = "down"
+			}
+			resp["postgres"] = dbStatus
 		}
 
 		w.WriteHeader(http.StatusOK)

@@ -2,7 +2,7 @@
 @JWT = eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkb21haW5hdG9yIiwiZXhwIjoxNzExMjQ1MzAwLCJpYXQiOjE3MTEyMTY1MDAsImlzcyI6ImRvbWFpbmF0b3IiLCJzdWIiOiIwMThlNGRhOC0wMzcyLTdkMWEtYjc5Yy0xZjFkMGZmOWI1YjMifQ.2G-lMEZZOQvmJTxa09xnnae538EvlPMegbFbxAsGXaLSIznW_PohwZ5KjiSryt_B8E9MFvRLxDvd_sO5dXH6ZQ
 
 ### Healthcheck
-GET {{url}}/healthcheck HTTP/1.1
+GET {{url}}/healthcheck?deep=true HTTP/1.1
 Accept: application/json
 
 ### Homepage
