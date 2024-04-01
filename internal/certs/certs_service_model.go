@@ -2,30 +2,32 @@ package certs
 
 import (
 	"time"
+
+	"github.com/germandv/domainator/internal/common"
 )
 
 type RegisterReq struct {
 	Domain Domain
-	UserID ID
+	UserID common.ID
 }
 
 type GetAllReq struct {
-	UserID ID
+	UserID common.ID
 }
 
 type UpdateReq struct {
-	ID     ID
-	UserID ID
+	ID     common.ID
+	UserID common.ID
 }
 
 type DeleteReq struct {
-	ID     ID
-	UserID ID
+	ID     common.ID
+	UserID common.ID
 }
 
 type Cert struct {
-	ID        ID
-	UserID    ID
+	ID        common.ID
+	UserID    common.ID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	ExpiresAt time.Time
@@ -34,9 +36,9 @@ type Cert struct {
 	Error     string
 }
 
-func New(userID ID, domain Domain, issuer Issuer, expiresAt time.Time) Cert {
+func New(userID common.ID, domain Domain, issuer Issuer, expiresAt time.Time) Cert {
 	return Cert{
-		ID:        NewID(),
+		ID:        common.NewID(),
 		UserID:    userID,
 		CreatedAt: time.Now(),
 		ExpiresAt: expiresAt,
@@ -62,12 +64,12 @@ func serviceToRepoAdapter(cert Cert) repoCert {
 
 // repoToServiceAdapter transforms a Cert from the Repository layer to the Service layer.
 func repoToServiceAdapter(cert repoCert) (Cert, error) {
-	parsedID, err := ParseID(cert.ID)
+	parsedID, err := common.ParseID(cert.ID)
 	if err != nil {
 		return Cert{}, err
 	}
 
-	parsedUserID, err := ParseID(cert.UserID)
+	parsedUserID, err := common.ParseID(cert.UserID)
 	if err != nil {
 		return Cert{}, err
 	}

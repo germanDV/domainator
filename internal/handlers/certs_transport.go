@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/germandv/domainator/internal/certs"
+	"github.com/germandv/domainator/internal/common"
 )
 
 type RegisterCertReq struct {
@@ -19,7 +20,7 @@ func (r RegisterCertReq) Parse() (certs.RegisterReq, error) {
 		return certs.RegisterReq{}, err
 	}
 
-	userID, err := certs.ParseID(r.UserID)
+	userID, err := common.ParseID(r.UserID)
 	if err != nil {
 		return certs.RegisterReq{}, err
 	}
@@ -36,7 +37,7 @@ type GetAllCertsReq struct {
 
 // Parse converts it from the Transport layer to the Service layer.
 func (r GetAllCertsReq) Parse() (certs.GetAllReq, error) {
-	userID, err := certs.ParseID(r.UserID)
+	userID, err := common.ParseID(r.UserID)
 	if err != nil {
 		return certs.GetAllReq{}, err
 	}
@@ -53,12 +54,12 @@ type UpdateCertReq struct {
 
 // Parse converts it from the Transport layer to the Service layer.
 func (r UpdateCertReq) Parse() (certs.UpdateReq, error) {
-	id, err := certs.ParseID(r.ID)
+	id, err := common.ParseID(r.ID)
 	if err != nil {
 		return certs.UpdateReq{}, err
 	}
 
-	userID, err := certs.ParseID(r.UserID)
+	userID, err := common.ParseID(r.UserID)
 	if err != nil {
 		return certs.UpdateReq{}, err
 	}
@@ -76,12 +77,12 @@ type DeleteCertReq struct {
 
 // Parse converts it from the Transport layer to the Service layer.
 func (r DeleteCertReq) Parse() (certs.DeleteReq, error) {
-	id, err := certs.ParseID(r.ID)
+	id, err := common.ParseID(r.ID)
 	if err != nil {
 		return certs.DeleteReq{}, err
 	}
 
-	userID, err := certs.ParseID(r.UserID)
+	userID, err := common.ParseID(r.UserID)
 	if err != nil {
 		return certs.DeleteReq{}, err
 	}

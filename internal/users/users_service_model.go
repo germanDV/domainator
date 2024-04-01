@@ -1,6 +1,10 @@
 package users
 
-import "time"
+import (
+	"time"
+
+	"github.com/germandv/domainator/internal/common"
+)
 
 type SaveReq struct {
 	Email              Email
@@ -14,7 +18,7 @@ type GetByEmailReq struct {
 }
 
 type User struct {
-	ID                 ID
+	ID                 common.ID
 	Email              Email
 	Name               string
 	IdentityProvider   string
@@ -24,7 +28,7 @@ type User struct {
 
 func New(name string, email Email, identityProvider string, identityProviderID string) User {
 	return User{
-		ID:                 NewID(),
+		ID:                 common.NewID(),
 		Name:               name,
 		Email:              email,
 		IdentityProvider:   identityProvider,
@@ -47,7 +51,7 @@ func serviceToRepoAdapter(user User) repoUser {
 
 // repoToServiceAdapter transforms a User from the Repository layer to the Service layer.
 func repoToServiceAdapter(user repoUser) (User, error) {
-	parsedID, err := ParseID(user.ID)
+	parsedID, err := common.ParseID(user.ID)
 	if err != nil {
 		return User{}, err
 	}

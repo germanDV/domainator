@@ -1,4 +1,4 @@
-package certs
+package common
 
 import "github.com/google/uuid"
 
@@ -20,5 +20,5 @@ func ParseID(id string) (ID, error) {
 }
 
 func (id ID) String() string {
-	return string(id.value)
+	return id.value
 }

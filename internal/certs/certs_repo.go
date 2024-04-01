@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/germandv/domainator/internal/common"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -15,10 +16,10 @@ const QueryTimeout = 5 * time.Second
 
 type Repo interface {
 	Save(ctx context.Context, cert repoCert) error
-	GetAll(ctx context.Context, userID ID) ([]repoCert, error)
-	Get(ctx context.Context, id ID) (repoCert, error)
-	Update(ctx context.Context, userID ID, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
-	Delete(ctx context.Context, userID ID, id ID) error
+	GetAll(ctx context.Context, userID common.ID) ([]repoCert, error)
+	Get(ctx context.Context, id common.ID) (repoCert, error)
+	Update(ctx context.Context, userID common.ID, id common.ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
+	Delete(ctx context.Context, userID common.ID, id common.ID) error
 }
 
 type CertsRepo struct {
@@ -48,7 +49,7 @@ func (r *CertsRepo) Save(ctx context.Context, cert repoCert) error {
 	return nil
 }
 
-func (r *CertsRepo) GetAll(ctx context.Context, userID ID) ([]repoCert, error) {
+func (r *CertsRepo) GetAll(ctx context.Context, userID common.ID) ([]repoCert, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -64,7 +65,7 @@ func (r *CertsRepo) GetAll(ctx context.Context, userID ID) ([]repoCert, error) {
 	return pgx.CollectRows(rows, pgx.RowToStructByName[repoCert])
 }
 
-func (r *CertsRepo) Get(ctx context.Context, id ID) (repoCert, error) {
+func (r *CertsRepo) Get(ctx context.Context, id common.ID) (repoCert, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -88,7 +89,15 @@ func (r *CertsRepo) Get(ctx context.Context, id ID) (repoCert, error) {
 	return cert, nil
 }
 
-func (r *CertsRepo) Update(ctx context.Context, userID ID, id ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error {
+func (r *CertsRepo) Update(
+	ctx context.Context,
+	userID common.ID,
+	id common.ID,
+	expiry time.Time,
+	issuer string,
+	updatedAt time.Time,
+	e string,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -115,7 +124,7 @@ func (r *CertsRepo) Update(ctx context.Context, userID ID, id ID, expiry time.Ti
 }
 
 // TODO: make it a soft delete
-func (r *CertsRepo) Delete(ctx context.Context, userID ID, id ID) error {
+func (r *CertsRepo) Delete(ctx context.Context, userID common.ID, id common.ID) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 

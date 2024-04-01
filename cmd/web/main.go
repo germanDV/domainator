@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +13,7 @@ import (
 
 	"github.com/germandv/domainator/internal/cache"
 	"github.com/germandv/domainator/internal/certs"
+	"github.com/germandv/domainator/internal/common"
 	"github.com/germandv/domainator/internal/configstruct"
 	"github.com/germandv/domainator/internal/db"
 	"github.com/germandv/domainator/internal/githubauth"
@@ -81,7 +80,7 @@ func main() {
 	authn := handlers.AuthMdwBuilder(authService, false)
 	authz := handlers.AuthMdwBuilder(authService, true)
 
-	stateStr := generateRandomString(32)
+	stateStr := common.GenerateRandomString(32)
 	githubCfg := githubauth.NewGithubConfig(
 		config.GithubClientID,
 		config.GithubSecret,
@@ -177,17 +176,4 @@ func getLogger(format string) (*slog.Logger, error) {
 	default:
 		return nil, errors.New("invalid log format, use one of 'text' or 'json'")
 	}
-}
-
-func generateRandomString(n int) string {
-	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	ret := make([]byte, n)
-	for i := 0; i < n; i++ {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
-		if err != nil {
-			panic(err)
-		}
-		ret[i] = letters[num.Int64()]
-	}
-	return string(ret)
 }
