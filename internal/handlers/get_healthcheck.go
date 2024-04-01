@@ -11,7 +11,7 @@ import (
 )
 
 type DbPinger interface {
-	Ping(context.Context) error
+	Ping(ctx context.Context) error
 }
 
 func GetHealthcheck(cacheClient cache.Client, db DbPinger) http.HandlerFunc {

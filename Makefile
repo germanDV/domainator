@@ -121,6 +121,18 @@ deps/ext: confirm
 	@echo 'Installing `templ` for html templating'
 	go install github.com/a-h/templ/cmd/templ@latest
 
+## worker/run: run worker
+.PHONY: worker/run
+worker/run:
+	@echo 'Running worker...'
+	go run ./cmd/worker
+
+## worker/build: build worker
+.PHONY: worker/build
+worker/build:
+	@echo 'Building worker binary...'
+	go build -o=./bin/${BINARY_NAME}_worker ./cmd/worker
+
 ## scripts/keys: generate new key-pair
 .PHONY: scripts/keys
 scripts/keys:

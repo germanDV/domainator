@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/germandv/domainator/internal/tlser"
+	"github.com/jackc/pgx/v5"
 )
 
 type Service interface {
-	Save(context.Context, RegisterReq) (Cert, error)
-	GetAll(context.Context, GetAllReq) ([]Cert, error)
-	Delete(context.Context, DeleteReq) error
-	Update(context.Context, UpdateReq) (Cert, error)
+	Save(ctx context.Context, req RegisterReq) (Cert, error)
+	GetAll(ctx context.Context, req GetAllReq) ([]Cert, error)
+	Delete(ctx context.Context, req DeleteReq) error
+	Update(ctx context.Context, req UpdateReq) (Cert, error)
+	ProcessBatch(ctx context.Context, size int, concurrency int) error
 }
 
 type CertsService struct {
@@ -102,4 +104,44 @@ func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) 
 		return Cert{}, err
 	}
 	return c, nil
+}
+
+func (s *CertsService) ProcessBatch(ctx context.Context, size int, concurrency int) error {
+	var certs []repoCert
+	var tx pgx.Tx
+	var err error
+
+	first := true
+	lastID := ""
+
+	for first || len(certs) > 0 {
+		first = false
+
+		certs, tx, err = s.repo.ProcessBatch(ctx, size, lastID)
+		if err != nil {
+			return err
+		}
+
+		tasks := make([]Task, len(certs))
+		for i, entry := range certs {
+			cert, err := repoToServiceAdapter(entry)
+			if err != nil {
+				continue
+			}
+
+			tasks[i] = Task{
+				cert:      cert,
+				tlsClient: s.tlsClient,
+				repo:      s.repo,
+				tx:        tx,
+			}
+
+			lastID = entry.ID
+		}
+
+		batch := NewBatch(tasks, tx, concurrency)
+		batch.Begin()
+	}
+
+	return nil
 }
