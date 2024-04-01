@@ -6,7 +6,6 @@ import (
 	"github.com/germandv/domainator/internal/cntxt"
 )
 
-// TODO: render access page with GitHub OAuth
 func GetAccess() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := cntxt.GetUserID(r)
@@ -15,6 +14,11 @@ func GetAccess() http.HandlerFunc {
 			return
 		}
 
-		w.Write([]byte("<h1>Beautiful Page with Sign In / Sign Up Options</h1>"))
+		c := Login()
+		err := Layout(c, "Domainator | Login", false).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering template", http.StatusInternalServerError)
+			return
+		}
 	}
 }

@@ -15,5 +15,5 @@ func ParseIssuer(issuer string) (Issuer, error) {
 }
 
 func (i Issuer) String() string {
-	return string(i.value)
+	return i.value
 }

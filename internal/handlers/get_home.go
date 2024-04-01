@@ -34,7 +34,7 @@ func GetHome(certsService certs.Service) http.HandlerFunc {
 		}
 
 		c := Index(transportCerts)
-		err = Layout(c, "The Home Of The Domainator").Render(r.Context(), w)
+		err = Layout(c, "The Home Of The Domainator", true).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering template", http.StatusInternalServerError)
 			return

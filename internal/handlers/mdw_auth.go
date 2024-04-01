@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/germandv/domainator/internal/cntxt"
 	"github.com/germandv/domainator/internal/tokenauth"
@@ -36,7 +37,15 @@ func AuthMdwBuilder(auth tokenauth.Service, required bool) func(next http.Handle
 				next.ServeHTTP(w, r)
 			} else {
 				if required {
-					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+					cookie := http.Cookie{
+						Name:     AuthCookieName,
+						Value:    "",
+						Path:     "/",
+						HttpOnly: true,
+						Expires:  time.Unix(0, 0),
+					}
+					http.SetCookie(w, &cookie)
+					http.Redirect(w, r, "/login", http.StatusSeeOther)
 				} else {
 					next.ServeHTTP(w, r)
 				}

@@ -20,5 +20,5 @@ func ParseDomain(dom string) (Domain, error) {
 }
 
 func (d Domain) String() string {
-	return string(d.value)
+	return d.value
 }

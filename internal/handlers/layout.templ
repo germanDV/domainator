@@ -1,6 +1,6 @@
 package handlers
 
-templ header(title string) {
+templ head(title string) {
   <head>
     <title>{title}</title>
 		<meta charset="UTF-8"/>
@@ -26,15 +26,26 @@ templ header(title string) {
   </head>
 }
 
+templ header() {
+  <header>
+    <form action="/logout" method="POST">
+      <button class="btn-sm btn-secondary" type="submit">OUT</button>
+    </form>
+  </header>
+}
+
 templ footer() {
   <footer>&copy; 2024 Domainator</footer>
 }
 
-templ Layout(contents templ.Component, title string) {
+templ Layout(contents templ.Component, title string, loggedIn bool) {
   <!DOCTYPE html>
   <html lang="en">
-    @header(title)
+    @head(title)
     <body>
+      if loggedIn {
+        @header()
+      }
       <main>
         @contents
       </main>

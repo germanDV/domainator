@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,9 +17,11 @@ import (
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/configstruct"
 	"github.com/germandv/domainator/internal/db"
+	"github.com/germandv/domainator/internal/githubauth"
 	"github.com/germandv/domainator/internal/handlers"
 	"github.com/germandv/domainator/internal/tlser"
 	"github.com/germandv/domainator/internal/tokenauth"
+	"github.com/germandv/domainator/internal/users"
 )
 
 type AppConfig struct {
@@ -34,6 +38,9 @@ type AppConfig struct {
 	PostgresUser     string `env:"POSTGRES_USER"`
 	PostgresPassword string `env:"POSTGRES_PASSWORD"`
 	PostgresDatabase string `env:"POSTGRES_DB"`
+	GithubClientID   string `env:"GITHUB_CLIENT_ID"`
+	GithubSecret     string `env:"GITHUB_SECRET"`
+	Host             string `env:"HOST" default:"http://localhost"`
 }
 
 func main() {
@@ -59,6 +66,8 @@ func main() {
 		panic(err)
 	}
 
+	usersRepo := users.NewRepo(db)
+	usersService := users.NewService(usersRepo)
 	certsRepo := certs.NewRepo(db)
 	cacheClient := cache.New(config.RedisHost, config.RedisPort, config.RedisPassword)
 	tlsClient := tlser.New(5 * time.Second)
@@ -72,11 +81,21 @@ func main() {
 	authn := handlers.AuthMdwBuilder(authService, false)
 	authz := handlers.AuthMdwBuilder(authService, true)
 
+	stateStr := generateRandomString(32)
+	githubCfg := githubauth.NewGithubConfig(
+		config.GithubClientID,
+		config.GithubSecret,
+		fmt.Sprintf("%s:%d/github/callback", config.Host, config.Port),
+	)
+
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient, db))
 	mux.Handle("GET /", authn(handlers.GetHome(certsService)))
 	mux.Handle("GET /login", authn(handlers.GetAccess()))
+	mux.Handle("GET /github/login", authn(handlers.GithubLogin(stateStr, githubCfg)))
+	mux.HandleFunc("GET /github/callback", handlers.GithubCallback(stateStr, githubCfg, authService, usersService))
+	mux.HandleFunc("POST /logout", handlers.Logout())
 	mux.Handle("POST /domain", authz(handlers.RegisterDomain(certsService)))
 	mux.Handle("PUT /domain/{id}", authz(handlers.UpdateDomain(certsService)))
 	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(certsService)))
@@ -158,4 +177,17 @@ func getLogger(format string) (*slog.Logger, error) {
 	default:
 		return nil, errors.New("invalid log format, use one of 'text' or 'json'")
 	}
+}
+
+func generateRandomString(n int) string {
+	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	ret := make([]byte, n)
+	for i := 0; i < n; i++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			panic(err)
+		}
+		ret[i] = letters[num.Int64()]
+	}
+	return string(ret)
 }
