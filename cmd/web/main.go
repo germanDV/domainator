@@ -14,7 +14,6 @@ import (
 	"github.com/germandv/domainator/internal/cache"
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/common"
-	"github.com/germandv/domainator/internal/configstruct"
 	"github.com/germandv/domainator/internal/db"
 	"github.com/germandv/domainator/internal/githubauth"
 	"github.com/germandv/domainator/internal/handlers"
@@ -43,12 +42,12 @@ type AppConfig struct {
 }
 
 func main() {
-	config, err := getConfig()
+	config, err := common.GetConfig[AppConfig]()
 	if err != nil {
 		panic(err)
 	}
 
-	logger, err := getLogger(config.LogFormat)
+	logger, err := common.GetLogger(config.LogFormat)
 	if err != nil {
 		panic(err)
 	}
@@ -143,37 +142,4 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("Server shutdown complete")
-}
-
-func getConfig() (*AppConfig, error) {
-	env := os.Getenv("ENV")
-	if env == "" {
-		env = "dev"
-	}
-
-	config := AppConfig{}
-	if env != "prod" {
-		err := configstruct.LoadAndParse(&config, "./.env")
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		err := configstruct.Parse(&config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &config, nil
-}
-
-func getLogger(format string) (*slog.Logger, error) {
-	switch format {
-	case "text":
-		return slog.New(slog.NewTextHandler(os.Stdout, nil)), nil
-	case "json":
-		return slog.New(slog.NewJSONHandler(os.Stdout, nil)), nil
-	default:
-		return nil, errors.New("invalid log format, use one of 'text' or 'json'")
-	}
 }

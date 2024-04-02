@@ -3,8 +3,8 @@ package users
 import "context"
 
 type Service interface {
-	Save(context.Context, SaveReq) (User, error)
-	GetByEmail(context.Context, GetByEmailReq) (User, error)
+	Save(ctx context.Context, req SaveReq) (User, error)
+	GetByEmail(ctx context.Context, req GetByEmailReq) (User, error)
 }
 
 type UsersService struct {
