@@ -4,16 +4,18 @@ import (
 	"context"
 	"time"
 
+	"github.com/germandv/domainator/internal/notifier"
 	"github.com/germandv/domainator/internal/tlser"
 	"github.com/germandv/domainator/internal/workerpool"
 	"github.com/jackc/pgx/v5"
 )
 
 type Task struct {
-	tlsClient tlser.Client
-	cert      Cert
-	repo      Repo
-	tx        pgx.Tx
+	tlsClient      tlser.Client
+	cert           Cert
+	repo           Repo
+	tx             pgx.Tx
+	notificationCh chan notifier.Notification
 }
 
 func (t Task) Execute() {
@@ -33,6 +35,18 @@ func (t Task) Execute() {
 	err = t.repo.UpdateWithTx(context.Background(), t.tx, t.cert.UserID, t.cert.ID, data.Expiry, issuer.value, now, e)
 	if err != nil {
 		return
+	}
+
+	expHours := hoursToExpiration(data.Expiry)
+	expStatus := expirationStatus(expHours)
+	if expStatus != "" {
+		t.notificationCh <- notifier.Notification{
+			ID:     t.cert.ID.String(),
+			UserID: t.cert.UserID.String(),
+			Domain: t.cert.Domain.value,
+			Status: expStatus,
+			Hours:  expHours,
+		}
 	}
 }
 

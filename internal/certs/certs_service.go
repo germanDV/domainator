@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/germandv/domainator/internal/notifier"
 	"github.com/germandv/domainator/internal/tlser"
 	"github.com/jackc/pgx/v5"
 )
@@ -106,7 +107,12 @@ func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) 
 	return c, nil
 }
 
-func (s *CertsService) ProcessBatch(ctx context.Context, size int, concurrency int) error {
+func (s *CertsService) ProcessBatch(
+	ctx context.Context,
+	size int,
+	concurrency int,
+	notificationCh chan notifier.Notification,
+) error {
 	var certs []repoCert
 	var tx pgx.Tx
 	var err error
@@ -130,10 +136,11 @@ func (s *CertsService) ProcessBatch(ctx context.Context, size int, concurrency i
 			}
 
 			tasks[i] = Task{
-				cert:      cert,
-				tlsClient: s.tlsClient,
-				repo:      s.repo,
-				tx:        tx,
+				cert:           cert,
+				tlsClient:      s.tlsClient,
+				repo:           s.repo,
+				tx:             tx,
+				notificationCh: notificationCh,
 			}
 
 			lastID = entry.ID
@@ -144,4 +151,21 @@ func (s *CertsService) ProcessBatch(ctx context.Context, size int, concurrency i
 	}
 
 	return nil
+}
+
+func hoursToExpiration(expiry time.Time) int {
+	return int(expiry.Sub(time.Now().UTC()).Hours())
+}
+
+func expirationStatus(hours int) string {
+	if hours <= 0 {
+		return "expired"
+	}
+	if hours < 24 {
+		return "expires today"
+	}
+	if hours < 72 {
+		return "expires soon"
+	}
+	return ""
 }
