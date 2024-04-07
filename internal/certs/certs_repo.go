@@ -160,21 +160,32 @@ func (r *CertsRepo) UpdateWithTx(
 	return nil
 }
 
-// TODO: make it a soft delete
 func (r *CertsRepo) Delete(ctx context.Context, userID common.ID, id common.ID) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	q := `delete from certificates where id = $1 and user_id = $2`
-	res, err := r.db.Exec(ctx, q, id, userID)
-	if err != nil {
-		return err
-	}
-	if res.RowsAffected() == 0 {
-		return ErrNotFound
-	}
+	return pgx.BeginFunc(ctx, r.db, func(tx pgx.Tx) error {
+		q := `insert into certificates_deleted (id, user_id, domain, issuer, error, expires_at, created_at, updated_at)
+      select * from certificates where id = $1 and user_id = $2`
+		res, err := tx.Exec(ctx, q, id, userID)
+		if err != nil {
+			return err
+		}
+		if res.RowsAffected() == 0 {
+			return ErrNotFound
+		}
 
-	return nil
+		q = `delete from certificates where id = $1 and user_id = $2`
+		res, err = r.db.Exec(ctx, q, id, userID)
+		if err != nil {
+			return err
+		}
+		if res.RowsAffected() == 0 {
+			return ErrNotFound
+		}
+
+		return nil
+	})
 }
 
 func (r *CertsRepo) ProcessBatch(ctx context.Context, size int, lastID string) ([]repoCert, pgx.Tx, error) {

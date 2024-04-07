@@ -19,3 +19,9 @@ In addition to `go` and `make`. You will need:
 - `templ` for html templating
 
 You may install them with `make deps`.
+
+## Components
+
+Domainator consists of two components:
+- **Server**: the webserver.
+- **Worker**: a background worker that updates certificates data, meant to be run as a cron job.
