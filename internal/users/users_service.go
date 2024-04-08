@@ -1,10 +1,14 @@
 package users
 
-import "context"
+import (
+	"context"
+)
 
 type Service interface {
 	Save(ctx context.Context, req SaveReq) (User, error)
 	GetByEmail(ctx context.Context, req GetByEmailReq) (User, error)
+	GetByID(ctx context.Context, req GetByIDReq) (User, error)
+	SetWebhookURL(ctx context.Context, req SetWebhookReq) error
 }
 
 type UsersService struct {
@@ -36,5 +40,24 @@ func (s *UsersService) GetByEmail(ctx context.Context, req GetByEmailReq) (User,
 	if err != nil {
 		return User{}, err
 	}
+
 	return u, nil
+}
+
+func (s *UsersService) GetByID(ctx context.Context, req GetByIDReq) (User, error) {
+	user, err := s.repo.GetByID(ctx, req.UserID)
+	if err != nil {
+		return User{}, err
+	}
+
+	u, err := repoToServiceAdapter(user)
+	if err != nil {
+		return User{}, err
+	}
+
+	return u, nil
+}
+
+func (s *UsersService) SetWebhookURL(ctx context.Context, req SetWebhookReq) error {
+	return s.repo.SetWebhookURL(ctx, req.UserID, req.URL)
 }

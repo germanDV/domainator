@@ -87,7 +87,7 @@ func main() {
 			os.Exit(0)
 		case n := <-notificationCh:
 			logger.Debug("Sending notification", "domain", n.Domain, "status", n.Status, "hours", n.Hours)
-			// TODO: allow users to enter a Slack Webhook URL
+			// TODO: fetch from the Settings service
 			slacker.Notify(config.SlackTestURL, n)
 		}
 	}

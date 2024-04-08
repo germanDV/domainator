@@ -10,4 +10,5 @@ type repoUser struct {
 	CreatedAt          time.Time `db:"created_at"`
 	IdentityProvider   string    `db:"identity_provider"`
 	IdentityProviderID string    `db:"identity_provider_id"`
+	WebhookURL         string    `db:"webhook_url"`
 }

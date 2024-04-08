@@ -97,6 +97,8 @@ func main() {
 	mux.Handle("POST /domain", authz(handlers.RegisterDomain(certsService)))
 	mux.Handle("PUT /domain/{id}", authz(handlers.UpdateDomain(certsService)))
 	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(certsService)))
+	mux.Handle("GET /settings", authz(handlers.GetSettings(usersService)))
+	mux.Handle("POST /settings/webhook", authz(handlers.SetWebhookURL(usersService)))
 
 	addr := fmt.Sprintf(":%d", config.Port)
 	commonMiddleware := handlers.CommonMdwBuilder(logger, cacheClient)

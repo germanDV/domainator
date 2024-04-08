@@ -84,7 +84,7 @@ func header() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><form action=\"/logout\" method=\"POST\"><button class=\"btn-sm btn-secondary\" type=\"submit\">OUT</button></form></header>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><form action=\"/logout\" method=\"POST\"><button class=\"btn-sm btn-secondary\" type=\"submit\">Log Out</button></form><a class=\"btn btn-sm ml-1\" href=\"/settings\">Settings</a></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

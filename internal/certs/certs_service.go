@@ -15,7 +15,7 @@ type Service interface {
 	GetAll(ctx context.Context, req GetAllReq) ([]Cert, error)
 	Delete(ctx context.Context, req DeleteReq) error
 	Update(ctx context.Context, req UpdateReq) (Cert, error)
-	ProcessBatch(ctx context.Context, size int, concurrency int) error
+	ProcessBatch(ctx context.Context, size int, concurrency int, notificationCh chan notifier.Notification) error
 }
 
 type CertsService struct {

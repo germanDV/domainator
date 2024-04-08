@@ -17,6 +17,15 @@ type GetByEmailReq struct {
 	Email Email
 }
 
+type GetByIDReq struct {
+	UserID common.ID
+}
+
+type SetWebhookReq struct {
+	UserID common.ID
+	URL    common.URL
+}
+
 type User struct {
 	ID                 common.ID
 	Email              Email
@@ -24,6 +33,7 @@ type User struct {
 	IdentityProvider   string
 	IdentityProviderID string
 	CreatedAt          time.Time
+	WebhookURL         common.URL
 }
 
 func New(name string, email Email, identityProvider string, identityProviderID string) User {
@@ -46,6 +56,7 @@ func serviceToRepoAdapter(user User) repoUser {
 		IdentityProvider:   user.IdentityProvider,
 		IdentityProviderID: user.IdentityProviderID,
 		CreatedAt:          user.CreatedAt,
+		WebhookURL:         user.WebhookURL.String(),
 	}
 }
 
@@ -61,12 +72,22 @@ func repoToServiceAdapter(user repoUser) (User, error) {
 		return User{}, err
 	}
 
-	return User{
+	u := User{
 		ID:                 parsedID,
 		Name:               user.Name,
 		Email:              parsedEmail,
 		IdentityProvider:   user.IdentityProvider,
 		IdentityProviderID: user.IdentityProviderID,
 		CreatedAt:          user.CreatedAt,
-	}, nil
+	}
+
+	if user.WebhookURL != "" {
+		parsedWebhookURL, err := common.ParseURL(user.WebhookURL)
+		if err != nil {
+			return User{}, err
+		}
+		u.WebhookURL = parsedWebhookURL
+	}
+
+	return u, nil
 }

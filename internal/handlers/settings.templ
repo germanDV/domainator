@@ -1,0 +1,48 @@
+package handlers
+
+templ Settings(url string) {
+  <div hx-ext="response-targets" class="page-center">
+    <h2>Settings</h2>
+    <p>If you wish to be notified when one of your certificates is about to expire, provide a Slack Webhook URL and we'll message you.</p>
+    <p>You will need to create a Slack App in your Workspace and then set up an Incoming Webhook.</p>
+    @WebhookForm(false, "", url)
+  </div>
+}
+
+templ WebhookForm(saved bool, err string, inputVal string) {
+  <div id="webhook_form" class="mt-4">
+    <form
+      class="inline"
+      hx-post="/settings/webhook"
+      hx-trigger="submit"
+      hx-swap="outerHTML"
+      hx-target="#webhook_form"
+      hx-target-400="#webhook_form"
+    >
+      <input
+        type="text"
+        name="webhook_url"
+        placeholder="Webhook URL"
+        value={inputVal}
+        required
+      />
+      <button type="submit">Save</button>
+
+      <div class="loader-container">
+        <div class="loader"><div></div><div></div><div></div></div>
+      </div>
+
+      if saved {
+        <div class="chip">
+          <span>saved</span>
+        </div>
+      }
+    </form>
+
+    <div id="error">
+      if err != "" {
+        <p class="error-text">Error: {err}</p>
+      }
+    </div>
+  </div>
+}

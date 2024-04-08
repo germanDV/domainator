@@ -39,7 +39,7 @@ func csp(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, StylesNonceKey, stylesNonce)
 
 		cspHeader := fmt.Sprintf(
-			"default-src 'self'; script-src 'nonce-%s' 'nonce-%s' 'unsafe-eval'; style-src 'nonce-%s' '%s'; frame-acestors 'none'",
+			"default-src 'self'; script-src 'nonce-%s' 'nonce-%s' 'unsafe-eval'; style-src 'nonce-%s' '%s'; frame-ancestors 'none'",
 			htmxNonce, respTrgtNonce, stylesNonce, htmxCSSHash,
 		)
 

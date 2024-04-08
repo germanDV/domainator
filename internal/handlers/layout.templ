@@ -29,8 +29,9 @@ templ head(title string) {
 templ header() {
   <header>
     <form action="/logout" method="POST">
-      <button class="btn-sm btn-secondary" type="submit">OUT</button>
+      <button class="btn-sm btn-secondary" type="submit">Log Out</button>
     </form>
+    <a class="btn btn-sm ml-1" href="/settings">Settings</a>
   </header>
 }
 
