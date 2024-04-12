@@ -14,8 +14,6 @@ templ Index(certificates []TransportCert) {
       hx-target="#table"
       hx-swap="beforeend"
       hx-target-400="#error"
-      hx-on::before-request="document.querySelector('#error').innerHTML = ''"
-      hx-on::after-request="if(event.detail.xhr.status < 300) this.reset()"
     >
       <input
         type="text"

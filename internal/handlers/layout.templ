@@ -5,23 +5,10 @@ templ head(title string) {
     <title>{title}</title>
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-		<script
-      src="static/scripts/htmx.min.js"
-      nonce={ctx.Value(HtmxNonceKey).(string)}
-    ></script>
-
-		<script
-      src="static/scripts/response-targets.js"
-      nonce={ctx.Value(RespTrgtNonceKey).(string)}
-    ></script>
-
-		<link
-      rel="stylesheet"
-      href="static/styles/main.css"
-      nonce={ctx.Value(StylesNonceKey).(string)}
-    />
-
+		<script src="static/scripts/htmx.min.js"></script>
+		<script src="static/scripts/response-targets.js"></script>
+		<script src="static/scripts/main.js" defer></script>
+		<link rel="stylesheet" href="static/styles/main.css" />
     <link rel="icon" type="image/png" href="static/images/favicon.png" />
   </head>
 }

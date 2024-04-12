@@ -35,6 +35,7 @@ func GetHome(certsService certs.Service) http.HandlerFunc {
 
 		c := Index(transportCerts)
 		err = Layout(c, "The Home Of The Domainator", true).Render(r.Context(), w)
+    // TODO: make a utility for this because it's repeated every time a template is rendered.
 		if err != nil {
 			http.Error(w, "Error rendering template", http.StatusInternalServerError)
 			return

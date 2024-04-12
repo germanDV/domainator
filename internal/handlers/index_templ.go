@@ -23,7 +23,7 @@ func Index(certificates []TransportCert) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section hx-ext=\"response-targets\"><div class=\"hero\"><h1>The Home Of The Domainator</h1><h3>Manage your TLS certificates</h3></div><form class=\"inline\" hx-post=\"/domain\" hx-trigger=\"submit\" hx-target=\"#table\" hx-swap=\"beforeend\" hx-target-400=\"#error\" hx-on::before-request=\"document.querySelector(&#39;#error&#39;).innerHTML = &#39;&#39;\" hx-on::after-request=\"if(event.detail.xhr.status &lt; 300) this.reset()\"><input type=\"text\" name=\"domain\" placeholder=\"Add New Domain\" required> <button type=\"submit\">Add</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div></form><div id=\"error\"></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section hx-ext=\"response-targets\"><div class=\"hero\"><h1>The Home Of The Domainator</h1><h3>Manage your TLS certificates</h3></div><form class=\"inline\" hx-post=\"/domain\" hx-trigger=\"submit\" hx-target=\"#table\" hx-swap=\"beforeend\" hx-target-400=\"#error\"><input type=\"text\" name=\"domain\" placeholder=\"Add New Domain\" required> <button type=\"submit\">Add</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div></form><div id=\"error\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -62,7 +62,7 @@ func RegisterDomainError(msg string) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handlers/index.templ`, Line: 38, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handlers/index.templ`, Line: 36, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
