@@ -230,6 +230,23 @@ form.htmx-request {
   text-align: center;
 }
 
+.hideme {
+  display: none;
+}
+
+#notification {
+  color: var(--primary-white);
+  background: var(--secondary-black);
+  border-radius: 4px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease-in-out;
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+
 .loader {
   display: inline-block;
   position: relative;

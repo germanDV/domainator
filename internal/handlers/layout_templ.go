@@ -134,7 +134,7 @@ func Layout(contents templ.Component, title string, loggedIn bool) templ.Compone
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</main></body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</main><div id=\"notification\" class=\"hideme\">Testing</div></body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
