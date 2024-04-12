@@ -226,6 +226,10 @@ form.htmx-request {
   margin-top: 32px;
 }
 
+.center {
+  text-align: center;
+}
+
 .loader {
   display: inline-block;
   position: relative;

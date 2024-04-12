@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/germandv/domainator/internal/common"
@@ -39,19 +40,21 @@ func (r *UsersRepo) Save(ctx context.Context, user repoUser) error {
 	return err
 }
 
-func (r *UsersRepo) GetByEmail(ctx context.Context, email Email) (repoUser, error) {
+func (r *UsersRepo) get(ctx context.Context, key string, value string) (repoUser, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	q := `
+	q := fmt.Sprintf(`
     select
       id, name, email, created_at, identity_provider, identity_provider_id, coalesce(webhook_url, '') as webhook_url
     from
       users
     where
-      email = $1`
+      %s = $1`,
+		key,
+	)
 
-	rows, _ := r.db.Query(ctx, q, email.value)
+	rows, _ := r.db.Query(ctx, q, value)
 	user, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[repoUser])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -63,28 +66,12 @@ func (r *UsersRepo) GetByEmail(ctx context.Context, email Email) (repoUser, erro
 	return user, nil
 }
 
+func (r *UsersRepo) GetByEmail(ctx context.Context, email Email) (repoUser, error) {
+	return r.get(ctx, "email", email.String())
+}
+
 func (r *UsersRepo) GetByID(ctx context.Context, userID common.ID) (repoUser, error) {
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
-	defer cancel()
-
-	q := `
-    select
-      id, name, email, created_at, identity_provider, identity_provider_id, coalesce(webhook_url, '') as webhook_url
-    from
-      users
-    where
-      id = $1`
-
-	rows, _ := r.db.Query(ctx, q, userID.String())
-	user, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[repoUser])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return repoUser{}, ErrNotFound
-		}
-		return repoUser{}, err
-	}
-
-	return user, nil
+	return r.get(ctx, "id", userID.String())
 }
 
 func (r *UsersRepo) SetWebhookURL(ctx context.Context, userID common.ID, url common.URL) error {
