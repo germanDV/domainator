@@ -25,6 +25,7 @@ import (
 type AppConfig struct {
 	Env              string `env:"APP_ENV" default:"dev"`
 	LogFormat        string `env:"LOG_FORMAT"`
+	LogLevel         string `env:"LOG_LEVEL" default:"info"`
 	Port             int    `env:"PORT"`
 	AuthPublKey      string `env:"AUTH_PUBLIC_KEY"`
 	AuthPrivKey      string `env:"AUTH_PRIVATE_KEY"`
@@ -47,7 +48,7 @@ func main() {
 		panic(err)
 	}
 
-	logger, err := common.GetLogger(config.LogFormat)
+	logger, err := common.GetLogger(config.LogFormat, config.LogLevel)
 	if err != nil {
 		panic(err)
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/germandv/domainator/internal/db"
 	"github.com/germandv/domainator/internal/notifier"
 	"github.com/germandv/domainator/internal/tlser"
+	"github.com/germandv/domainator/internal/users"
 )
 
 type WorkerConfig struct {
@@ -57,6 +58,10 @@ func main() {
 	certsRepo := certs.NewRepo(db)
 	tlsClient := tlser.New(5 * time.Second)
 	certsService := certs.NewService(tlsClient, certsRepo)
+
+	usersRepo := users.NewRepo(db)
+	usersService := users.NewService(usersRepo)
+
 	slacker := notifier.NewSlacker()
 
 	doneCh := make(chan struct{})
@@ -87,8 +92,24 @@ func main() {
 			os.Exit(0)
 		case n := <-notificationCh:
 			logger.Debug("Sending notification", "domain", n.Domain, "status", n.Status, "hours", n.Hours)
-			// TODO: fetch from the Settings service
-			slacker.Notify(config.SlackTestURL, n)
+			userID, err := common.ParseID(n.UserID)
+			if err != nil {
+				logger.Error("Failed to parse user ID", "id", n.UserID, "error", err.Error())
+				return
+			}
+
+			user, err := usersService.GetByID(context.Background(), users.GetByIDReq{UserID: userID})
+			if err != nil {
+				logger.Error("Failed to fetch user data", "id", n.UserID, "error", err.Error())
+				return
+			}
+
+			if user.WebhookURL.String() == "" {
+				logger.Debug("User has not provided a webhook, skipping notification", "id", n.UserID)
+				return
+			}
+
+			slacker.Notify(user.WebhookURL.String(), n)
 		}
 	}
 }
