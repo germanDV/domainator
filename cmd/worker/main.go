@@ -16,6 +16,7 @@ import (
 type WorkerConfig struct {
 	Env              string `env:"APP_ENV" default:"dev"`
 	LogFormat        string `env:"LOG_FORMAT"`
+	LogLevel         string `env:"LOG_LEVEL" default:"info"`
 	PostgresHost     string `env:"POSTGRES_HOST"`
 	PostgresPort     int    `env:"POSTGRES_PORT"`
 	PostgresUser     string `env:"POSTGRES_USER"`
@@ -35,7 +36,7 @@ func main() {
 		panic(err)
 	}
 
-	logger, err := common.GetLogger(config.LogFormat)
+	logger, err := common.GetLogger(config.LogFormat, config.LogLevel)
 	if err != nil {
 		panic(err)
 	}
