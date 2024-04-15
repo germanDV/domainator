@@ -5,7 +5,6 @@ import (
 	"net/http"
 )
 
-
 func csp(next http.Handler) http.Handler {
 	htmxCSSHash := "sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg="
 
