@@ -23,11 +23,7 @@ func GetSettings(userService users.Service) http.HandlerFunc {
 			return
 		}
 
-		c := Settings(u.WebhookURL.String())
-		err = Layout(c, "Domainator | Settings", true).Render(r.Context(), w)
-		if err != nil {
-			http.Error(w, "Error rendering template", http.StatusInternalServerError)
-			return
-		}
+		c := Layout(Settings(u.WebhookURL.String()), "Domainator | Settings", true)
+		SendTempl(w, r, c)
 	}
 }

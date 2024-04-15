@@ -21,11 +21,8 @@ func SetWebhookURL(userService users.Service) http.HandlerFunc {
 
 		url, err := common.ParseURL(urlInput)
 		if err != nil {
-			w.WriteHeader(400)
-			e := WebhookForm(false, err.Error(), url.String()).Render(r.Context(), w)
-			if e != nil {
-				http.Error(w, "Error rendering template", http.StatusInternalServerError)
-			}
+			c := WebhookForm(false, err.Error(), url.String())
+			SendTemplWithStatus(http.StatusBadRequest, w, r, c)
 			return
 		}
 
@@ -36,18 +33,12 @@ func SetWebhookURL(userService users.Service) http.HandlerFunc {
 
 		err = userService.SetWebhookURL(r.Context(), req)
 		if err != nil {
-			w.WriteHeader(400)
-			e := WebhookForm(false, err.Error(), url.String()).Render(r.Context(), w)
-			if e != nil {
-				http.Error(w, "Error rendering template", http.StatusInternalServerError)
-			}
+			c := WebhookForm(false, err.Error(), url.String())
+			SendTemplWithStatus(http.StatusBadRequest, w, r, c)
 			return
 		}
 
-		w.WriteHeader(200)
-		e := WebhookForm(true, "", url.String()).Render(r.Context(), w)
-		if e != nil {
-			http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		}
+		c := WebhookForm(true, "", url.String())
+		SendTempl(w, r, c)
 	}
 }

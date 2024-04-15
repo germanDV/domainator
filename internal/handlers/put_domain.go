@@ -25,7 +25,7 @@ func UpdateDomain(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
-		c, err := certsService.Update(r.Context(), parsedReq)
+		cert, err := certsService.Update(r.Context(), parsedReq)
 		if err != nil {
 			if errors.Is(err, certs.ErrNotFound) {
 				http.Error(w, "Domain not found", http.StatusNotFound)
@@ -35,9 +35,7 @@ func UpdateDomain(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
-		err = CertRow(serviceToTransportAdapter(c)).Render(r.Context(), w)
-		if err != nil {
-			http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		}
+		c := CertRow(serviceToTransportAdapter(cert))
+		SendTempl(w, r, c)
 	}
 }

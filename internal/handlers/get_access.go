@@ -14,11 +14,7 @@ func GetAccess() http.HandlerFunc {
 			return
 		}
 
-		c := Login()
-		err := Layout(c, "Domainator | Login", false).Render(r.Context(), w)
-		if err != nil {
-			http.Error(w, "Error rendering template", http.StatusInternalServerError)
-			return
-		}
+		c := Layout(Login(), "Domainator | Login", false)
+		SendTempl(w, r, c)
 	}
 }
