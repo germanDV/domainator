@@ -79,6 +79,9 @@ func LoadAndParse[T any](configStruct *T, configFilepath string) error {
 // getRootPath returns the root path of the project,
 // walking back from the current directory until it finds a go.mod file.
 func getRootPath(path string) (string, error) {
+	if path == "/" {
+		return "", errors.New("could not find go.mod file")
+	}
 	_, err := os.Stat(filepath.Join(path, "go.mod"))
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return "", err

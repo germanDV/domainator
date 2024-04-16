@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -17,6 +18,8 @@ type GitHubUserData struct {
 	Username  string `json:"login"`
 	Email     string `json:"email"`
 }
+
+var client = &http.Client{Timeout: 5 * time.Second}
 
 func NewGithubConfig(clientID string, secret string, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
@@ -35,7 +38,7 @@ func GetGithubUserData(token *oauth2.Token) (*GitHubUserData, error) {
 		return nil, err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +65,7 @@ func GetGithubUserEmail(token *oauth2.Token) (string, error) {
 		return "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
