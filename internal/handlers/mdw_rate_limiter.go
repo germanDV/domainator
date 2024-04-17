@@ -9,9 +9,11 @@ import (
 	"github.com/germandv/domainator/internal/cache"
 )
 
-const RequestsPerMin = 50
-
-func rateLimiterBuilder(logger *slog.Logger, cacheClient cache.Client) func(next http.Handler) http.Handler {
+func rateLimiterBuilder(
+	logger *slog.Logger,
+	cacheClient cache.Client,
+	reqsPerMin int64,
+) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			key := getKey(r.RemoteAddr)
@@ -23,7 +25,7 @@ func rateLimiterBuilder(logger *slog.Logger, cacheClient cache.Client) func(next
 				return
 			}
 
-			if current > RequestsPerMin {
+			if current > reqsPerMin {
 				logger.Info("too many requests", "ip", r.RemoteAddr, "count", current)
 				http.Error(w, "Too many requests", http.StatusTooManyRequests)
 				return
