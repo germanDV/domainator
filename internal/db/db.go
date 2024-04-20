@@ -14,6 +14,10 @@ func Init(user string, pass string, host string, port int, dbname string, ssl bo
 		dsn += "?sslmode=disable"
 	}
 
+	return InitWithConnStr(dsn)
+}
+
+func InitWithConnStr(dsn string) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, err

@@ -93,6 +93,11 @@ db/migrate/down: confirm
 	@echo 'Rolling back ${n} migrations..'
 	@POSTGRES_PASSWORD=${POSTGRES_PASSWORD} tern migrate -m ./migrations --destination -${n}
 
+## db/migrate/tests: run database migrations for tests
+.PHONY: db/migrate/tests
+db/migrate/tests:
+	@tern migrate --config testdata/tern_test.conf  -m ./migrations
+
 ## db/cli: connect to local database using pgcli
 .PHONY: db/cli
 db/cli:
