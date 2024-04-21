@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -93,27 +92,24 @@ func NewTestDB() (*pgxpool.Pool, func(), error) {
 		return nil, nil, fmt.Errorf("failed to get postgres connection string: %w", err)
 	}
 
-	err = os.Setenv("POSTGRES_CONN_STR", conn)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to set postgres connection string in env: %w", err)
-	}
-
 	fmt.Printf("Postgres Test Container ConnectionString: %s\n", conn)
-	db, err := db.InitWithConnStr(conn)
+	dbPool, err := db.InitWithConnStr(conn)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to init postgres: %w", err)
 	}
 
-	err = db.Ping(ctx)
+	err = dbPool.Ping(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to ping postgres: %w", err)
 	}
 
-	cmd := exec.Command("make", "db/migrate/tests")
-	cmd.Dir = filepath.Join("..", "..", cmd.Dir)
-	err = cmd.Run()
+	migrator, err := db.NewDbMigrator(conn, os.DirFS(filepath.Join("..", "..", "migrations")))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to run migrations: %w", err)
+		return nil, nil, fmt.Errorf("failed create DB Migrator: %w", err)
+	}
+	err = migrator.Up(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed run migrations: %w", err)
 	}
 
 	terminate := func() {
@@ -122,5 +118,5 @@ func NewTestDB() (*pgxpool.Pool, func(), error) {
 		}
 	}
 
-	return db, terminate, nil
+	return dbPool, terminate, nil
 }

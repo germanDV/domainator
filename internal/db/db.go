@@ -9,16 +9,16 @@ import (
 )
 
 func Init(user string, pass string, host string, port int, dbname string, ssl bool) (*pgxpool.Pool, error) {
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s", user, pass, host, port, dbname)
+	connStr := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s", user, pass, host, port, dbname)
 	if !ssl {
-		dsn += "?sslmode=disable"
+		connStr += "?sslmode=disable"
 	}
 
-	return InitWithConnStr(dsn)
+	return InitWithConnStr(connStr)
 }
 
-func InitWithConnStr(dsn string) (*pgxpool.Pool, error) {
-	cfg, err := pgxpool.ParseConfig(dsn)
+func InitWithConnStr(connStr string) (*pgxpool.Pool, error) {
+	cfg, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return nil, err
 	}
