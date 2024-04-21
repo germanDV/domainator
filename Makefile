@@ -1,5 +1,4 @@
 BINARY_NAME=domainator
-POSTGRES_PASSWORD ?= postgres
 
 ## help: print this help message
 .PHONY: help
@@ -14,7 +13,7 @@ confirm:
 ## test: run tests
 .PHONY: test
 test:
-	ENV_FILENAME=.env.test go test ./...
+	go test ./...
 
 ## vuln: check for vulnerabilities
 .PHONY: vuln
@@ -69,29 +68,17 @@ docker/down: confirm
 	@echo 'Stopping docker-compose'
 	docker compose down
 
-## db/migrate/init: init tern project
-.PHONY: db/migrate/init
-db/migrate/init: confirm
-	@echo 'Initializing tern project'
-	tern init
-
-## db/migrate/new name=$1: create a new database migration ($ make db/migrate/new name=create_users_table)
-.PHONY: db/migrate/new
-db/migrate/new:
-	@echo 'Creating migration files for ${name}...'
-	tern new -m ./migrations ${name}
-
 ## db/migrate/up: run database migrations
 .PHONY: db/migrate/up
 db/migrate/up:
 	@echo 'Running migrations...'
-	@POSTGRES_PASSWORD=${POSTGRES_PASSWORD} tern migrate -m ./migrations
+	@go run ./cmd/migrate -action up
 
-## db/migrate/down n=$1: rollback database N versions ($ make db/migrate/down n=2)
+## db/migrate/down: rollback latest database migration
 .PHONY: db/migrate/down
 db/migrate/down: confirm
-	@echo 'Rolling back ${n} migrations..'
-	@POSTGRES_PASSWORD=${POSTGRES_PASSWORD} tern migrate -m ./migrations --destination -${n}
+	@echo 'Rolling back latest migration..'
+	@go run ./cmd/migrate -action down
 
 ## db/cli: connect to local database using pgcli
 .PHONY: db/cli
@@ -116,8 +103,6 @@ deps/upgrade:
 deps/ext: confirm
 	@echo 'Installing `air` for hot-reloading'
 	go install github.com/cosmtrek/air@latest
-	@echo 'Installing `tern` for db migrations'
-	go install github.com/jackc/tern/v2@latest
 	@echo 'Installing `templ` for html templating'
 	go install github.com/a-h/templ/cmd/templ@latest
 

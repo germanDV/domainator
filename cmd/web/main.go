@@ -23,23 +23,19 @@ import (
 )
 
 type AppConfig struct {
-	Env              string `env:"APP_ENV" default:"dev"`
-	LogFormat        string `env:"LOG_FORMAT"`
-	LogLevel         string `env:"LOG_LEVEL" default:"info"`
-	Port             int    `env:"PORT"`
-	AuthPublKey      string `env:"AUTH_PUBLIC_KEY"`
-	AuthPrivKey      string `env:"AUTH_PRIVATE_KEY"`
-	RedisHost        string `env:"REDIS_HOST"`
-	RedisPort        int    `env:"REDIS_PORT"`
-	RedisPassword    string `env:"REDIS_PASSWORD" default:" "`
-	PostgresHost     string `env:"POSTGRES_HOST"`
-	PostgresPort     int    `env:"POSTGRES_PORT"`
-	PostgresUser     string `env:"POSTGRES_USER"`
-	PostgresPassword string `env:"POSTGRES_PASSWORD"`
-	PostgresDatabase string `env:"POSTGRES_DB"`
-	GithubClientID   string `env:"GITHUB_CLIENT_ID"`
-	GithubSecret     string `env:"GITHUB_SECRET"`
-	Host             string `env:"HOST" default:"http://localhost"`
+	Env             string `env:"APP_ENV" default:"dev"`
+	LogFormat       string `env:"LOG_FORMAT"`
+	LogLevel        string `env:"LOG_LEVEL" default:"info"`
+	Port            int    `env:"PORT"`
+	AuthPublKey     string `env:"AUTH_PUBLIC_KEY"`
+	AuthPrivKey     string `env:"AUTH_PRIVATE_KEY"`
+	RedisHost       string `env:"REDIS_HOST"`
+	RedisPort       int    `env:"REDIS_PORT"`
+	RedisPassword   string `env:"REDIS_PASSWORD" default:" "`
+	PostgresConnStr string `env:"POSTGRES_CONN_STR"`
+	GithubClientID  string `env:"GITHUB_CLIENT_ID"`
+	GithubSecret    string `env:"GITHUB_SECRET"`
+	Host            string `env:"HOST" default:"http://localhost"`
 }
 
 func main() {
@@ -53,14 +49,7 @@ func main() {
 		panic(err)
 	}
 
-	db, err := db.Init(
-		config.PostgresUser,
-		config.PostgresPassword,
-		config.PostgresHost,
-		config.PostgresPort,
-		config.PostgresDatabase,
-		config.Env != "dev",
-	)
+	db, err := db.InitWithConnStr(config.PostgresConnStr)
 	if err != nil {
 		panic(err)
 	}

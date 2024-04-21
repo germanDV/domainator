@@ -32,7 +32,7 @@ func NewService(tlsClient tlser.Client, repo Repo) *CertsService {
 
 func (s *CertsService) Save(ctx context.Context, req RegisterReq) (Cert, error) {
 	data := s.tlsClient.GetCertData(req.Domain.value)
-	if data.Status != tlser.StatusOK {
+	if data.Status != tlser.StatusOK && data.Status != tlser.StatusExpired {
 		return Cert{}, fmt.Errorf("TLS error: %s", data.Status)
 	}
 

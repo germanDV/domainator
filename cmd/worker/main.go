@@ -14,17 +14,13 @@ import (
 )
 
 type WorkerConfig struct {
-	Env              string `env:"APP_ENV" default:"dev"`
-	LogFormat        string `env:"LOG_FORMAT"`
-	LogLevel         string `env:"LOG_LEVEL" default:"info"`
-	PostgresHost     string `env:"POSTGRES_HOST"`
-	PostgresPort     int    `env:"POSTGRES_PORT"`
-	PostgresUser     string `env:"POSTGRES_USER"`
-	PostgresPassword string `env:"POSTGRES_PASSWORD"`
-	PostgresDatabase string `env:"POSTGRES_DB"`
-	BatchSize        int    `env:"BATCH_SIZE" default:"50"`
-	Concurrency      int    `env:"BATCH_SIZE" default:"20"`
-	SlackTestURL     string `env:"SLACK_TEST_WEBHOOK_URL" default:" "`
+	Env             string `env:"APP_ENV" default:"dev"`
+	LogFormat       string `env:"LOG_FORMAT"`
+	LogLevel        string `env:"LOG_LEVEL" default:"info"`
+	PostgresConnStr string `env:"POSTGRES_CONN_STR"`
+	BatchSize       int    `env:"BATCH_SIZE" default:"50"`
+	Concurrency     int    `env:"BATCH_SIZE" default:"20"`
+	SlackTestURL    string `env:"SLACK_TEST_WEBHOOK_URL" default:" "`
 }
 
 // This worker is meant to be run as a cron job,
@@ -43,14 +39,7 @@ func main() {
 
 	logger.Info("Starting worker")
 
-	db, err := db.Init(
-		config.PostgresUser,
-		config.PostgresPassword,
-		config.PostgresHost,
-		config.PostgresPort,
-		config.PostgresDatabase,
-		config.Env != "dev",
-	)
+	db, err := db.InitWithConnStr(config.PostgresConnStr)
 	if err != nil {
 		logger.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
