@@ -14,23 +14,12 @@ import (
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/cntxt"
 	"github.com/germandv/domainator/internal/db"
-	"github.com/germandv/domainator/internal/tlser"
+	"github.com/germandv/domainator/internal/tlser_mock"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
-
-// TODO: improve this mock and move to its own package (tlser_mock)
-type MockTLSer struct{}
-
-func (m MockTLSer) GetCertData(_ string) tlser.CertData {
-	return tlser.CertData{
-		Status: "OK",
-		Expiry: time.Now().Add(24 * 30 * time.Hour),
-		Issuer: "Test-Issuer",
-	}
-}
 
 func TestRegisterDomain(t *testing.T) {
 	db, _, err := NewTestDB()
@@ -39,7 +28,7 @@ func TestRegisterDomain(t *testing.T) {
 	}
 
 	certsRepo := certs.NewRepo(db)
-	certsService := certs.NewService(MockTLSer{}, certsRepo)
+	certsService := certs.NewService(tlser_mock.New(), certsRepo)
 
 	formData := url.Values{}
 	formData.Set("domain", "example.com")
