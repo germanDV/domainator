@@ -23,7 +23,7 @@ func Settings(url string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-ext=\"response-targets\" class=\"page-center\"><h2>Settings</h2><p>If you wish to be notified when one of your certificates is about to expire, provide a Slack Webhook URL and we'll message you.</p><p>You will need to create a Slack App in your Workspace and then set up an Incoming Webhook.</p>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-ext=\"response-targets\" class=\"page-center\"><h2>Settings</h2><p>If you wish to be notified when one of your certificate is about to expire, provide a Slack Webhook URL and we'll message you.</p><p>You will need to create a Slack App in your Workspace and then set up an Incoming Webhook.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

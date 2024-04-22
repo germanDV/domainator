@@ -43,7 +43,7 @@ footer {
 }
 
 section {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -149,6 +149,15 @@ button.btn-danger {
   }
 }
 
+button.icon-btn {
+  padding: 4px 8px;
+  background: var(--primary-white);
+  color: var(--secondary-black);
+  &:hover {
+    background: var(--secondary-white);
+  }
+}
+
 table {
   margin: 24px 0;
   padding: 16px;
@@ -224,6 +233,11 @@ form.htmx-request {
 
 .mt-4 {
   margin-top: 32px;
+}
+
+.w-250 {
+  max-width: 250px;
+  word-wrap: break-word;
 }
 
 .center {
