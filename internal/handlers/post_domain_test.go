@@ -12,6 +12,7 @@ import (
 	"github.com/germandv/domainator/internal/tlser_mock"
 )
 
+// TODO: Add more tests and maybe group all tests for domain handlers together.
 func TestRegisterDomain(t *testing.T) {
 	db := common.TestDB.GetPool()
 	certsRepo := certs.NewRepo(db)
@@ -35,10 +36,10 @@ func TestRegisterDomain(t *testing.T) {
 		}
 
 		resp := w.Body.String()
-		if !strings.Contains(resp, `<th scope="row">example.com</th>`) {
+		if !strings.Contains(resp, `<th scope="row" class="w-250">example.com</th>`) {
 			t.Errorf("Domain col not found in response: %s", resp)
 		}
-		if !strings.Contains(resp, `<td>Test-Issuer</td>`) {
+		if !strings.Contains(resp, `<td class="w-250">Test-Issuer</td>`) {
 			t.Errorf("Issuer col not found in response: %s", resp)
 		}
 		if !strings.Contains(resp, `<td><span class="chip">Expires in 29 days</span></td>`) {

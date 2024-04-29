@@ -1,7 +1,7 @@
 package handlers
 
 templ Settings(url string) {
-  <div hx-ext="response-targets" class="page-center">
+  <div hx-ext="response-targets" class="x-center">
     <h2>Settings</h2>
     <p>If you wish to be notified when one of your certificate is about to expire, provide a Slack Webhook URL and we'll message you.</p>
     <p>You will need to create a Slack App in your Workspace and then set up an Incoming Webhook.</p>
@@ -43,10 +43,6 @@ templ WebhookForm(saved bool, err string, inputVal string) {
       if err != "" {
         <p class="error-text">Error: {err}</p>
       }
-    </div>
-
-    <div class="mt-4 center">
-      <a href="/">&larr; Back to Dashboard</a>
     </div>
   </div>
 }

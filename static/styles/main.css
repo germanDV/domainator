@@ -13,7 +13,7 @@
   --error: #BF616A;
   --warning: #D08770;
   --success: #A3BE8C;
-  --header-h: 48px;
+  --header-h: 82px;
   --foother-h: 48px;
 }
 
@@ -26,7 +26,59 @@ header {
   display: flex;
   justify-content: right;
   align-items: center;
-  padding: 8px;
+  padding: 16px;
+}
+
+nav {
+  display: inline-block;
+  position: relative;
+
+  button.user {
+    padding: 0;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--primary-black);
+    background: var(--primary-white);
+    color: var(--primary-black);
+
+    &:hover {
+      border: 2px solid var(--primary-black);
+      color: var(--primary-black);
+      background: var(--primary-white) !important;
+    }
+  }
+
+  &:hover ul {
+    display: block;
+  }
+
+  ul {
+    display: none;
+    position: absolute;
+    right: 0;
+    overflow: auto;
+    background-color: var(--primary-white);
+    border-radius:5px;
+    box-shadow: 0px 10px 10px 0px rgba(0,0,0,0.4);
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  li {
+    list-style: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    &:hover {
+      background-color: var(--secondary-white);
+    }
+  }
+
+  a {
+    text-decoration: none;
+    color: var(--primary-black);
+  }
 }
 
 main {
@@ -73,14 +125,6 @@ p {
   margin-bottom: 200px;
 }
 
-.page-center {
-  min-height: calc(100vh - var(--foother-h) - 64px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
 input {
   font-size: 1.1em;
   background: var(--primary-white);
@@ -99,6 +143,20 @@ a.btn {
   align-items: center;
   & > svg {
     margin-right: 8px;
+  }
+}
+
+button.text {
+  border: none;
+  background: none;
+  color: var(--primary-black);
+  padding: 0;
+  margin: 0;
+  font-size: 1rem;
+  &:hover {
+    border: none;
+    background: none !important;
+    color: var(--primary-black);
   }
 }
 
@@ -242,6 +300,20 @@ form.htmx-request {
 
 .center {
   text-align: center;
+}
+
+.page-center {
+  min-height: calc(100vh - var(--foother-h) - var(--header-h));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.x-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hideme {

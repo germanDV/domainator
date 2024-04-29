@@ -40,7 +40,7 @@ func main() {
 
 func getConfig() (*AppConfig, error) {
 	config := AppConfig{}
-	err := configstruct.LoadAndParse(&config, "./.env")
+	err := configstruct.Parse(&config, "./.env")
 	if err != nil {
 		return nil, err
 	}

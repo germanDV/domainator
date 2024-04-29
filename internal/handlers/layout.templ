@@ -4,7 +4,7 @@ templ head(title string) {
   <head>
     <title>{title}</title>
 		<meta charset="UTF-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0 "/>
 		<script src="static/scripts/htmx.min.js"></script>
 		<script src="static/scripts/response-targets.js"></script>
 		<script src="static/scripts/main.js" defer></script>
@@ -15,10 +15,18 @@ templ head(title string) {
 
 templ header() {
   <header>
-    <form action="/logout" method="POST">
-      <button class="btn-sm btn-secondary" type="submit">Log Out</button>
-    </form>
-    <a class="btn btn-sm ml-1" href="/settings">Settings</a>
+    <nav hx-boost="true">
+      <button class="user">NN</button>
+      <ul>
+        <li><a href="/">Dashboard</a></li>
+        <li><a href="/settings">Settings</a></li>
+        <li>
+          <form action="/logout" method="POST">
+            <button class="text" type="submit">Log Out</button>
+          </form>
+        </li>
+      </ul>
+    </nav>
   </header>
 }
 
@@ -37,7 +45,7 @@ templ Layout(contents templ.Component, title string, loggedIn bool) {
       <main>
         @contents
       </main>
-      
+
       <div id="notification" class="hideme">Testing</div>
     </body>
     @footer()

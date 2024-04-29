@@ -36,7 +36,7 @@ func head(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script src=\"static/scripts/htmx.min.js\"></script><script src=\"static/scripts/response-targets.js\"></script><script src=\"static/scripts/main.js\" defer></script><link rel=\"stylesheet\" href=\"static/styles/main.css\"><link rel=\"icon\" type=\"image/png\" href=\"static/images/favicon.png\"></head>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0 \"><script src=\"static/scripts/htmx.min.js\"></script><script src=\"static/scripts/response-targets.js\"></script><script src=\"static/scripts/main.js\" defer></script><link rel=\"stylesheet\" href=\"static/styles/main.css\"><link rel=\"icon\" type=\"image/png\" href=\"static/images/favicon.png\"></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -60,7 +60,7 @@ func header() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><form action=\"/logout\" method=\"POST\"><button class=\"btn-sm btn-secondary\" type=\"submit\">Log Out</button></form><a class=\"btn btn-sm ml-1\" href=\"/settings\">Settings</a></header>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<header><nav hx-boost=\"true\"><button class=\"user\">NN</button><ul><li><a href=\"/\">Dashboard</a></li><li><a href=\"/settings\">Settings</a></li><li><form action=\"/logout\" method=\"POST\"><button class=\"text\" type=\"submit\">Log Out</button></form></li></ul></nav></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
