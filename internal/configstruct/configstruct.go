@@ -12,45 +12,37 @@ import (
 	"time"
 )
 
+var (
+	errEnvFileNotFound = errors.New("env file not found")
+	errNoGoModFile     = errors.New("could not find go.mod file")
+)
+
 // Parse takes a pointer to a struct and uses the 'env' and 'default'
 // struct tags to populate it with values from environment variables.
+//
+// Before reading from environment variables, it will load the env file
+// if it exists. The path to the env file is relative to the project root.
+// To determine the project root, it will walk back from the current directory
+// until it finds a go.mod file. If no go.mod file is found, it will ignore this step
+// and continue reading from environment variables.
 //
 // Variables are considered required and will return an error unless
 // a default value is provided.
 //
 // Supported types are: string, int, bool and time.Duration.
 // Nested structs are not supported.
-func Parse[T any](configStruct *T) error {
-	v := reflect.TypeOf(*configStruct)
-
-	for i := 0; i < v.NumField(); i++ {
-		structField := v.Field(i).Name
-		structFieldType := v.Field(i).Type
-		envVarName := v.Field(i).Tag.Get("env")
-		defaultValue := v.Field(i).Tag.Get("default")
-
-		envVarValue, ok := os.LookupEnv(envVarName)
-		if !ok {
-			if defaultValue == "" {
-				return fmt.Errorf("missing env var %v (no default provided)", envVarName)
-			}
-			envVarValue = defaultValue
-		}
-
-		value, err := cast(structFieldType.Name(), envVarValue)
-		if err != nil {
-			return err
-		}
-
-		reflect.ValueOf(configStruct).Elem().FieldByName(structField).Set(value)
+func Parse[T any](configStruct *T, configFilepath string) error {
+	err := fileToEnv(configFilepath)
+	// "env file not found" and "no go.mod" are ignored as these are common cases on cloud.
+	if err != nil && !errors.Is(err, errEnvFileNotFound) && errors.Is(err, errNoGoModFile) {
+		return err
 	}
 
-	return nil
+	return envToStruct(configStruct)
 }
 
-// LoadAndParse loads env vars from an env file and calls `Parse` to populate the config struct.
-// Provide file path relative to the root of the project (aka: wherever go.mod is located).
-func LoadAndParse[T any](configStruct *T, configFilepath string) error {
+// fileToEnv looks for the env file, parses it and loads variables into the environment.
+func fileToEnv(configFilepath string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -64,36 +56,13 @@ func LoadAndParse[T any](configStruct *T, configFilepath string) error {
 	path := filepath.Join(root, configFilepath)
 	f, err := os.Open(path)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return errEnvFileNotFound
+		}
 		return err
 	}
 	defer f.Close()
 
-	err = setFromFile(f)
-	if err != nil {
-		return err
-	}
-
-	return Parse(configStruct)
-}
-
-// getRootPath returns the root path of the project,
-// walking back from the current directory until it finds a go.mod file.
-func getRootPath(path string) (string, error) {
-	if path == "/" {
-		return "", errors.New("could not find go.mod file")
-	}
-	_, err := os.Stat(filepath.Join(path, "go.mod"))
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return "", err
-	} else if err == nil {
-		return path, nil
-	} else {
-		return getRootPath(filepath.Join(path, ".."))
-	}
-}
-
-// setFromFile parses env file and sets values to the environment, without overwriting existing ones.
-func setFromFile(f *os.File) error {
 	multiline := false
 	multilineKey := ""
 	multilineVal := ""
@@ -143,6 +112,52 @@ func setFromFile(f *os.File) error {
 	return nil
 }
 
+// envToStruct gets values from envirnoment variables and sets them into the provided configStruct.
+func envToStruct[T any](configStruct *T) error {
+	v := reflect.TypeOf(*configStruct)
+
+	for i := 0; i < v.NumField(); i++ {
+		structField := v.Field(i).Name
+		structFieldType := v.Field(i).Type
+		envVarName := v.Field(i).Tag.Get("env")
+		defaultValue := v.Field(i).Tag.Get("default")
+
+		envVarValue, ok := os.LookupEnv(envVarName)
+		if !ok {
+			if defaultValue == "" {
+				return fmt.Errorf("missing env var %v (no default provided)", envVarName)
+			}
+			envVarValue = defaultValue
+		}
+
+		value, err := cast(structFieldType.Name(), envVarValue)
+		if err != nil {
+			return err
+		}
+
+		reflect.ValueOf(configStruct).Elem().FieldByName(structField).Set(value)
+	}
+
+	return nil
+}
+
+// getRootPath returns the root path of the project,
+// walking back from the current directory until it finds a go.mod file.
+func getRootPath(path string) (string, error) {
+	if path == "/" {
+		return "", errNoGoModFile
+	}
+	_, err := os.Stat(filepath.Join(path, "go.mod"))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return "", err
+	} else if err == nil {
+		return path, nil
+	} else {
+		return getRootPath(filepath.Join(path, ".."))
+	}
+}
+
+// cast takes a string and trys to cast the value to its intended type.
 func cast(fieldType string, fieldValue string) (reflect.Value, error) {
 	switch fieldType {
 	case "string":
