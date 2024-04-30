@@ -74,6 +74,7 @@ func GithubCallback(
 				user, err = usersService.Save(r.Context(), users.SaveReq{
 					Email:              email,
 					Name:               userData.Name,
+					Avatar:             userData.AvatarURL,
 					IdentityProvider:   "GitHub",
 					IdentityProviderID: fmt.Sprintf("%d", userData.ID),
 				})

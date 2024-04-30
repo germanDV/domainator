@@ -32,10 +32,19 @@ func (r *UsersRepo) Save(ctx context.Context, user repoUser) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	q := `insert into users (id, name, email, identity_provider, identity_provider_id)
-    values ($1, $2, $3, $4, $5)`
+	q := `insert into users (id, name, email, identity_provider, identity_provider_id, avatar_url)
+    values ($1, $2, $3, $4, $5, $6)`
 
-	_, err := r.db.Exec(ctx, q, user.ID, user.Name, user.Email, user.IdentityProvider, user.IdentityProviderID)
+	_, err := r.db.Exec(
+		ctx,
+		q,
+		user.ID,
+		user.Name,
+		user.Email,
+		user.IdentityProvider,
+		user.IdentityProviderID,
+		user.Avatar,
+	)
 
 	return err
 }
@@ -46,7 +55,14 @@ func (r *UsersRepo) get(ctx context.Context, key string, value string) (repoUser
 
 	q := fmt.Sprintf(`
     select
-      id, name, email, created_at, identity_provider, identity_provider_id, coalesce(webhook_url, '') as webhook_url
+      id,
+      name,
+      email,
+      created_at,
+      identity_provider,
+      identity_provider_id,
+      coalesce(webhook_url, '') as webhook_url,
+      coalesce(avatar_url, '') as avatar_url
     from
       users
     where

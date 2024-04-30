@@ -22,7 +22,7 @@ func NewService(repo Repo) *UsersService {
 }
 
 func (s *UsersService) Save(ctx context.Context, req SaveReq) (User, error) {
-	user := New(req.Name, req.Email, req.IdentityProvider, req.IdentityProviderID)
+	user := New(req.Name, req.Email, req.IdentityProvider, req.IdentityProviderID, req.Avatar)
 	err := s.repo.Save(ctx, serviceToRepoAdapter(user))
 	if err != nil {
 		return User{}, err

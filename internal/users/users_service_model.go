@@ -9,6 +9,7 @@ import (
 type SaveReq struct {
 	Email              Email
 	Name               string
+	Avatar             string
 	IdentityProvider   string
 	IdentityProviderID string
 }
@@ -30,17 +31,19 @@ type User struct {
 	ID                 common.ID
 	Email              Email
 	Name               string
+	Avatar             string
 	IdentityProvider   string
 	IdentityProviderID string
 	CreatedAt          time.Time
 	WebhookURL         common.URL
 }
 
-func New(name string, email Email, identityProvider string, identityProviderID string) User {
+func New(name string, email Email, identityProvider string, identityProviderID string, avatar string) User {
 	return User{
 		ID:                 common.NewID(),
 		Name:               name,
 		Email:              email,
+		Avatar:             avatar,
 		IdentityProvider:   identityProvider,
 		IdentityProviderID: identityProviderID,
 		CreatedAt:          time.Now(),
@@ -53,6 +56,7 @@ func serviceToRepoAdapter(user User) repoUser {
 		ID:                 user.ID.String(),
 		Name:               user.Name,
 		Email:              user.Email.String(),
+		Avatar:             user.Avatar,
 		IdentityProvider:   user.IdentityProvider,
 		IdentityProviderID: user.IdentityProviderID,
 		CreatedAt:          user.CreatedAt,
@@ -76,6 +80,7 @@ func repoToServiceAdapter(user repoUser) (User, error) {
 		ID:                 parsedID,
 		Name:               user.Name,
 		Email:              parsedEmail,
+		Avatar:             user.Avatar,
 		IdentityProvider:   user.IdentityProvider,
 		IdentityProviderID: user.IdentityProviderID,
 		CreatedAt:          user.CreatedAt,
