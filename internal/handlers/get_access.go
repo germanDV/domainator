@@ -14,7 +14,7 @@ func GetAccess() http.HandlerFunc {
 			return
 		}
 
-		c := Layout(Login(), "Domainator | Login", false)
+		c := Layout(Login(), "Domainator | Login")
 		SendTempl(w, r, c)
 	}
 }

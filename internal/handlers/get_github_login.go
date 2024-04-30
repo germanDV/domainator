@@ -25,7 +25,6 @@ func GithubLogin(stateStr string, githubConfig *oauth2.Config) http.HandlerFunc 
 	}
 }
 
-// TODO: Save user profile img from GitHub and use it in layout.templ
 func GithubCallback(
 	stateStr string,
 	githubConfig *oauth2.Config,
@@ -88,7 +87,7 @@ func GithubCallback(
 			}
 		}
 
-		jwt, err := authService.Generate(user.ID.String())
+		jwt, err := authService.Generate(user.ID.String(), userData.AvatarURL)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

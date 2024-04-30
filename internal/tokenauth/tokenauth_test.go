@@ -25,7 +25,9 @@ func TestTokenAuth(t *testing.T) {
 	}
 	userID := id.String()
 
-	token, err := tokenAuth.Generate(userID)
+	avatar := "https://example.com/avatar.png"
+
+	token, err := tokenAuth.Generate(userID, avatar)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,6 +57,10 @@ func TestTokenAuth(t *testing.T) {
 	exp, ok := claims["exp"].(float64)
 	if !ok {
 		t.Errorf("expected int64, got %T", claims["exp"])
+	}
+
+	if claims["pic"] != avatar {
+		t.Errorf("expected %s, got %s", avatar, claims["pic"])
 	}
 
 	if time.Unix(int64(iat), 0).Add(TokenExpiration).Unix() != int64(exp) {

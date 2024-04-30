@@ -33,7 +33,7 @@ func GetHome(certsService certs.Service) http.HandlerFunc {
 			transportCerts[i] = serviceToTransportAdapter(cert)
 		}
 
-		c := Layout(Index(transportCerts), "The Home Of The Domainator", true)
+		c := Layout(Index(transportCerts), "The Home Of The Domainator")
 		SendTempl(w, r, c)
 	}
 }

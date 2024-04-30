@@ -22,6 +22,7 @@ func AuthMdwBuilder(auth tokenauth.Service, required bool) func(next http.Handle
 
 			var e error
 			var userID string
+			var avatar string
 
 			if err == nil && cookie.Value != "" {
 				claims, err := auth.Validate(cookie.Value)
@@ -29,11 +30,13 @@ func AuthMdwBuilder(auth tokenauth.Service, required bool) func(next http.Handle
 					e = err
 				} else {
 					userID = claims["sub"].(string)
+					avatar = claims["pic"].(string)
 				}
 			}
 
 			if e == nil && userID != "" {
 				r = cntxt.SetUserID(r, userID)
+				r = cntxt.SetAvatar(r, avatar)
 				next.ServeHTTP(w, r)
 			} else {
 				if required {

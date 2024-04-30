@@ -23,7 +23,7 @@ func GetSettings(userService users.Service) http.HandlerFunc {
 			return
 		}
 
-		c := Layout(Settings(u.WebhookURL.String()), "Domainator | Settings", true)
+		c := Layout(Settings(u.WebhookURL.String()), "Domainator | Settings")
 		SendTempl(w, r, c)
 	}
 }

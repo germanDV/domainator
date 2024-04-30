@@ -13,7 +13,7 @@ import (
 const TokenExpiration = 8 * time.Hour
 
 type Service interface {
-	Generate(userId string) (string, error)
+	Generate(userId string, avatarURL string) (string, error)
 	Validate(tokenString string) (jwt.MapClaims, error)
 }
 
@@ -39,10 +39,11 @@ func New(priv string, publ string) (*TokenAuth, error) {
 	}, nil
 }
 
-func (t *TokenAuth) Generate(userID string) (string, error) {
+func (t *TokenAuth) Generate(userID string, avatarURL string) (string, error) {
 	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"sub": userID,
+		"pic": avatarURL,
 		"iat": now.Unix(),
 		"exp": now.Add(TokenExpiration).Unix(),
 		"aud": "domainator",

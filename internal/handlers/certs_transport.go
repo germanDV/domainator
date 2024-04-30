@@ -93,6 +93,7 @@ func (r DeleteCertReq) Parse() (certs.DeleteReq, error) {
 	}, nil
 }
 
+// TransportCert represents a User in the Transport layer.
 type TransportCert struct {
 	ID        string
 	CreatedAt string

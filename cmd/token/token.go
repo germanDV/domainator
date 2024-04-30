@@ -30,7 +30,7 @@ func main() {
 		panic(err)
 	}
 
-	token, err := tokenService.Generate(userID)
+	token, err := tokenService.Generate(userID, "")
 	if err != nil {
 		panic(err)
 	}

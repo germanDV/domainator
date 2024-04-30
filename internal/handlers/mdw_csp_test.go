@@ -12,7 +12,7 @@ func TestCsp(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	csp(handler).ServeHTTP(w, r)
 
-	want := "default-src 'self'; script-src 'self'; style-src 'self' 'sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg='; frame-ancestors 'none'; form-action 'self'"
+	want := "default-src 'self'; script-src 'self'; style-src 'self' 'sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg='; img-src 'self' avatars.githubusercontent.com; frame-ancestors 'none'; form-action 'self'"
 	got := w.Header().Get("Content-Security-Policy")
 
 	if got != want {

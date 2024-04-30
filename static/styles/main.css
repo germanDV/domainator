@@ -47,6 +47,11 @@ nav {
       color: var(--primary-black);
       background: var(--primary-white) !important;
     }
+
+    img {
+      width: 100%;
+      border-radius: 50%;
+    }
   }
 
   &:hover ul {
