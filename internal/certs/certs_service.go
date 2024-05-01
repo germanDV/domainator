@@ -19,19 +19,28 @@ type Service interface {
 }
 
 type CertsService struct {
-	repo      Repo
-	tlsClient tlser.Client
+	repo            Repo
+	tlsClient       tlser.Client
+	maxCertsPerUser int
 }
 
-func NewService(tlsClient tlser.Client, repo Repo) *CertsService {
+func NewService(tlsClient tlser.Client, repo Repo, maxCertsPerUser int) *CertsService {
 	return &CertsService{
-		repo:      repo,
-		tlsClient: tlsClient,
+		repo:            repo,
+		tlsClient:       tlsClient,
+		maxCertsPerUser: maxCertsPerUser,
 	}
 }
 
 func (s *CertsService) Save(ctx context.Context, req RegisterReq) (Cert, error) {
-  // TODO: Limit number of certs per user to 10.
+	count, err := s.repo.Count(ctx, req.UserID, s.maxCertsPerUser)
+	if err != nil {
+		return Cert{}, err
+	}
+
+	if count >= s.maxCertsPerUser {
+		return Cert{}, fmt.Errorf("cannot have more than %d certs", s.maxCertsPerUser)
+	}
 
 	data := s.tlsClient.GetCertData(req.Domain.value)
 	if data.Status != tlser.StatusOK && data.Status != tlser.StatusExpired {

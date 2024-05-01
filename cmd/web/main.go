@@ -59,7 +59,7 @@ func main() {
 	certsRepo := certs.NewRepo(db)
 	cacheClient := cache.New(config.RedisHost, config.RedisPort, config.RedisPassword)
 	tlsClient := tlser.New(5 * time.Second)
-	certsService := certs.NewService(tlsClient, certsRepo)
+	certsService := certs.NewService(tlsClient, certsRepo, 10)
 
 	// TODO: Hash static file to avoid caching old versions.
 	// TODO: Embed static files in production binary.

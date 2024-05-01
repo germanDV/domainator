@@ -22,6 +22,7 @@ type Repo interface {
 	UpdateWithTx(ctx context.Context, tx pgx.Tx, userID common.ID, id common.ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
 	Delete(ctx context.Context, userID common.ID, id common.ID) error
 	ProcessBatch(ctx context.Context, size int, cursor string) ([]repoCert, pgx.Tx, error)
+	Count(ctx context.Context, userID common.ID, limit int) (int, error)
 }
 
 type CertsRepo struct {
@@ -230,4 +231,19 @@ func (r *CertsRepo) ProcessBatch(ctx context.Context, size int, lastID string) (
 	}
 
 	return certs, tx, nil
+}
+
+func (r *CertsRepo) Count(ctx context.Context, userID common.ID, limit int) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	count := 0
+	q := "select count(id) from certificates where user_id = $1 limit $2"
+
+	err := r.db.QueryRow(ctx, q, userID, limit).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
