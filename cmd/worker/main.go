@@ -47,7 +47,7 @@ func main() {
 
 	certsRepo := certs.NewRepo(db)
 	tlsClient := tlser.New(5 * time.Second)
-	certsService := certs.NewService(tlsClient, certsRepo)
+	certsService := certs.NewService(tlsClient, certsRepo, 10)
 
 	usersRepo := users.NewRepo(db)
 	usersService := users.NewService(usersRepo)
