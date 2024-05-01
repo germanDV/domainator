@@ -168,16 +168,10 @@ button.text {
 a.btn,
 button {
   font-size: 1.1em;
-  border: 1px solid var(--primary-black);
-  border-radius: 4px;
-  background: var(--primary-black);
-  color: var(--primary-white);
+  border: 2px solid var(--primary-black);
   padding: 8px 16px;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  &:hover {
-    background: var(--secondary-black);
-  }
+  transition: all 0.1s ease-in-out;
 }
 
 button.htmx-request {
@@ -185,39 +179,31 @@ button.htmx-request {
   pointer-events: none;
 }
 
-a.btn-sm,
-button.btn-sm {
-  padding: 4px 8px;
-}
-
-button.btn-secondary {
-  border: 1px solid var(--secondary-black);
-  background: var(--primary-white);
-  color: var(--secondary-black);
+.btn-primary {
+  background: var(--primary-black);
+  color: var(--primary-white);
   &:hover {
-    background: var(--primary-black);
-    border: 1px solid var(--primary-black);
-    color: var(--primary-white);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px 2px var(--secondary-white);
   }
 }
 
-button.btn-danger {
-  border: 1px solid var(--secondary-black);
+.btn-secondary {
   background: var(--primary-white);
   color: var(--secondary-black);
   &:hover {
-    background: var(--primary-white);
-    border: 1px solid var(--error);
-    color: var(--error);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px 2px var(--primary-black);
   }
 }
 
-button.icon-btn {
+.icon-btn {
   padding: 4px 8px;
   background: var(--primary-white);
   color: var(--secondary-black);
   &:hover {
-    background: var(--secondary-white);
+    transform: translate(-1px, -1px);
+    box-shadow: 2px 2px 0px 1px var(--primary-black);
   }
 }
 

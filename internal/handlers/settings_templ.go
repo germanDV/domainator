@@ -63,7 +63,7 @@ func WebhookForm(saved bool, err string, inputVal string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" required> <button type=\"submit\">Save</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" required> <button class=\"btn-primary\" type=\"submit\">Save</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

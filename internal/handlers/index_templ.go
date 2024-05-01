@@ -23,7 +23,7 @@ func Index(certificates []TransportCert) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section hx-ext=\"response-targets\"><div class=\"hero\"><h1>The Home Of The Domainator</h1><h3>Manage your TLS certificates</h3></div><form class=\"inline\" hx-post=\"/domain\" hx-trigger=\"submit\" hx-target=\"#table\" hx-swap=\"beforeend\" hx-target-400=\"#error\"><input type=\"text\" name=\"domain\" placeholder=\"Add New Domain\" required> <button type=\"submit\">Add</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div></form><div id=\"error\"></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section hx-ext=\"response-targets\"><div class=\"hero\"><h1>The Home Of The Domainator</h1><h3>Manage your TLS certificates</h3></div><form class=\"inline\" hx-post=\"/domain\" hx-trigger=\"submit\" hx-target=\"#table\" hx-swap=\"beforeend\" hx-target-400=\"#error\"><input type=\"text\" name=\"domain\" placeholder=\"Add New Domain\" required> <button class=\"btn-primary\" type=\"submit\">Add</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div></form><div id=\"error\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
