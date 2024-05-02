@@ -17,6 +17,10 @@ var (
 	errNoGoModFile     = errors.New("could not find go.mod file")
 )
 
+// TODO: maybe look for env file from current directory and go upwards?
+//       So that it can be loaded even if there's no go.mod file
+//       (may be useful in production if running just the binary).
+
 // Parse takes a pointer to a struct and uses the 'env' and 'default'
 // struct tags to populate it with values from environment variables.
 //

@@ -20,6 +20,7 @@ import (
 	"github.com/germandv/domainator/internal/tlser"
 	"github.com/germandv/domainator/internal/tokenauth"
 	"github.com/germandv/domainator/internal/users"
+	"github.com/germandv/domainator/ui"
 )
 
 type AppConfig struct {
@@ -61,10 +62,6 @@ func main() {
 	tlsClient := tlser.New(5 * time.Second)
 	certsService := certs.NewService(tlsClient, certsRepo, 10)
 
-	// TODO: Hash static file to avoid caching old versions.
-	// TODO: Embed static files in production binary.
-	fileServer := http.FileServer(http.Dir("./static"))
-
 	authService, err := tokenauth.New(config.AuthPrivKey, config.AuthPublKey)
 	if err != nil {
 		panic(err)
@@ -80,7 +77,7 @@ func main() {
 	)
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /static/*", http.StripPrefix("/static/", fileServer))
+	mux.Handle("GET /static/*", http.StripPrefix("/static/", ui.CreateFileServer()))
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient, db))
 	mux.Handle("GET /", authn(handlers.GetHome(certsService)))
 	mux.Handle("GET /login", authn(handlers.GetAccess()))
