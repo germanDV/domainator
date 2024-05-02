@@ -48,7 +48,7 @@ templgen:
 .PHONY: build
 build: templgen
 	@echo 'Building for Linux'
-	go build -o=./bin/${BINARY_NAME} ./cmd/web
+	go build -ldflags "-s -w" -o=./bin/${BINARY_NAME} ./cmd/web
 
 ## docker/up: start PostgreSQL + Redis docker containers
 .PHONY: docker/up
