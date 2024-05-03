@@ -17,10 +17,6 @@ var (
 	errNoGoModFile     = errors.New("could not find go.mod file")
 )
 
-// TODO: maybe look for env file from current directory and go upwards?
-//       So that it can be loaded even if there's no go.mod file
-//       (may be useful in production if running just the binary).
-
 // Parse takes a pointer to a struct and uses the 'env' and 'default'
 // struct tags to populate it with values from environment variables.
 //
@@ -30,6 +26,8 @@ var (
 // until it finds a go.mod file. If no go.mod file is found, it will ignore this step
 // and continue reading from environment variables.
 //
+// If the provided path is an absolute path, it will be used as is.
+//
 // Variables are considered required and will return an error unless
 // a default value is provided.
 //
@@ -38,7 +36,7 @@ var (
 func Parse[T any](configStruct *T, configFilepath string) error {
 	err := fileToEnv(configFilepath)
 	// "env file not found" and "no go.mod" are ignored as these are common cases on cloud.
-	if err != nil && !errors.Is(err, errEnvFileNotFound) && errors.Is(err, errNoGoModFile) {
+	if err != nil && !errors.Is(err, errEnvFileNotFound) && !errors.Is(err, errNoGoModFile) {
 		return err
 	}
 
@@ -47,17 +45,11 @@ func Parse[T any](configStruct *T, configFilepath string) error {
 
 // fileToEnv looks for the env file, parses it and loads variables into the environment.
 func fileToEnv(configFilepath string) error {
-	cwd, err := os.Getwd()
+	path, err := getAbsPath(configFilepath)
 	if err != nil {
 		return err
 	}
 
-	root, err := getRootPath(cwd)
-	if err != nil {
-		return err
-	}
-
-	path := filepath.Join(root, configFilepath)
 	f, err := os.Open(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -114,6 +106,27 @@ func fileToEnv(configFilepath string) error {
 	}
 
 	return nil
+}
+
+// getAbsPath returns the absolute path of the provided path.
+// If the path is already absolute, it will be returned as is.
+// If the path is relative, it will be joined with the project root.
+func getAbsPath(configFilepath string) (string, error) {
+	if filepath.IsAbs(configFilepath) {
+		return configFilepath, nil
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	root, err := getRootPath(cwd)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(root, configFilepath), nil
 }
 
 // envToStruct gets values from envirnoment variables and sets them into the provided configStruct.
