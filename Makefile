@@ -20,18 +20,20 @@ test:
 vuln:
 	govulncheck ./...
 
-## audit: tidy dependencies, format and vet
-.PHONY: audit
+## vet: vet code
+.PHONY: vet
+vet:
+	@echo 'Vetting code...'
+	go vet ./...
+
+## fmt: tidy dependencies and format code
+.PHONY: fmt
 audit:
 	@echo 'Tidying and verifying module dependencies...'
 	go mod tidy
 	go mod verify
 	@echo 'Formatting code...'
 	go fmt ./...
-	@echo 'Vetting code...'
-	go vet ./...
-	@echo 'Checking dependencies for vulnerabilities...'
-	govulncheck ./...
 
 ## dev: run with hot-reloading
 .PHONY: dev
