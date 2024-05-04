@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/germandv/domainator/internal/cntxt"
+	"github.com/germandv/domainator/internal/cookies"
 	"github.com/germandv/domainator/internal/tokenauth"
 )
 
@@ -18,14 +19,14 @@ const AuthCookieName = "token"
 func AuthMdwBuilder(auth tokenauth.Service, required bool) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cookie, err := r.Cookie(AuthCookieName)
+			cookie, err := cookies.Read(r, AuthCookieName)
 
 			var e error
 			var userID string
 			var avatar string
 
-			if err == nil && cookie.Value != "" {
-				claims, err := auth.Validate(cookie.Value)
+			if err == nil && cookie != "" {
+				claims, err := auth.Validate(cookie)
 				if err != nil {
 					e = err
 				} else {

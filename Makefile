@@ -125,6 +125,11 @@ worker/build:
 scripts/keys:
 	go run ./cmd/keys
 
+## scripts/secret: generate a 32-byte secret
+.PHONY: scripts/secret
+scripts/secret:
+	go run ./cmd/secret
+
 ## scripts/token u=$1: generate an auth token ($ make scripts/token u=<user_id>)
 .PHONY: scripts/token
 scripts/token:

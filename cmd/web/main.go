@@ -37,6 +37,7 @@ type AppConfig struct {
 	GithubClientID  string `env:"GITHUB_CLIENT_ID"`
 	GithubSecret    string `env:"GITHUB_SECRET"`
 	Host            string `env:"HOST" default:"http://localhost"`
+	CookieSecret    string `env:"COOKIE_SECRET"`
 }
 
 func main() {
@@ -69,20 +70,20 @@ func main() {
 	authn := handlers.AuthMdwBuilder(authService, false)
 	authz := handlers.AuthMdwBuilder(authService, true)
 
-	stateStr := common.GenerateRandomString(32)
 	githubCfg := githubauth.NewGithubConfig(
 		config.GithubClientID,
 		config.GithubSecret,
 		fmt.Sprintf("%s:%d/github/callback", config.Host, config.Port),
 	)
 
+	// TODO: pass logger to handlers to log errors and pertinent info.
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", ui.CreateFileServer()))
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient, db))
 	mux.Handle("GET /", authn(handlers.GetHome(certsService)))
 	mux.Handle("GET /login", authn(handlers.GetAccess()))
-	mux.Handle("GET /github/login", authn(handlers.GithubLogin(stateStr, githubCfg)))
-	mux.HandleFunc("GET /github/callback", handlers.GithubCallback(stateStr, githubCfg, authService, usersService))
+	mux.Handle("GET /github/login", authn(handlers.GithubLogin(githubCfg, []byte(config.CookieSecret))))
+	mux.HandleFunc("GET /github/callback", handlers.GithubCallback(githubCfg, authService, usersService, []byte(config.CookieSecret)))
 	mux.HandleFunc("POST /logout", handlers.Logout())
 	mux.Handle("POST /domain", authz(handlers.RegisterDomain(certsService)))
 	mux.Handle("PUT /domain/{id}", authz(handlers.UpdateDomain(certsService)))
