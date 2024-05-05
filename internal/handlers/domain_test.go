@@ -162,7 +162,7 @@ func TestDeleteDomain(t *testing.T) {
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest("GET", "/", nil)
 	r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a444")
-	handler = GetHome(certsService)
+	handler = GetDashboard(certsService)
 	handler.ServeHTTP(w, r)
 	if w.Code != 200 {
 		t.Errorf("Expected 200 when fetching dashboard page, got %d", w.Code)
@@ -193,7 +193,7 @@ func TestDeleteDomain(t *testing.T) {
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest("GET", "/", nil)
 	r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a444")
-	handler = GetHome(certsService)
+	handler = GetDashboard(certsService)
 	handler.ServeHTTP(w, r)
 	if w.Code != 200 {
 		t.Errorf("Expected 200 when fetching dashboard page, got %d", w.Code)
