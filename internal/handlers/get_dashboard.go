@@ -7,11 +7,11 @@ import (
 	"github.com/germandv/domainator/internal/cntxt"
 )
 
-func GetHome(certsService certs.Service) http.HandlerFunc {
+func GetDashboard(certsService certs.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := cntxt.GetUserID(r)
 		if userID == "" {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
@@ -33,7 +33,7 @@ func GetHome(certsService certs.Service) http.HandlerFunc {
 			transportCerts[i] = serviceToTransportAdapter(cert)
 		}
 
-		c := Layout(Index(transportCerts), "The Home Of The Domainator")
+		c := Layout(Dashboard(transportCerts), "Domainator | Dashboard")
 		SendTempl(w, r, c)
 	}
 }

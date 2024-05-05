@@ -85,7 +85,7 @@ func header() templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button><ul><li><a href=\"/\">Dashboard</a></li><li><a href=\"/settings\">Settings</a></li><li><form action=\"/logout\" method=\"POST\"><button class=\"text\" type=\"submit\">Log Out</button></form></li></ul></nav></header>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button><ul><li><a href=\"/dashboard\">Dashboard</a></li><li><a href=\"/settings\">Settings</a></li><li><form action=\"/logout\" method=\"POST\"><button class=\"text\" type=\"submit\">Log Out</button></form></li></ul></nav></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

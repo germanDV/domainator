@@ -10,7 +10,7 @@ import "context"
 import "io"
 import "bytes"
 
-func Index(certificates []TransportCert) templ.Component {
+func Dashboard(certificates []TransportCert) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -23,7 +23,7 @@ func Index(certificates []TransportCert) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section hx-ext=\"response-targets\"><div class=\"hero\"><h1>The Home Of The Domainator</h1><h3>Manage your TLS certificates</h3></div><form class=\"inline\" hx-post=\"/domain\" hx-trigger=\"submit\" hx-target=\"#table\" hx-swap=\"beforeend\" hx-target-400=\"#error\"><input type=\"text\" name=\"domain\" placeholder=\"Add New Domain\" required> <button class=\"btn-primary\" type=\"submit\">Add</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div></form><div id=\"error\"></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<section hx-ext=\"response-targets\"><div class=\"hero\"><h1>Dashboard | Tracked TLS</h1></div><form class=\"inline\" hx-post=\"/domain\" hx-trigger=\"submit\" hx-target=\"#table\" hx-swap=\"beforeend\" hx-target-400=\"#error\"><input type=\"text\" name=\"domain\" placeholder=\"Add New Domain\" required> <button class=\"btn-primary\" type=\"submit\">Add</button><div class=\"loader-container\"><div class=\"loader\"><div></div><div></div><div></div></div></div></form><div id=\"error\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -62,7 +62,7 @@ func RegisterDomainError(msg string) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handlers/index.templ`, Line: 36, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handlers/dashboard.templ`, Line: 35, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {

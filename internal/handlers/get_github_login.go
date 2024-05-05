@@ -128,6 +128,6 @@ func GithubCallback(
 			return
 		}
 
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 	}
 }
