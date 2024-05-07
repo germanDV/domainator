@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/cntxt"
 )
 
-func UpdateDomain(certsService certs.Service) http.HandlerFunc {
+func UpdateDomain(logger *slog.Logger, certsService certs.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := cntxt.GetUserID(r)
 
@@ -35,6 +36,7 @@ func UpdateDomain(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
+		logger.Info("refreshed domain", "domain", cert.Domain.String(), "user", userID)
 		c := CertRow(serviceToTransportAdapter(cert))
 		SendTempl(w, r, c)
 	}
