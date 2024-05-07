@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -25,6 +27,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestRegisterDomain(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
 	certsService := certs.NewService(tlser_mock.New(), certsRepo, 2)
 
@@ -38,7 +41,7 @@ func TestRegisterDomain(t *testing.T) {
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a891")
 
-		handler := RegisterDomain(certsService)
+		handler := RegisterDomain(logger, certsService)
 		handler.ServeHTTP(w, r)
 
 		if w.Code != 200 {
@@ -67,7 +70,7 @@ func TestRegisterDomain(t *testing.T) {
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a891")
 
-		handler := RegisterDomain(certsService)
+		handler := RegisterDomain(logger, certsService)
 		handler.ServeHTTP(w, r)
 
 		if w.Code != 400 {
@@ -85,7 +88,7 @@ func TestRegisterDomain(t *testing.T) {
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a891")
 
-		handler := RegisterDomain(certsService)
+		handler := RegisterDomain(logger, certsService)
 		handler.ServeHTTP(w, r)
 
 		if w.Code != 200 {
@@ -108,7 +111,7 @@ func TestRegisterDomain(t *testing.T) {
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a891")
 
-		handler := RegisterDomain(certsService)
+		handler := RegisterDomain(logger, certsService)
 		handler.ServeHTTP(w, r)
 
 		if w.Code != 400 {
@@ -126,7 +129,7 @@ func TestRegisterDomain(t *testing.T) {
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a891")
 
-		handler := RegisterDomain(certsService)
+		handler := RegisterDomain(logger, certsService)
 		handler.ServeHTTP(w, r)
 
 		if w.Code != 400 {
@@ -141,6 +144,7 @@ func TestRegisterDomain(t *testing.T) {
 }
 
 func TestDeleteDomain(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
 	certsService := certs.NewService(tlser_mock.New(), certsRepo, 2)
 
@@ -152,7 +156,7 @@ func TestDeleteDomain(t *testing.T) {
 	r := httptest.NewRequest("POST", "/domain", body)
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a444")
-	handler := RegisterDomain(certsService)
+	handler := RegisterDomain(logger, certsService)
 	handler.ServeHTTP(w, r)
 	if w.Code != 200 {
 		t.Errorf("Expected 200 when registering, got %d", w.Code)
@@ -183,7 +187,7 @@ func TestDeleteDomain(t *testing.T) {
 	r = httptest.NewRequest("DELETE", fmt.Sprintf("/domain/%s", cert.ID.String()), nil)
 	r.SetPathValue("id", cert.ID.String())
 	r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a444")
-	handler = DeleteDomain(certsService)
+	handler = DeleteDomain(logger, certsService)
 	handler.ServeHTTP(w, r)
 	if w.Code != 200 {
 		t.Errorf("Expected 200 when deleting domain, got %d", w.Code)
@@ -205,6 +209,7 @@ func TestDeleteDomain(t *testing.T) {
 }
 
 func TestUpdateDomain(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
 	certsService := certs.NewService(tlser_mock.New(), certsRepo, 2)
 
@@ -216,7 +221,7 @@ func TestUpdateDomain(t *testing.T) {
 	r := httptest.NewRequest("POST", "/domain", body)
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a077")
-	handler := RegisterDomain(certsService)
+	handler := RegisterDomain(logger, certsService)
 	handler.ServeHTTP(w, r)
 	if w.Code != 200 {
 		t.Errorf("Expected 200 when registering, got %d", w.Code)
@@ -233,7 +238,7 @@ func TestUpdateDomain(t *testing.T) {
 	r = httptest.NewRequest("PUT", fmt.Sprintf("/domain/%s", certBefore.ID.String()), nil)
 	r.SetPathValue("id", certBefore.ID.String())
 	r = cntxt.SetUserID(r, "018ec52b-dd69-7df4-b8e7-edcdc9a3a077")
-	handler = UpdateDomain(certsService)
+	handler = UpdateDomain(logger, certsService)
 	handler.ServeHTTP(w, r)
 	if w.Code != 200 {
 		t.Errorf("Expected 200 when updating domain, got %d", w.Code)

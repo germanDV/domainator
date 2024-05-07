@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/cntxt"
 )
 
-func RegisterDomain(certsService certs.Service) http.HandlerFunc {
+func RegisterDomain(logger *slog.Logger, certsService certs.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := cntxt.GetUserID(r)
 		domain := r.FormValue("domain")
@@ -27,6 +28,7 @@ func RegisterDomain(certsService certs.Service) http.HandlerFunc {
 			return
 		}
 
+		logger.Info("registered new domain", "domain", domain, "user", userID)
 		c := CertRow(serviceToTransportAdapter(cert))
 		SendTempl(w, r, c)
 	}

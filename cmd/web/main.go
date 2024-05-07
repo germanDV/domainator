@@ -76,18 +76,17 @@ func main() {
 		fmt.Sprintf("%s:%d/github/callback", config.Host, config.Port),
 	)
 
-	// TODO: pass logger to handlers to log errors and pertinent info.
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/*", http.StripPrefix("/static/", ui.CreateFileServer()))
 	mux.HandleFunc("GET /healthcheck", handlers.GetHealthcheck(cacheClient, db))
 	mux.Handle("GET /", authn(handlers.GetLanding()))
 	mux.Handle("GET /dashboard", authn(handlers.GetDashboard(certsService)))
-	mux.Handle("GET /github/login", authn(handlers.GithubLogin(githubCfg, []byte(config.CookieSecret))))
-	mux.HandleFunc("GET /github/callback", handlers.GithubCallback(githubCfg, authService, usersService, []byte(config.CookieSecret)))
+	mux.Handle("GET /github/login", authn(handlers.GithubLogin(logger, githubCfg, []byte(config.CookieSecret))))
+	mux.HandleFunc("GET /github/callback", handlers.GithubCallback(logger, githubCfg, authService, usersService, []byte(config.CookieSecret)))
 	mux.HandleFunc("POST /logout", handlers.Logout())
-	mux.Handle("POST /domain", authz(handlers.RegisterDomain(certsService)))
-	mux.Handle("PUT /domain/{id}", authz(handlers.UpdateDomain(certsService)))
-	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(certsService)))
+	mux.Handle("POST /domain", authz(handlers.RegisterDomain(logger, certsService)))
+	mux.Handle("PUT /domain/{id}", authz(handlers.UpdateDomain(logger, certsService)))
+	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(logger, certsService)))
 	mux.Handle("GET /settings", authz(handlers.GetSettings(usersService)))
 	mux.Handle("POST /settings/webhook", authz(handlers.SetWebhookURL(usersService)))
 
