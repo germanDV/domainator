@@ -238,7 +238,7 @@ func (r *CertsRepo) Count(ctx context.Context, userID common.ID, limit int) (int
 	defer cancel()
 
 	count := 0
-	q := "select count(id) from certificates where user_id = $1 limit $2"
+	q := "select count(*) from certificates where user_id = $1 limit $2"
 
 	err := r.db.QueryRow(ctx, q, userID, limit).Scan(&count)
 	if err != nil {
