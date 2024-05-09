@@ -21,8 +21,9 @@ type Repo interface {
 	Update(ctx context.Context, userID common.ID, id common.ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
 	UpdateWithTx(ctx context.Context, tx pgx.Tx, userID common.ID, id common.ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
 	Delete(ctx context.Context, userID common.ID, id common.ID) error
-	ProcessBatch(ctx context.Context, size int, cursor string) ([]repoCert, pgx.Tx, error)
+	ProcessBatch(ctx context.Context, tx pgx.Tx, size int, cursor string) ([]repoCert, error)
 	Count(ctx context.Context, userID common.ID, limit int) (int, error)
+	BeginTx(ctx context.Context) (pgx.Tx, error)
 }
 
 type CertsRepo struct {
@@ -189,14 +190,13 @@ func (r *CertsRepo) Delete(ctx context.Context, userID common.ID, id common.ID) 
 	})
 }
 
-func (r *CertsRepo) ProcessBatch(ctx context.Context, size int, lastID string) ([]repoCert, pgx.Tx, error) {
+func (r *CertsRepo) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	return r.db.Begin(ctx)
+}
+
+func (r *CertsRepo) ProcessBatch(ctx context.Context, tx pgx.Tx, size int, lastID string) ([]repoCert, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
-
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
 
 	q := `
     select
@@ -227,10 +227,10 @@ func (r *CertsRepo) ProcessBatch(ctx context.Context, size int, lastID string) (
 	certs, err := pgx.CollectRows(rows, pgx.RowToStructByName[repoCert])
 	if err != nil {
 		tx.Rollback(ctx)
-		return nil, nil, err
+		return nil, err
 	}
 
-	return certs, tx, nil
+	return certs, nil
 }
 
 func (r *CertsRepo) Count(ctx context.Context, userID common.ID, limit int) (int, error) {
