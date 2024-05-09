@@ -3,8 +3,10 @@ package certs
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/germandv/domainator/internal/common"
 	"github.com/germandv/domainator/internal/notifier"
 	"github.com/germandv/domainator/internal/tlser"
 	"github.com/jackc/pgx/v5"
@@ -15,7 +17,7 @@ type Service interface {
 	GetAll(ctx context.Context, req GetAllReq) ([]Cert, error)
 	Delete(ctx context.Context, req DeleteReq) error
 	Update(ctx context.Context, req UpdateReq) (Cert, error)
-	ProcessBatch(ctx context.Context, size int, concurrency int, notificationCh chan notifier.Notification) error
+	ProcessBatch(ctx context.Context, size int, concurrency int, ch chan<- notifier.Notification) error
 }
 
 type CertsService struct {
@@ -122,11 +124,16 @@ func (s *CertsService) ProcessBatch(
 	ctx context.Context,
 	size int,
 	concurrency int,
-	notificationCh chan notifier.Notification,
+	ch chan<- notifier.Notification,
 ) error {
 	var certs []repoCert
-	var tx pgx.Tx
 	var err error
+	var wg sync.WaitGroup
+
+	tx, err := s.repo.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
 
 	first := true
 	lastID := ""
@@ -134,34 +141,70 @@ func (s *CertsService) ProcessBatch(
 	for first || len(certs) > 0 {
 		first = false
 
-		certs, tx, err = s.repo.ProcessBatch(ctx, size, lastID)
+		certs, err = s.repo.ProcessBatch(ctx, tx, size, lastID)
 		if err != nil {
+			tx.Rollback(context.Background())
 			return err
 		}
-
-		tasks := make([]Task, len(certs))
-		for i, entry := range certs {
-			cert, err := repoToServiceAdapter(entry)
-			if err != nil {
-				continue
-			}
-
-			tasks[i] = Task{
-				cert:           cert,
-				tlsClient:      s.tlsClient,
-				repo:           s.repo,
-				tx:             tx,
-				notificationCh: notificationCh,
-			}
-
-			lastID = entry.ID
+		if len(certs) == 0 {
+			break
 		}
 
-		batch := NewBatch(tasks, tx, concurrency)
-		batch.Begin()
+		wg.Add(len(certs))
+		for _, cert := range certs {
+			lastID = cert.ID
+			go func(cert repoCert) {
+				defer wg.Done()
+				s.updateAndCheckExp(cert, tx, ch)
+			}(cert)
+		}
+		wg.Wait()
 	}
 
-	return nil
+	return tx.Commit(context.Background())
+}
+
+func (s *CertsService) updateAndCheckExp(cert repoCert, tx pgx.Tx, ch chan<- notifier.Notification) {
+	data := s.tlsClient.GetCertData(cert.Domain)
+
+	e := ""
+	if data.Status != tlser.StatusOK && data.Status != tlser.StatusExpired {
+		e = string(data.Status)
+	}
+
+	issuer, err := ParseIssuer(data.Issuer)
+	if err != nil {
+		return
+	}
+
+	userID, err := common.ParseID(cert.UserID)
+	if err != nil {
+		return
+	}
+
+	certID, err := common.ParseID(cert.ID)
+	if err != nil {
+		return
+	}
+
+	now := time.Now().UTC()
+
+	err = s.repo.UpdateWithTx(context.Background(), tx, userID, certID, data.Expiry, issuer.value, now, e)
+	if err != nil {
+		return
+	}
+
+	expHours := hoursToExpiration(data.Expiry)
+	expStatus := expirationStatus(expHours)
+	if expStatus != "" {
+		ch <- notifier.Notification{
+			ID:     cert.ID,
+			UserID: cert.UserID,
+			Domain: cert.Domain,
+			Status: expStatus,
+			Hours:  expHours,
+		}
+	}
 }
 
 func hoursToExpiration(expiry time.Time) int {
