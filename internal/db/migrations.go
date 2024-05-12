@@ -11,11 +11,11 @@ import (
 
 const VersionTable = "schema_version"
 
-type DbMigrator struct {
+type DBMigrator struct {
 	migrator *migrate.Migrator
 }
 
-func NewDbMigrator(connStr string, fsys fs.FS) (*DbMigrator, error) {
+func NewDBMigrator(connStr string, fsys fs.FS) (*DBMigrator, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -34,18 +34,18 @@ func NewDbMigrator(connStr string, fsys fs.FS) (*DbMigrator, error) {
 		return nil, err
 	}
 
-	return &DbMigrator{migrator}, nil
+	return &DBMigrator{migrator}, nil
 }
 
-func (m *DbMigrator) Status(ctx context.Context) (int32, error) {
+func (m *DBMigrator) Status(ctx context.Context) (int32, error) {
 	return m.migrator.GetCurrentVersion(ctx)
 }
 
-func (m *DbMigrator) Up(ctx context.Context) error {
+func (m *DBMigrator) Up(ctx context.Context) error {
 	return m.migrator.Migrate(ctx)
 }
 
-func (m *DbMigrator) Down(ctx context.Context) error {
+func (m *DBMigrator) Down(ctx context.Context) error {
 	curr, err := m.Status(ctx)
 	if err != nil {
 		return err

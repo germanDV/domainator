@@ -127,11 +127,12 @@ func main() {
 	}
 	db.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	err = srv.Shutdown(ctx)
 	if err != nil {
 		logger.Error("Failed to shut down gracefully", "err", err)
+		cancel()
 		os.Exit(1)
 	}
+	cancel()
 	logger.Info("Server shutdown complete")
 }

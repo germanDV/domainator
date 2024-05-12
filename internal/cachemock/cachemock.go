@@ -1,4 +1,4 @@
-package cache_mock
+package cachemock
 
 import "time"
 

@@ -26,7 +26,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	migrator, err := db.NewDbMigrator(config.PostgresConnStr, os.DirFS("migrations"))
+	migrator, err := db.NewDBMigrator(config.PostgresConnStr, os.DirFS("migrations"))
 	if err != nil {
 		panic(err)
 	}

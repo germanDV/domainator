@@ -2,6 +2,7 @@ package certs
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/germandv/domainator/internal/common"
@@ -226,7 +227,10 @@ func (r *CertsRepo) ProcessBatch(ctx context.Context, tx pgx.Tx, size int, lastI
 
 	certs, err := pgx.CollectRows(rows, pgx.RowToStructByName[repoCert])
 	if err != nil {
-		tx.Rollback(ctx)
+		e := tx.Rollback(ctx)
+		if e != nil {
+			return nil, fmt.Errorf("an error occurred: %w. And tx did not rollback successfully: %w", err, e)
+		}
 		return nil, err
 	}
 

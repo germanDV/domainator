@@ -22,7 +22,7 @@ type testDB struct {
 	terminate func(context.Context) error
 }
 
-// TestDB is a single instance to be shared accross tests, to initialize and run the test container only once.
+// TestDB is a single instance to be shared accros tests, to initialize and run the test container only once.
 var TestDB = &testDB{
 	once:   sync.Once{},
 	dbName: "domainator",
@@ -44,7 +44,7 @@ func (tdb *testDB) init() {
 	)
 
 	if err != nil {
-		panic(fmt.Errorf("failed to strat posgres container: %w", err))
+		panic(fmt.Errorf("failed to start posgres container: %w", err))
 	}
 
 	conn, err := pgContainer.ConnectionString(ctx)
@@ -63,7 +63,7 @@ func (tdb *testDB) init() {
 		panic(fmt.Errorf("failed to ping postgres: %w", err))
 	}
 
-	migrator, err := db.NewDbMigrator(conn, os.DirFS(filepath.Join("..", "..", "migrations")))
+	migrator, err := db.NewDBMigrator(conn, os.DirFS(filepath.Join("..", "..", "migrations")))
 	if err != nil {
 		panic(fmt.Errorf("failed create DB Migrator: %w", err))
 	}

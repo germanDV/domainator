@@ -174,7 +174,7 @@ func TestReadSignedInvalidValue(t *testing.T) {
 	signedCookie := signCookie(name, value, []byte(secret))
 
 	// Tamper the cookie
-	signedCookie.Value = signedCookie.Value + "tampered"
+	signedCookie.Value += "tampered"
 
 	req.AddCookie(signedCookie)
 

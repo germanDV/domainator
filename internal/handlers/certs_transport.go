@@ -109,13 +109,15 @@ func serviceToTransportAdapter(c certs.Cert) TransportCert {
 	now := time.Now()
 	diffDays := c.ExpiresAt.Sub(now).Hours() / 24
 	status := ""
-	if c.Error != "" {
+
+	switch {
+	case c.Error != "":
 		status = c.Error
-	} else if diffDays < 0 {
+	case diffDays < 0:
 		status = "Expired"
-	} else if diffDays <= 1 {
+	case diffDays <= 1:
 		status = "Expires today"
-	} else {
+	default:
 		status = fmt.Sprintf("Expires in %d days", int(diffDays))
 	}
 
