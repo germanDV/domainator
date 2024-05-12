@@ -6,17 +6,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/germandv/domainator/internal/cache_mock"
+	"github.com/germandv/domainator/internal/cachemock"
 )
 
-type MockDbPinger struct{}
+type MockDBPinger struct{}
 
-func (m MockDbPinger) Ping(_ context.Context) error {
+func (m MockDBPinger) Ping(_ context.Context) error {
 	return nil
 }
 
 func TestGetHealthcheck(t *testing.T) {
-	handler := GetHealthcheck(cache_mock.New(), MockDbPinger{})
+	handler := GetHealthcheck(cachemock.New(), MockDBPinger{})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/healthcheck", nil)
 	handler.ServeHTTP(w, r)
@@ -38,7 +38,7 @@ func TestGetHealthcheck(t *testing.T) {
 }
 
 func TestGetHealthcheck_Deep(t *testing.T) {
-	handler := GetHealthcheck(cache_mock.New(), MockDbPinger{})
+	handler := GetHealthcheck(cachemock.New(), MockDBPinger{})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/healthcheck?deep=true", nil)
 	handler.ServeHTTP(w, r)

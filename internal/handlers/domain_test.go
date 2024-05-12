@@ -14,7 +14,7 @@ import (
 	"github.com/germandv/domainator/internal/certs"
 	"github.com/germandv/domainator/internal/cntxt"
 	"github.com/germandv/domainator/internal/common"
-	"github.com/germandv/domainator/internal/tlser_mock"
+	"github.com/germandv/domainator/internal/tlsermock"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 func TestRegisterDomain(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
-	certsService := certs.NewService(tlser_mock.New(), certsRepo, 2)
+	certsService := certs.NewService(tlsermock.New(), certsRepo, 2)
 
 	t.Run("register_new_domain", func(t *testing.T) {
 		formData := url.Values{}
@@ -146,7 +146,7 @@ func TestRegisterDomain(t *testing.T) {
 func TestDeleteDomain(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
-	certsService := certs.NewService(tlser_mock.New(), certsRepo, 2)
+	certsService := certs.NewService(tlsermock.New(), certsRepo, 2)
 
 	// Register a domain.
 	formData := url.Values{}
@@ -211,7 +211,7 @@ func TestDeleteDomain(t *testing.T) {
 func TestUpdateDomain(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
-	certsService := certs.NewService(tlser_mock.New(), certsRepo, 2)
+	certsService := certs.NewService(tlsermock.New(), certsRepo, 2)
 
 	// Register a domain.
 	formData := url.Values{}

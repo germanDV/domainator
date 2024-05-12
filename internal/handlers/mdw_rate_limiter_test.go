@@ -7,12 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/germandv/domainator/internal/cache_mock"
+	"github.com/germandv/domainator/internal/cachemock"
 )
 
 func TestRateLimiter(t *testing.T) {
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	cacheClient := cache_mock.New()
+	cacheClient := cachemock.New()
 	limiter := rateLimiterBuilder(logger, cacheClient, 5)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

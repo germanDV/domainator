@@ -1,4 +1,4 @@
-package tlser_mock
+package tlsermock
 
 import (
 	"strings"

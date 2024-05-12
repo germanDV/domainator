@@ -17,6 +17,8 @@ In addition to `go` and `make`. You will need:
 
 You may install them with `make deps`.
 
+To run `make lint`, you will need [golangci-lint](golang.org/x/lint/golint).
+
 ## Components
 
 Domainator consists of two components:

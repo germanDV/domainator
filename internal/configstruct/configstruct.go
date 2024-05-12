@@ -129,7 +129,7 @@ func getAbsPath(configFilepath string) (string, error) {
 	return filepath.Join(root, configFilepath), nil
 }
 
-// envToStruct gets values from envirnoment variables and sets them into the provided configStruct.
+// envToStruct gets values from environment variables and sets them into the provided configStruct.
 func envToStruct[T any](configStruct *T) error {
 	v := reflect.TypeOf(*configStruct)
 
@@ -164,17 +164,18 @@ func getRootPath(path string) (string, error) {
 	if path == "/" {
 		return "", errNoGoModFile
 	}
-	_, err := os.Stat(filepath.Join(path, "go.mod"))
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return "", err
-	} else if err == nil {
+
+	switch _, err := os.Stat(filepath.Join(path, "go.mod")); {
+	case err == nil:
 		return path, nil
-	} else {
+	case err != nil && !errors.Is(err, os.ErrNotExist):
+		return "", err
+	default:
 		return getRootPath(filepath.Join(path, ".."))
 	}
 }
 
-// cast takes a string and trys to cast the value to its intended type.
+// cast takes a string and tries to cast the value to its intended type.
 func cast(fieldType string, fieldValue string) (reflect.Value, error) {
 	switch fieldType {
 	case "string":

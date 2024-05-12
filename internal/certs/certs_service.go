@@ -143,7 +143,10 @@ func (s *CertsService) ProcessBatch(
 
 		certs, err = s.repo.ProcessBatch(ctx, tx, size, lastID)
 		if err != nil {
-			tx.Rollback(context.Background())
+			e := tx.Rollback(context.Background())
+			if e != nil {
+				return fmt.Errorf("an error occurred: %w. And tx did not rollback successfully: %w", err, e)
+			}
 			return err
 		}
 		if len(certs) == 0 {

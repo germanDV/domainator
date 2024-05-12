@@ -13,7 +13,7 @@ import (
 const TokenExpiration = 8 * time.Hour
 
 type Service interface {
-	Generate(userId string, avatarURL string) (string, error)
+	Generate(userID string, avatarURL string) (string, error)
 	Validate(tokenString string) (jwt.MapClaims, error)
 }
 

@@ -10,11 +10,11 @@ import (
 	"github.com/germandv/domainator/internal/cache"
 )
 
-type DbPinger interface {
+type DBPinger interface {
 	Ping(ctx context.Context) error
 }
 
-func GetHealthcheck(cacheClient cache.Client, db DbPinger) http.HandlerFunc {
+func GetHealthcheck(cacheClient cache.Client, db DBPinger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		deep := q.Get("deep")
@@ -25,7 +25,7 @@ func GetHealthcheck(cacheClient cache.Client, db DbPinger) http.HandlerFunc {
 		info, ok := debug.ReadBuildInfo()
 		if !ok {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error reading build info"))
+			_, _ = w.Write([]byte("Error reading build info"))
 			return
 		}
 
@@ -67,6 +67,6 @@ func GetHealthcheck(cacheClient cache.Client, db DbPinger) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 		enc := json.NewEncoder(w)
-		enc.Encode(resp)
+		_ = enc.Encode(resp)
 	}
 }

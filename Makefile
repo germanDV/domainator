@@ -26,6 +26,13 @@ vet:
 	@echo 'Vetting code...'
 	go vet ./...
 
+## TODO: think about adding: paralleltest
+## lint: lint code
+.PHONY: lint
+lint:
+	@echo 'Linting code...'
+	golangci-lint run --disable-all --enable errcheck,gosimple,ineffassign,unused,staticcheck,gocritic,misspell,stylecheck ./...
+
 ## fmt: tidy dependencies and format code
 .PHONY: fmt
 audit:
