@@ -99,8 +99,8 @@ func main() {
 				return
 			}
 
-			slacker.Notify(user.WebhookURL.String(), n)
-			// logger.Error("Failed to send notification", "id", n.UserID, "webhook_url", user.WebhookURL.String(), "error", err.Error())
+			err = slacker.Notify(user.WebhookURL.String(), n)
+			logger.Error("Failed to send notification", "id", n.UserID, "webhook_url", user.WebhookURL.String(), "error", err.Error())
 		}
 	}
 }
