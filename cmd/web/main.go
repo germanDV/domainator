@@ -17,6 +17,7 @@ import (
 	"github.com/germandv/domainator/internal/db"
 	"github.com/germandv/domainator/internal/githubauth"
 	"github.com/germandv/domainator/internal/handlers"
+	"github.com/germandv/domainator/internal/notifier"
 	"github.com/germandv/domainator/internal/tlser"
 	"github.com/germandv/domainator/internal/tokenauth"
 	"github.com/germandv/domainator/internal/users"
@@ -62,6 +63,7 @@ func main() {
 	cacheClient := cache.New(config.RedisHost, config.RedisPort, config.RedisPassword)
 	tlsClient := tlser.New(5 * time.Second)
 	certsService := certs.NewService(tlsClient, certsRepo, 10)
+	slacker := notifier.NewSlacker()
 
 	authService, err := tokenauth.New(config.AuthPrivKey, config.AuthPublKey)
 	if err != nil {
@@ -89,6 +91,7 @@ func main() {
 	mux.Handle("DELETE /domain/{id}", authz(handlers.DeleteDomain(logger, certsService)))
 	mux.Handle("GET /settings", authz(handlers.GetSettings(usersService)))
 	mux.Handle("POST /settings/webhook", authz(handlers.SetWebhookURL(usersService)))
+	mux.Handle("PATCH /webhook/test", authz(handlers.SendTestMessage(logger, usersService, slacker)))
 
 	addr := fmt.Sprintf(":%d", config.Port)
 	commonMiddleware := handlers.CommonMdwBuilder(logger, cacheClient)

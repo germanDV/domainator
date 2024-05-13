@@ -202,15 +202,22 @@ p {
   margin-bottom: 100px;
 }
 
+textarea,
 input {
   font-size: 1.1em;
   background: var(--primary-white);
   color: var(--primary-black);
   border: 1px solid var(--secondary-white);
-  border-radius: 4px;
   padding: 8px 16px;
   &:focus {
     border: 1px solid var(--primary-black);
+  }
+}
+
+textarea {
+  width: 500px;
+  @media screen and (max-width: 500px) {
+    width: 100%;
   }
 }
 
@@ -342,6 +349,13 @@ form.htmx-request {
   color: var(--error);
 }
 
+.flex-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  column-gap: 12px;
+}
+
 .chip {
   font-weight: bold;
   border-radius: 16px;
@@ -351,6 +365,10 @@ form.htmx-request {
 
 .ml-1 {
   margin-left: 8px;
+}
+
+.mr-1 {
+  margin-right: 8px;
 }
 
 .mt-4 {
