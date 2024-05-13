@@ -12,31 +12,44 @@ templ Settings(url string) {
 templ WebhookForm(saved bool, err string, inputVal string) {
   <div id="webhook_form" class="mt-4">
     <form
-      class="inline"
       hx-post="/settings/webhook"
       hx-trigger="submit"
       hx-swap="outerHTML"
       hx-target="#webhook_form"
       hx-target-400="#webhook_form"
     >
-      <input
+      <textarea
+        rows="4"
         type="text"
         name="webhook_url"
         placeholder="Webhook URL"
-        value={inputVal}
         required
-      />
-      <button class="btn-primary" type="submit">Save</button>
+      >
+        {inputVal}
+      </textarea>
 
-      <div class="loader-container">
-        <div class="loader"><div></div><div></div><div></div></div>
+      <div class="flex-right">
+        if saved {
+          <div class="chip">
+            <span>saved</span>
+          </div>
+        }
+        <div class="loader-container">
+          <div class="loader"><div></div><div></div><div></div></div>
+        </div>
       </div>
 
-      if saved {
-        <div class="chip">
-          <span>saved</span>
-        </div>
-      }
+      <button
+        class="btn-secondary mr-1"
+        type="button"
+        hx-patch="/webhook/test"
+        hx-target="this"
+        hx-target-400="#error"
+      >
+        Send Test Message
+      </button>
+
+      <button class="btn-primary" type="submit">Save</button>
     </form>
 
     <div id="error">
@@ -45,4 +58,8 @@ templ WebhookForm(saved bool, err string, inputVal string) {
       }
     </div>
   </div>
+}
+
+templ MessageSent() {
+  <span class="chip">Test message sent!</span>
 }

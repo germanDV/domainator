@@ -95,13 +95,14 @@ func (r DeleteCertReq) Parse() (certs.DeleteReq, error) {
 
 // TransportCert represents a User in the Transport layer.
 type TransportCert struct {
-	ID        string
-	CreatedAt string
-	ExpiresAt string
-	Domain    string
-	Issuer    string
-	Status    string
-	Error     string
+	ID         string
+	CreatedAt  string
+	ExpiresAt  string
+	Domain     string
+	Issuer     string
+	Status     string
+	Error      string
+	LastUpdate string
 }
 
 // serviceToTransportAdapter transforms a Cert from the Service layer to the Transport layer.
@@ -122,12 +123,13 @@ func serviceToTransportAdapter(c certs.Cert) TransportCert {
 	}
 
 	return TransportCert{
-		ID:        c.ID.String(),
-		CreatedAt: c.CreatedAt.Format(time.DateOnly),
-		ExpiresAt: c.ExpiresAt.Format(time.DateOnly),
-		Domain:    c.Domain.String(),
-		Issuer:    c.Issuer.String(),
-		Status:    status,
-		Error:     c.Error,
+		ID:         c.ID.String(),
+		CreatedAt:  c.CreatedAt.Format(time.DateOnly),
+		ExpiresAt:  c.ExpiresAt.Format(time.DateOnly),
+		Domain:     c.Domain.String(),
+		Issuer:     c.Issuer.String(),
+		Status:     status,
+		Error:      c.Error,
+		LastUpdate: c.UpdatedAt.Format(time.DateOnly),
 	}
 }
