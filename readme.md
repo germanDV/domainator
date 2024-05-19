@@ -24,3 +24,22 @@ To run `make lint`, you will need [golangci-lint](golang.org/x/lint/golint).
 Domainator consists of two components:
 - **Server**: the webserver.
 - **Worker**: a background worker that updates certificates data, meant to be run as a cron job.
+
+## Worker
+
+The worker is meant to be run as a cron job. Multiple workers can be run in parallel as they will select different rows for the database to update.
+
+Build it:
+```shell
+make worker build
+```
+
+Run it:
+```shell
+POSTGRES_CONN_STR=postgresql://u:p@h:p/domainator ./domainator_worker
+```
+
+Run it (readinv vars from env file):
+```shell
+ENV_FILE=/abs/path/to/.env ./domainator_worker
+```
