@@ -15,12 +15,11 @@ import (
 
 type WorkerConfig struct {
 	Env             string `env:"APP_ENV" default:"dev"`
-	LogFormat       string `env:"LOG_FORMAT"`
+	LogFormat       string `env:"LOG_FORMAT" default:"text"`
 	LogLevel        string `env:"LOG_LEVEL" default:"info"`
 	PostgresConnStr string `env:"POSTGRES_CONN_STR"`
 	BatchSize       int    `env:"BATCH_SIZE" default:"50"`
 	Concurrency     int    `env:"BATCH_SIZE" default:"20"`
-	SlackTestURL    string `env:"SLACK_TEST_WEBHOOK_URL" default:" "`
 }
 
 // This worker is meant to be run as a cron job,
