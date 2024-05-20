@@ -1,6 +1,13 @@
 package common
 
-import "github.com/google/uuid"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/google/uuid"
+)
+
+var ErrInvalidID = errors.New("invalid ID")
 
 type ID struct {
 	value string
@@ -14,7 +21,7 @@ func NewID() ID {
 func ParseID(id string) (ID, error) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
-		return ID{}, err
+		return ID{}, fmt.Errorf("error parsing id %s: %w", id, ErrInvalidID)
 	}
 	return ID{value: parsedID.String()}, nil
 }

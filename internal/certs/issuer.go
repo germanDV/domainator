@@ -1,6 +1,9 @@
 package certs
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Issuer struct {
 	value string
@@ -9,7 +12,7 @@ type Issuer struct {
 func ParseIssuer(issuer string) (Issuer, error) {
 	issuer = strings.TrimSpace(issuer)
 	if issuer == "" {
-		return Issuer{}, ErrInvalidIssuer
+		return Issuer{}, fmt.Errorf("error parsing issuer %s: %w", issuer, ErrInvalidIssuer)
 	}
 	return Issuer{value: issuer}, nil
 }

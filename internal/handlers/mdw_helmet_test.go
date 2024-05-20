@@ -7,6 +7,8 @@ import (
 )
 
 func TestHelmet(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)

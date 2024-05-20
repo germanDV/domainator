@@ -7,6 +7,8 @@ import (
 )
 
 func TestRealIP_TrueClientIP(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	w := httptest.NewRecorder()
@@ -23,6 +25,8 @@ func TestRealIP_TrueClientIP(t *testing.T) {
 }
 
 func TestRealIP_XRealIP(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	w := httptest.NewRecorder()
@@ -38,6 +42,8 @@ func TestRealIP_XRealIP(t *testing.T) {
 }
 
 func TestRealIP_XForwardedFor(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	w := httptest.NewRecorder()
@@ -52,6 +58,8 @@ func TestRealIP_XForwardedFor(t *testing.T) {
 }
 
 func TestRealIP_XForwardedForMultiple(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	w := httptest.NewRecorder()
@@ -66,6 +74,8 @@ func TestRealIP_XForwardedForMultiple(t *testing.T) {
 }
 
 func TestRealIP_NoHeaders(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	w := httptest.NewRecorder()

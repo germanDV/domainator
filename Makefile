@@ -26,7 +26,6 @@ vet:
 	@echo 'Vetting code...'
 	go vet ./...
 
-## TODO: think about adding: paralleltest
 ## lint: lint code
 .PHONY: lint
 lint:

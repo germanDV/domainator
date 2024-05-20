@@ -12,6 +12,8 @@ import (
 const secret = "4yxfIPahS5s15puGIDIDFqVSm09mKkyH"
 
 func TestWrite(t *testing.T) {
+	t.Parallel()
+
 	// Create a new test server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		cookie := http.Cookie{Name: "test", Value: "value"}
@@ -40,6 +42,8 @@ func TestWrite(t *testing.T) {
 }
 
 func TestRead(t *testing.T) {
+	t.Parallel()
+
 	req := httptest.NewRequest("GET", "http://example.com", nil)
 	cookie := &http.Cookie{Name: "testCookie", Value: "testValue"}
 	req.AddCookie(cookie)
@@ -54,6 +58,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestReadMissingCookie(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest("GET", "http://example.com", nil)
 	_, err := Read(req, "missingCookie")
 	if err == nil {
@@ -62,6 +67,8 @@ func TestReadMissingCookie(t *testing.T) {
 }
 
 func TestWriteEncoded(t *testing.T) {
+	t.Parallel()
+
 	// Create a new test server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		cookie := http.Cookie{Name: "test", Value: "value"}
@@ -93,6 +100,8 @@ func TestWriteEncoded(t *testing.T) {
 }
 
 func TestReadEncoded(t *testing.T) {
+	t.Parallel()
+
 	req := httptest.NewRequest("GET", "http://example.com", nil)
 	cookie := &http.Cookie{Name: "testCookie", Value: "testValue"}
 	cookie.Value = base64.URLEncoding.EncodeToString([]byte(cookie.Value))
@@ -108,6 +117,8 @@ func TestReadEncoded(t *testing.T) {
 }
 
 func TestWriteSigned(t *testing.T) {
+	t.Parallel()
+
 	// Create a new test server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		cookie := http.Cookie{Name: "test", Value: "value"}
@@ -150,6 +161,8 @@ func TestWriteSigned(t *testing.T) {
 }
 
 func TestReadSigned(t *testing.T) {
+	t.Parallel()
+
 	name := "cookie"
 	value := "value"
 
@@ -167,6 +180,8 @@ func TestReadSigned(t *testing.T) {
 }
 
 func TestReadSignedInvalidValue(t *testing.T) {
+	t.Parallel()
+
 	name := "test"
 	value := "original"
 

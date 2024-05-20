@@ -5,6 +5,8 @@ import (
 )
 
 func TestKeypair(t *testing.T) {
+	t.Parallel()
+
 	var pemPriv string
 	var pemPubl string
 

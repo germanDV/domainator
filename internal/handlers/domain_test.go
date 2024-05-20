@@ -27,6 +27,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestRegisterDomain(t *testing.T) {
+	t.Parallel()
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
 	certsService := certs.NewService(tlsermock.New(), certsRepo, 2)
@@ -144,6 +146,8 @@ func TestRegisterDomain(t *testing.T) {
 }
 
 func TestDeleteDomain(t *testing.T) {
+	t.Parallel()
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
 	certsService := certs.NewService(tlsermock.New(), certsRepo, 2)
@@ -209,6 +213,8 @@ func TestDeleteDomain(t *testing.T) {
 }
 
 func TestUpdateDomain(t *testing.T) {
+	t.Parallel()
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	certsRepo := certs.NewRepo(db)
 	certsService := certs.NewService(tlsermock.New(), certsRepo, 2)

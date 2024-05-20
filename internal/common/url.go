@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -12,8 +13,9 @@ type URL struct {
 }
 
 func ParseURL(url string) (URL, error) {
+	url = strings.TrimSpace(url)
 	if !strings.HasPrefix(url, "https://") {
-		return URL{}, ErrInvalidURL
+		return URL{}, fmt.Errorf("error parsing url %s: %w", url, ErrInvalidURL)
 	}
 	return URL{value: url}, nil
 }

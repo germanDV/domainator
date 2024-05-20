@@ -16,6 +16,8 @@ func (m MockDBPinger) Ping(_ context.Context) error {
 }
 
 func TestGetHealthcheck(t *testing.T) {
+	t.Parallel()
+
 	handler := GetHealthcheck(cachemock.New(), MockDBPinger{})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/healthcheck", nil)
@@ -38,6 +40,8 @@ func TestGetHealthcheck(t *testing.T) {
 }
 
 func TestGetHealthcheck_Deep(t *testing.T) {
+	t.Parallel()
+
 	handler := GetHealthcheck(cachemock.New(), MockDBPinger{})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/healthcheck?deep=true", nil)
