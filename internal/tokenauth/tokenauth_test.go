@@ -9,6 +9,8 @@ import (
 )
 
 func TestTokenAuth(t *testing.T) {
+	t.Parallel()
+
 	priv, publ, err := keys.NewPair()
 	if err != nil {
 		t.Fatal(err)

@@ -7,6 +7,8 @@ import (
 )
 
 func TestContentTypeStatic(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/static/test.jpg", nil)
@@ -17,6 +19,8 @@ func TestContentTypeStatic(t *testing.T) {
 }
 
 func TestContentTypeHealthcheck(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/healthcheck", nil)
@@ -32,6 +36,8 @@ func TestContentTypeHealthcheck(t *testing.T) {
 }
 
 func TestContentTypeDefault(t *testing.T) {
+	t.Parallel()
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/test", nil)

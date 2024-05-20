@@ -22,6 +22,8 @@ func (lw *logWriter) Write(data []byte) (int, error) {
 }
 
 func TestLoggerBuilder(t *testing.T) {
+	t.Parallel()
+
 	lw := newLogWriter()
 	logger := slog.New(slog.NewTextHandler(lw, nil))
 	mdw := loggerBuilder(logger)

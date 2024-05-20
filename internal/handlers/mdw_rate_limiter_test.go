@@ -11,6 +11,8 @@ import (
 )
 
 func TestRateLimiter(t *testing.T) {
+	t.Parallel()
+
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
 	cacheClient := cachemock.New()
 	limiter := rateLimiterBuilder(logger, cacheClient, 5)

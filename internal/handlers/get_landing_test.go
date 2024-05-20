@@ -9,6 +9,8 @@ import (
 )
 
 func TestGetLanding_Authenticated(t *testing.T) {
+	t.Parallel()
+
 	handler := GetLanding()
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
@@ -26,6 +28,8 @@ func TestGetLanding_Authenticated(t *testing.T) {
 }
 
 func TestGetLanding_Unauthenticated(t *testing.T) {
+	t.Parallel()
+
 	handler := GetLanding()
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
