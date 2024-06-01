@@ -2,7 +2,6 @@ package certs
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/germandv/domainator/internal/common"
@@ -18,13 +17,12 @@ const QueryTimeout = 5 * time.Second
 type Repo interface {
 	Save(ctx context.Context, cert repoCert) error
 	GetAll(ctx context.Context, userID common.ID) ([]repoCert, error)
+	GetBatch(ctx context.Context, size int, cursor string) ([]repoCert, error)
 	Get(ctx context.Context, id common.ID) (repoCert, error)
-	Update(ctx context.Context, userID common.ID, id common.ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
-	UpdateWithTx(ctx context.Context, tx pgx.Tx, userID common.ID, id common.ID, expiry time.Time, issuer string, updatedAt time.Time, e string) error
-	Delete(ctx context.Context, userID common.ID, id common.ID) error
-	ProcessBatch(ctx context.Context, tx pgx.Tx, size int, cursor string) ([]repoCert, error)
 	Count(ctx context.Context, userID common.ID, limit int) (int, error)
-	BeginTx(ctx context.Context) (pgx.Tx, error)
+	Update(ctx context.Context, userID common.ID, id common.ID, expiry time.Time, issuer string, updatedAt time.Time) error
+	UpdateWithError(ctx context.Context, userID common.ID, id common.ID, error string, updatedAt time.Time) error
+	Delete(ctx context.Context, userID common.ID, id common.ID) error
 }
 
 type CertsRepo struct {
@@ -101,7 +99,6 @@ func (r *CertsRepo) Update(
 	expiry time.Time,
 	issuer string,
 	updatedAt time.Time,
-	e string,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
@@ -113,11 +110,11 @@ func (r *CertsRepo) Update(
       issuer = $2,
       expires_at = $3,
       updated_at = $4,
-      error = nullif($5, '')
+      error = ''
     where
-      id = $1 and user_id = $6`
+      id = $1 and user_id = $5`
 
-	res, err := r.db.Exec(ctx, q, id, issuer, expiry, updatedAt, e, userID)
+	res, err := r.db.Exec(ctx, q, id, issuer, expiry, updatedAt, userID)
 	if err != nil {
 		return err
 	}
@@ -128,15 +125,12 @@ func (r *CertsRepo) Update(
 	return nil
 }
 
-func (r *CertsRepo) UpdateWithTx(
+func (r *CertsRepo) UpdateWithError(
 	ctx context.Context,
-	tx pgx.Tx,
 	userID common.ID,
 	id common.ID,
-	expiry time.Time,
-	issuer string,
+	error string,
 	updatedAt time.Time,
-	e string,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
@@ -145,14 +139,12 @@ func (r *CertsRepo) UpdateWithTx(
     update
       certificates
     set
-      issuer = $2,
-      expires_at = $3,
-      updated_at = $4,
-      error = nullif($5, '')
+      error = $3,
+      updated_at = $4
     where
-      id = $1 and user_id = $6`
+      id = $1 and user_id = $2`
 
-	res, err := tx.Exec(ctx, q, id, issuer, expiry, updatedAt, e, userID)
+	res, err := r.db.Exec(ctx, q, id, userID, error, updatedAt)
 	if err != nil {
 		return err
 	}
@@ -191,11 +183,7 @@ func (r *CertsRepo) Delete(ctx context.Context, userID common.ID, id common.ID) 
 	})
 }
 
-func (r *CertsRepo) BeginTx(ctx context.Context) (pgx.Tx, error) {
-	return r.db.Begin(ctx)
-}
-
-func (r *CertsRepo) ProcessBatch(ctx context.Context, tx pgx.Tx, size int, lastID string) ([]repoCert, error) {
+func (r *CertsRepo) GetBatch(ctx context.Context, size int, lastID string) ([]repoCert, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
@@ -205,8 +193,7 @@ func (r *CertsRepo) ProcessBatch(ctx context.Context, tx pgx.Tx, size int, lastI
     from certificates
     where id < $2
     order by id desc
-    limit $1
-    for update skip locked`
+    limit $1`
 
 	if lastID == "" {
 		q = `
@@ -214,23 +201,18 @@ func (r *CertsRepo) ProcessBatch(ctx context.Context, tx pgx.Tx, size int, lastI
         id, user_id, domain, issuer, expires_at, created_at, updated_at, coalesce(error, '') as error
       from certificates
       order by id desc
-      limit $1
-      for update skip locked`
+      limit $1`
 	}
 
 	var rows pgx.Rows
 	if lastID == "" {
-		rows, _ = tx.Query(ctx, q, size)
+		rows, _ = r.db.Query(ctx, q, size)
 	} else {
-		rows, _ = tx.Query(ctx, q, size, lastID)
+		rows, _ = r.db.Query(ctx, q, size, lastID)
 	}
 
 	certs, err := pgx.CollectRows(rows, pgx.RowToStructByName[repoCert])
 	if err != nil {
-		e := tx.Rollback(ctx)
-		if e != nil {
-			return nil, fmt.Errorf("an error occurred: %w. And tx did not rollback successfully: %w", err, e)
-		}
 		return nil, err
 	}
 

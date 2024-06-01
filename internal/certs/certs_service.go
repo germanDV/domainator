@@ -3,13 +3,13 @@ package certs
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/germandv/domainator/internal/common"
 	"github.com/germandv/domainator/internal/notifier"
 	"github.com/germandv/domainator/internal/tlser"
-	"github.com/jackc/pgx/v5"
 )
 
 type Service interface {
@@ -17,7 +17,7 @@ type Service interface {
 	GetAll(ctx context.Context, req GetAllReq) ([]Cert, error)
 	Delete(ctx context.Context, req DeleteReq) error
 	Update(ctx context.Context, req UpdateReq) (Cert, error)
-	ProcessBatch(ctx context.Context, size int, concurrency int, ch chan<- notifier.Notification) error
+	ProcessBatch(ctx context.Context, size int, ch chan<- notifier.Notification, logger *slog.Logger) error
 }
 
 type CertsService struct {
@@ -91,10 +91,22 @@ func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) 
 		return Cert{}, err
 	}
 
-	e := ""
 	data := s.tlsClient.GetCertData(cert.Domain)
+	now := time.Now().UTC()
+
 	if data.Status != tlser.StatusOK && data.Status != tlser.StatusExpired {
-		e = string(data.Status)
+		err := s.repo.UpdateWithError(context.Background(), req.UserID, req.ID, string(data.Status), now)
+		if err != nil {
+			return Cert{}, err
+		}
+
+		cert.UpdatedAt = now
+		cert.Error = string(data.Status)
+		c, err := repoToServiceAdapter(cert)
+		if err != nil {
+			return Cert{}, err
+		}
+		return c, nil
 	}
 
 	issuer, err := ParseIssuer(data.Issuer)
@@ -102,8 +114,7 @@ func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) 
 		return Cert{}, ErrInvalidIssuer
 	}
 
-	now := time.Now().UTC()
-	err = s.repo.Update(ctx, req.UserID, req.ID, data.Expiry, issuer.value, now, e)
+	err = s.repo.Update(ctx, req.UserID, req.ID, data.Expiry, issuer.value, now)
 	if err != nil {
 		return Cert{}, err
 	}
@@ -111,7 +122,7 @@ func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) 
 	cert.UpdatedAt = now
 	cert.Issuer = issuer.value
 	cert.ExpiresAt = data.Expiry
-	cert.Error = e
+	cert.Error = ""
 
 	c, err := repoToServiceAdapter(cert)
 	if err != nil {
@@ -123,17 +134,12 @@ func (s *CertsService) Update(ctx context.Context, req UpdateReq) (Cert, error) 
 func (s *CertsService) ProcessBatch(
 	ctx context.Context,
 	size int,
-	concurrency int,
 	ch chan<- notifier.Notification,
+	logger *slog.Logger,
 ) error {
 	var certs []repoCert
 	var err error
 	var wg sync.WaitGroup
-
-	tx, err := s.repo.BeginTx(ctx)
-	if err != nil {
-		return err
-	}
 
 	first := true
 	lastID := ""
@@ -141,14 +147,11 @@ func (s *CertsService) ProcessBatch(
 	for first || len(certs) > 0 {
 		first = false
 
-		certs, err = s.repo.ProcessBatch(ctx, tx, size, lastID)
+		certs, err = s.repo.GetBatch(ctx, size, lastID)
 		if err != nil {
-			e := tx.Rollback(context.Background())
-			if e != nil {
-				return fmt.Errorf("an error occurred: %w. And tx did not rollback successfully: %w", err, e)
-			}
 			return err
 		}
+
 		if len(certs) == 0 {
 			break
 		}
@@ -158,21 +161,46 @@ func (s *CertsService) ProcessBatch(
 			lastID = cert.ID
 			go func(cert repoCert) {
 				defer wg.Done()
-				s.updateAndCheckExp(cert, tx, ch)
+				s.updateAndCheckExp(cert, ch, logger)
 			}(cert)
 		}
 		wg.Wait()
 	}
 
-	return tx.Commit(context.Background())
+	return nil
 }
 
-func (s *CertsService) updateAndCheckExp(cert repoCert, tx pgx.Tx, ch chan<- notifier.Notification) {
+func (s *CertsService) updateAndCheckExp(cert repoCert, ch chan<- notifier.Notification, logger *slog.Logger) {
+	logger.Debug("checking cert", "id", cert.ID, "domain", cert.Domain)
 	data := s.tlsClient.GetCertData(cert.Domain)
+	now := time.Now().UTC()
 
-	e := ""
+	userID, err := common.ParseID(cert.UserID)
+	if err != nil {
+		logger.Debug("failed to parse user ID", "id", cert.ID, "userID", cert.UserID, "error", err.Error())
+		return
+	}
+
+	certID, err := common.ParseID(cert.ID)
+	if err != nil {
+		logger.Debug("failed to parse ID", "id", cert.ID, "error", err.Error())
+		return
+	}
+
 	if data.Status != tlser.StatusOK && data.Status != tlser.StatusExpired {
-		e = string(data.Status)
+		err := s.repo.UpdateWithError(context.Background(), userID, certID, string(data.Status), now)
+		if err != nil {
+			logger.Debug("failed to UpdateWithError", "id", cert.ID, "status", string(data.Status), "error", err.Error())
+			return
+		}
+		ch <- notifier.Notification{
+			ID:     cert.ID,
+			UserID: cert.UserID,
+			Domain: cert.Domain,
+			Status: string(data.Status),
+			Hours:  0,
+		}
+		return
 	}
 
 	issuer, err := ParseIssuer(data.Issuer)
@@ -180,20 +208,9 @@ func (s *CertsService) updateAndCheckExp(cert repoCert, tx pgx.Tx, ch chan<- not
 		return
 	}
 
-	userID, err := common.ParseID(cert.UserID)
+	err = s.repo.Update(context.Background(), userID, certID, data.Expiry, issuer.value, now)
 	if err != nil {
-		return
-	}
-
-	certID, err := common.ParseID(cert.ID)
-	if err != nil {
-		return
-	}
-
-	now := time.Now().UTC()
-
-	err = s.repo.UpdateWithTx(context.Background(), tx, userID, certID, data.Expiry, issuer.value, now, e)
-	if err != nil {
+		logger.Debug("failed to update cert", "id", cert.ID, "error", err.Error())
 		return
 	}
 

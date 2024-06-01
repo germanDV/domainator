@@ -27,7 +27,7 @@ Domainator consists of two components:
 
 ## Worker
 
-The worker is meant to be run as a cron job. Multiple workers can be run in parallel as they will select different rows from the database to update.
+The worker is meant to be run as a cron job.
 
 Build it:
 ```shell
