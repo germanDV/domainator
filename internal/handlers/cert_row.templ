@@ -6,7 +6,7 @@ templ CertRow(c TransportCert) {
     <td>{c.ExpiresAt}</td>
     <td class="w-250">{c.Issuer}</td>
     <td>
-      <span class={"chip", templ.KV("error-text", c.Status == "Expired")}>
+      <span class={"chip", templ.KV("error-text", c.Status == "Expired" || c.Error != "")}>
         {c.Status}
       </span>
     </td>
