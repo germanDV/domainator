@@ -66,7 +66,7 @@ func CertRow(c TransportCert) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 = []any{"chip", templ.KV("error-text", c.Status == "Expired")}
+		var templ_7745c5c3_Var5 = []any{"chip", templ.KV("error-text", c.Status == "Expired" || c.Error != "")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var5...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

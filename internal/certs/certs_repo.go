@@ -92,29 +92,11 @@ func (r *CertsRepo) Get(ctx context.Context, id common.ID) (repoCert, error) {
 	return cert, nil
 }
 
-func (r *CertsRepo) Update(
-	ctx context.Context,
-	userID common.ID,
-	id common.ID,
-	expiry time.Time,
-	issuer string,
-	updatedAt time.Time,
-) error {
+func (r *CertsRepo) update(ctx context.Context, query string, args ...any) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	q := `
-    update
-      certificates
-    set
-      issuer = $2,
-      expires_at = $3,
-      updated_at = $4,
-      error = ''
-    where
-      id = $1 and user_id = $5`
-
-	res, err := r.db.Exec(ctx, q, id, issuer, expiry, updatedAt, userID)
+	res, err := r.db.Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}
@@ -125,6 +107,27 @@ func (r *CertsRepo) Update(
 	return nil
 }
 
+func (r *CertsRepo) Update(
+	ctx context.Context,
+	userID common.ID,
+	id common.ID,
+	expiry time.Time,
+	issuer string,
+	updatedAt time.Time,
+) error {
+	q := `
+    update
+      certificates
+    set
+      issuer = $2,
+      expires_at = $3,
+      updated_at = $4,
+      error = ''
+    where
+      id = $1 and user_id = $5`
+	return r.update(ctx, q, id, issuer, expiry, updatedAt, userID)
+}
+
 func (r *CertsRepo) UpdateWithError(
 	ctx context.Context,
 	userID common.ID,
@@ -132,9 +135,6 @@ func (r *CertsRepo) UpdateWithError(
 	error string,
 	updatedAt time.Time,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
-	defer cancel()
-
 	q := `
     update
       certificates
@@ -143,16 +143,7 @@ func (r *CertsRepo) UpdateWithError(
       updated_at = $4
     where
       id = $1 and user_id = $2`
-
-	res, err := r.db.Exec(ctx, q, id, userID, error, updatedAt)
-	if err != nil {
-		return err
-	}
-	if res.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-
-	return nil
+	return r.update(ctx, q, id, userID, error, updatedAt)
 }
 
 func (r *CertsRepo) Delete(ctx context.Context, userID common.ID, id common.ID) error {
