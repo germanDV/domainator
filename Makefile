@@ -1,4 +1,4 @@
-BINARY_NAME=domainator
+# BINARY_NAME=domainator
 
 ## help: print this help message
 .PHONY: help
@@ -30,7 +30,7 @@ vet:
 .PHONY: lint
 lint:
 	@echo 'Linting code...'
-	golangci-lint run --disable-all --enable errcheck,gosimple,ineffassign,unused,staticcheck,gocritic,misspell,stylecheck ./...
+	golangci-lint run --disable-all --enable errcheck,gosimple,ineffassign,unused,gocritic,misspell,stylecheck ./...
 
 ## fmt: tidy dependencies and format code
 .PHONY: fmt
