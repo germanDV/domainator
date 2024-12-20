@@ -33,7 +33,7 @@ func TestGetHealthcheck(t *testing.T) {
 		t.Errorf("Error unmarshalling response: %s", err)
 	}
 
-	goVersion := "go1.23.0"
+	goVersion := "go1.23.4"
 	if resp["go"] != goVersion {
 		t.Errorf("Want go version %s, got %s", goVersion, resp["go"])
 	}
