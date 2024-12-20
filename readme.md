@@ -15,7 +15,7 @@ In addition to `go` and `make`. You will need:
 - `air` for hot reloading
 - `templ` for html templating
 
-You may install them with `make deps`.
+You may install them with `make deps/ext`.
 
 To run `make lint`, you will need [golangci-lint](golang.org/x/lint/golint).
 
