@@ -29,8 +29,14 @@ vet:
 ## lint: lint code
 .PHONY: lint
 lint:
-	@echo 'Linting code...'
+	@echo 'Linting code with golangci-lint...'
 	golangci-lint run --disable-all --enable errcheck,gosimple,ineffassign,unused,gocritic,misspell,stylecheck ./...
+
+## sec: check for security issues
+.PHONY: sec
+sec:
+	@echo 'Running security checks with gosec...'
+	gosec ./...
 
 ## fmt: tidy dependencies and format code
 .PHONY: fmt
