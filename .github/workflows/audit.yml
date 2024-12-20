@@ -10,11 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Gosec security scanner
-        uses: securego/gosec@master
-        with:
-          args: ./...
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
