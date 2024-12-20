@@ -50,7 +50,7 @@ func fileToEnv(configFilepath string) error {
 		return err
 	}
 
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return errEnvFileNotFound
@@ -74,7 +74,11 @@ func fileToEnv(configFilepath string) error {
 		if multiline {
 			multilineVal += "\n" + line
 			if strings.HasSuffix(multilineVal, `"`) {
-				os.Setenv(multilineKey, strings.TrimSuffix(multilineVal, `"`))
+				err := os.Setenv(multilineKey, strings.TrimSuffix(multilineVal, `"`))
+				if err != nil {
+					return err
+				}
+
 				multilineKey = ""
 				multilineVal = ""
 				multiline = false
@@ -101,7 +105,10 @@ func fileToEnv(configFilepath string) error {
 
 		_, exists := os.LookupEnv(key)
 		if !exists {
-			os.Setenv(key, val)
+			err := os.Setenv(key, val)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 )
 
+// #nosec G101
 const secret = "4yxfIPahS5s15puGIDIDFqVSm09mKkyH"
 
 func TestWrite(t *testing.T) {
